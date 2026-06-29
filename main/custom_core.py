@@ -17,10 +17,12 @@ from org.sikuli.basics import Debug as JDebug
 _R = Robot()
 
 def check_emergency_stop():
+    """helper to enforce faster shutdown of the script"""
     if not bh.BOT_RUNNING:
         raise RuntimeError("Emergency Abort")
 
 def click(location):
+    """Click on a given coordinate"""
     global _R
 
     check_emergency_stop()
@@ -40,6 +42,7 @@ def click(location):
     sleep(0.3)
 
 def dragDrop(start_location, end_location):
+    """Drag the mouse between given coordinates"""
     global _R
 
     check_emergency_stop()
@@ -65,12 +68,14 @@ def dragDrop(start_location, end_location):
     _R.mouseRelease(InputEvent.BUTTON1_DOWN_MASK)
 
 def findAllList(image_path):
+    """Find an image on the screen and return all matches in a list"""
     check_emergency_stop()
     screen_size = Toolkit.getDefaultToolkit().getScreenSize()
     full_screen = Region(0, 0, screen_size.width, screen_size.height)
     return full_screen.findAllList(image_path)
 
 def popup(message, title='Bot Notification'):
+    """Generate a popup with the given message and title"""
     check_emergency_stop()
     from javax.swing import JOptionPane
     try:
@@ -79,11 +84,13 @@ def popup(message, title='Bot Notification'):
         JDebug.error("[CorePopup] Render failed\n%s", str(e))
 
 def sleep(seconds):
+    """Obvious"""
     time.sleep(seconds)
 
 class Do():
     @staticmethod
     def popup(message, title='Bot Notification', timeout=3):
+        """Generate a popup with the given message and title, which autovanishes after a given timeout"""
         from javax.swing import JOptionPane
         from java.awt.event import ActionListener
         from javax.swing import Timer as JTimer
@@ -110,6 +117,7 @@ class Region():
         self.h = h
 
     def click(self, target=None):
+        """Click on the center of a region or given coordinates"""
         if target is None:
             center_x = self.x + int(self.w / 2)
             center_y = self.y + int(self.h / 2)
@@ -118,6 +126,7 @@ class Region():
             click(target)
 
     def exists(self, image_path, timeout=0):
+        """Check if a pattern exists within a region"""
         check_emergency_stop()
         screen_mat = bh.grab_screen_to_mat(self)
         template = Imgcodecs.imread(image_path, Imgcodecs.IMREAD_UNCHANGED)
@@ -144,6 +153,7 @@ class Region():
         return False
 
     def findAllList(self, image_path):
+        """Find an image in the region and return all matches in a list"""
         check_emergency_stop()
         results_list = []
         screen_mat = bh.grab_screen_to_mat(self)
@@ -176,6 +186,7 @@ class Region():
         return results_list
 
     def getAverageColor(self):
+        """Get the coloraverage of a given region"""
         check_emergency_stop()
         screen_mat = None
         try:
@@ -196,23 +207,29 @@ class Region():
                 screen_mat.release()
 
     def getCenter(self):
+        """Get the center coordinates of a region"""
         cx = self.x + int(self.w / 2)
         cy = self.y + int(self.h / 2)
         return Match(cx, cy, 1.0, 0, 0)
 
     def getH(self):
+        """Get the current height of the region"""
         return self.h
 
     def getW(self):
+        """Get the current width of the region"""
         return self.w
 
     def getX(self):
+        """Get the current top left X coordinate of the region"""
         return self.x
 
     def getY(self):
+        """Get the current tpp left Y coordinate of the region"""
         return self.y
 
     def moveMouseAway(self):
+        """Move the mouse out of the region in order to not disturb the cursor interferring with the grabber"""
         global _R
 
         check_emergency_stop()
@@ -224,6 +241,7 @@ class Region():
             JDebug.error("[CoreRegion] moveMouseAway Failed to execute\n%s", str(e))
 
     def text(self):
+        """Perform an OCR scan and return the text found in a region"""
         check_emergency_stop()
         try:
             sleep(0.05) # Settle delay for Unity UI animations
@@ -233,6 +251,7 @@ class Region():
             return ""
 
     def wait(self, image_path, timeout=3):
+        """Wait for an image to appear within the given timeout"""
         check_emergency_stop()
         start_time = JSystem.currentTimeMillis()
         timeout_ms = timeout * 1000
@@ -244,6 +263,7 @@ class Region():
         return False
 
     def waitVanish(self, image_path=None, timeout=3):
+        """Wait for an image to disappear within the given timeout"""
         check_emergency_stop()
         start_time = JSystem.currentTimeMillis()
         timeout_ms = timeout * 1000
@@ -261,4 +281,5 @@ class Match(Region):
         self.score = score
 
     def getScore(self):
+        """Get the current match score"""
         return self.score

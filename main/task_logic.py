@@ -5,12 +5,15 @@ from org.sikuli.basics import Debug as JDebug
 
 
 def run_arcane_crystal(match):
+    """Perform Arcane Crystal Task"""
     click((1840, 55))
 
 def run_arena_of_kings(match):
+    """Perform Arena of Kings Task"""
     click((1855, 115))
 
 def run_campaign(match):
+    """Perform Campaign Task"""
     _screen = Region(0, 0, 1920, 1080)
     task_campaign_dm = 'images/tasks/campaign/daily_missions.png'
     task_campaign_liberate = 'images/tasks/campaign/liberate.png'
@@ -49,6 +52,7 @@ def run_campaign(match):
         pass
 
 def run_check_upgrade():
+    """Check if hero's can be upgraded"""
     main_upgrade = Region(1661, 910, 259, 170)
 
     target_mode = str(bh.CONFIG['upgrade_mode']).lower()
@@ -57,13 +61,16 @@ def run_check_upgrade():
         main_upgrade.moveMouseAway()
 
 def run_engineer(match):
+    """Perform Engineer Task"""
     click((1620, 730))
     click((1840, 55))
 
 def run_firestone_collect(match):
+    """Perform Firestone Collection Task"""
     click((1840, 55))
 
 def run_firestone_research(match):
+    """Perform Firestone Research Task"""
     task_firestone_research_bubble = 'images/tasks/firestone/research_bubble.png'
     task_firestone_research_slotsfull = 'images/tasks/firestone/research_slotsfull.png'
     while bh.BOT_RUNNING and bh.color_at(540, 970) == 'green':
@@ -97,11 +104,13 @@ def run_firestone_research(match):
             pass
 
 def run_guild_expeditions(match):
+    """Perform Guild Expeditions Task"""
     for c in [(1290, 330), (1290, 330), (1510, 70)]:
         sleep(0.5)
         click((c))
 
 def run_hero_upgrade():
+    """Ensure the upgrade multiplier is set to the configured setting"""
     while bh.BOT_RUNNING:
         x = 0
         for m in [115, 640, 810, 1010, 1200, 1380, 1600]:
@@ -114,22 +123,20 @@ def run_hero_upgrade():
             break
 
 def run_map(match):
+    """Perform Map Task"""
     task_map_okay = 'images/tasks/map/okay.png'
     task_map_zoom = 'images/tasks/map/zoom.png'
-
     while bh.color_at(170, 320) == 'green':
         click((170, 320))
         sleep(1)
         click((950, 650))
         sleep(0.5)
-
     try:
         zoom_match = exists(task_map_zoom)
         if zoom_match:
             dragDrop(zoom_match, (1290,1040))
     except Exception as e:
         JDebug.error("[Map] Unable to zoom\n%s", str(e))
-
     for type in ['scout','adventure', 'war', 'monster']:
         missions = findAllList('images/tasks/map/mission/'+type+'.png')
         if missions:
@@ -142,13 +149,16 @@ def run_map(match):
     click((1840, 55))
 
 def run_meteorite(match):
+    """Perform Meteorite Research Task"""
     click((1840, 55))
 
 def run_pickaxe(match):
+    """Perform Pickaxes Task"""
     click((690, 660))
     click((1840, 55))
 
 def run_quests(match):
+    """Perform Quests Task"""
     click((760, 130))
     for n in range(0, 5):
         click((1450, 300))
@@ -160,6 +170,7 @@ def run_quests(match):
     click((1840, 55))
 
 def run_tavern(match):
+    """Perform Tavern Task"""
     while bh.BOT_RUNNING:
         if bh.color_at(400, 640) == 'yellow':
             click((400,640))

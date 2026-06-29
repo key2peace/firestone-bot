@@ -31,6 +31,7 @@ CONFIG = {
 Env.addHotkey('x', KeyModifier.CTRL + KeyModifier.SHIFT, bh.trigger_graceful_stop)
 
 def color_at(x, y):
+    """Get the color from a specified coordinate pixel and return a color name"""
     global _R
 
     colormap = {
@@ -49,6 +50,7 @@ def color_at(x, y):
     return False
 
 def do_capture(filename):
+    """Capture a screenshot and save it as the specified filename"""
     global CONFIG
     target_dir = 'capture'
     target_path = os.path.join(target_dir, filename)
@@ -61,6 +63,7 @@ def do_capture(filename):
         raw_mat.release()
 
 def duration(start_ts, stop_ts=0):
+    """Return a textual representation of the duration between start_ts and stop_ts"""
     if not stop_ts:
         stop_ts = JSystem.currentTimeMillis()
     result = ''
@@ -88,8 +91,9 @@ def duration(start_ts, stop_ts=0):
     if milliseconds:
         result = result + milliseconds + 'ms '
     return result
-    
+
 def filter_mat_alpha(src_mat, threshold=128):
+    """Perform Alpha Flattening on a given mat"""
     if src_mat.empty() or src_mat.channels() < 4:
         return src_mat
     channels = ArrayList()
@@ -101,6 +105,7 @@ def filter_mat_alpha(src_mat, threshold=128):
     return src_mat
 
 def get_file_sha256(filepath):
+    """Get the SHA-256 checksum of a file"""
     hasher = hashlib.sha256()
     with open(filepath, 'rb') as f:
         buf = f.read()
@@ -108,6 +113,7 @@ def get_file_sha256(filepath):
     return hasher.hexdigest()
 
 def get_suffix_rank(suffix):
+    """Convert gamestyle exponentials to real"""
     if len(suffix) == 1:
         mapping = {'K': 1, 'M': 2, 'B': 3, 'T': 4}
         return mapping.get(suffix.upper(), 0)
@@ -118,6 +124,7 @@ def get_suffix_rank(suffix):
     return 0
 
 def grab_screen_to_mat(region=None):
+    """Gran (part of the) screen for processing"""
     global _R
 
     if region:
@@ -149,6 +156,7 @@ def grab_screen_to_mat(region=None):
     return final_bgr_mat
 
 def optimize_alpha_channels(target_dir='images', threshold=128):
+    """Walk through the images folder and alpha flatten unprocessed images"""
     global CONFIG, TRACKER
 
     bundle_dir = str(ImagePath.getBundlePath())
@@ -178,6 +186,7 @@ def optimize_alpha_channels(target_dir='images', threshold=128):
     JDebug.info("[bot-info] Alpha optimization scan complete. All indices successfully synchronized.")
 
 def trigger_graceful_stop(event):
+    """Perform a shutdown of the script"""
     global BOT_RUNNING
 
     JDebug.info("[bot-system] Emergency stop triggered! Halting all running tasks...")
@@ -185,6 +194,7 @@ def trigger_graceful_stop(event):
     raise KeyboardInterrupt
 
 class ImageTracker():
+    """Keep track of images and alpha flatten them if unknown in database"""
     path = 'images/'
 
     def __init__(self):
@@ -241,6 +251,7 @@ class ImageTracker():
                 pass
 
     def add(self, file_path, data=None):
+        """Add a file to the database with the given data, if not provided it will be calculated"""
         if not file_path.lower().endswith('.png'): return
         file_dir = os.path.dirname(file_path)
         file_base = os.path.basename(file_path)
@@ -263,6 +274,7 @@ class ImageTracker():
             JDebug.error("[ImageTracker] Failed writing trackerfile in %s:\n%s", str(file_path), str(e))
 
     def get(self, file_path):
+        """Get trackerdata of a file or directory"""
         file_dir = os.path.dirname(file_path)
         file_base = os.path.basename(file_path)
         tracker_path = os.path.join(file_dir, CONFIG['tracker_file'])
@@ -280,9 +292,11 @@ class ImageTracker():
                 return tracker_data[file_base]
             else:
                 return {}
-        return tracker_data
+        else:
+            return tracker_data
 
     def remove(self, file_path):
+        """Remove a file from the tracker"""
         file_dir = os.path.dirname(file_path)
         file_base = os.path.basename(file_path)
         tracker_data = self.get(file_dir)
@@ -296,6 +310,7 @@ class ImageTracker():
             JDebug.error("[ImageTracker] Failed writing trackerfile in %s:\n%s", str(file_path), str(e))
 
     def verify(self, file_path):
+        """Verify a file against the database"""
         if not os.path.exists(file_path): return False
         tracker_data = self.get(file_path)
         if not tracker_data: return False
