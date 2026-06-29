@@ -1,6 +1,6 @@
 
 # firestone-bot
-[SiuliX/OculiX](https://github.com/oculix-org/Oculix "SiuliX/OculiX") driven bot for [Firestone - Idle Clicker](https://holydaygames.com/firestone "Firestone - Idle Clicker")
+[SiuliX/OculiX](https://github.com/oculix-org/Oculix "SiuliX/OculiX") inspired bot for [Firestone - Idle Clicker](https://holydaygames.com/firestone "Firestone - Idle Clicker")
 
 ![](https://img.shields.io/github/stars/key2peace/firestone-bot.svg) ![](https://img.shields.io/github/forks/key2peace/firestone-bot.svg) ![](https://img.shields.io/github/tag/key2peace/firestone-bot.svg) ![](https://img.shields.io/github/release/key2peace/firestone-bot.svg) ![](https://img.shields.io/github/issues/key2peace/firestone-bot.svg)
 
@@ -13,10 +13,6 @@ But sadly, new OculiX IDE looking shiny on my desktop, getting frustrated by the
 - SikuliX/OculiX turned out to have some nasty bugs we couldn't work around, so we decided to implement a shiny new mini core addressing OpenCV directly, emulating the parts of sikulix we need to maintain compatibility for the existing code. The mini core turned out to become bloody fast.
 - Pattern image files are being optimized for better matching performance
 - We utilize RAM for image processing, disk i/o is being minimized
-
-## Requirements
-- Java Runtime Enviroment
-- [SiuliX/OculiX](https://github.com/oculix-org/Oculix/releases/latest "SiuliX/OculiX Latest Release") for your operating system
 
 ## License
 This code is released under the MIT License
