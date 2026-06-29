@@ -18,36 +18,8 @@ except Exception as e:
 import java.lang.System as JSystem
 import task_logic
 import bot_helper as bh
-#import gui_setup
+
 from custom_core import *
-
-# Regions
-main_finished = Region(0, 200, 130, 290)
-main_upgrade = Region(1661, 910, 259, 170)
-
-# Patterns
-tasks = {
-    'arcane_crystal': ('images/tasks/arcane_crystal.png', 'run_arcane_crystal'),
-    'arena_of_kings': ('images/tasks/arena_of_kings.png', 'run_arena_of_kings'),
-    'campaign':       ('images/tasks/campaign.png',       'run_campaign'),
-    'engineer':       ('images/tasks/engineer.png',       'run_engineer'),
-    'firestone_collect': ('images/tasks/firestone/collect.png', 'run_firestone_collect'),
-    'firestone_research': ('images/tasks/firestone/research.png', 'run_firestone_research'),
-    'guild_expeditions': ('images/tasks/guild_expeditions.png', 'run_guild_expeditions'),
-    'map':            ('images/tasks/map.png',            'run_map'),
-    'meteorite':      ('images/tasks/meteorite.png',      'run_meteorite'),
-    'pickaxe':        ('images/tasks/pickaxe.png',        'run_pickaxe'),
-    'quests':         ('images/tasks/quests.png',         'run_quests'),
-    'tavern':         ('images/tasks/tavern.png',         'run_tavern')
-}
-
-# - these are underlying to the task stuff
-
-# hotkey to stop the script
-bh.bot_running = True # Reset flag to True on every single start
-Env.addHotkey('x', KeyModifier.CTRL + KeyModifier.SHIFT, bh.trigger_graceful_stop)
-
-bh.optimize_alpha_channels()
 
 sleep(10)
 
@@ -61,7 +33,7 @@ try:
 except:
     pass
 
-# Crazygames dutch gamebar
+# Crazygames gamebar
 try:
     img = exists('images/misc/gamebar.png')
     if img:
@@ -71,18 +43,34 @@ try:
 except:
     pass
 
-# Wrap the core bot loops inside a safe exception intercept block
 try:
-    task_logic.main_check_upgrade()
-    while bh.bot_running:
-        task_logic.main_hero_upgrade()
-
+    # Patterns
+    main_finished = Region(0, 200, 130, 290)
+    tasks = {
+        'arcane_crystal': ('images/tasks/arcane_crystal.png', 'run_arcane_crystal'),
+        'arena_of_kings': ('images/tasks/arena_of_kings.png', 'run_arena_of_kings'),
+        'campaign':       ('images/tasks/campaign.png',       'run_campaign'),
+        'engineer':       ('images/tasks/engineer.png',       'run_engineer'),
+        'firestone_collect': ('images/tasks/firestone/collect.png', 'run_firestone_collect'),
+        'firestone_research': ('images/tasks/firestone/research.png', 'run_firestone_research'),
+        'guild_expeditions': ('images/tasks/guild_expeditions.png', 'run_guild_expeditions'),
+        'map':            ('images/tasks/map.png',            'run_map'),
+        'meteorite':      ('images/tasks/meteorite.png',      'run_meteorite'),
+        'pickaxe':        ('images/tasks/pickaxe.png',        'run_pickaxe'),
+        'quests':         ('images/tasks/quests.png',         'run_quests'),
+        'tavern':         ('images/tasks/tavern.png',         'run_tavern')
+    }
+    task_logic.run_check_upgrade()
+    JDebug.info("[Main] Entering main loop")
+    while bh.BOT_RUNNING:
+        task_logic.run_hero_upgrade()
         for name, (pattern, task_function_name) in tasks.items():
             friendly_name = name.replace('_', ' ').title()
+
             try:
                 match = main_finished.exists(pattern)
                 if match:
-                    JDebug.info("[Tasks] %s detected", friendly_name)
+                    JDebug.history("[Tasks] %s detected", friendly_name)
                     match.highlight()
                     match.click()
                     match.waitVanish()
@@ -95,7 +83,6 @@ try:
                         JDebug.history("[Tasks] %s - Finished in %s", friendly_name, bh.duration(start))
                     else:
                         JDebug.history("[Tasks] %s\nMissing handler %s", friendly_name, task_function_name)
-
             except Exception as e:
                 JDebug.error("[Tasks] %s\n%s", friendly_name, str(e))
 
