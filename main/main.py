@@ -30,7 +30,7 @@ try:
         JDebug.info("[Crazygames] Going fullscreen")
         img.click()
         img.waitVanish()
-except:
+except Exception as e:
     pass
 
 # Crazygames gamebar
@@ -40,8 +40,9 @@ try:
         JDebug.info("[Crazygames] Disabling bottom gamebar")
         img.click()
         img.waitVanish()
-except:
+except Exception as e:
     pass
+
 
 try:
     # Patterns
@@ -74,7 +75,7 @@ try:
                     match.highlight()
                     match.click()
                     match.waitVanish()
-                    bh.doCapture(name+'.png')
+                    bh.do_capture(name+'.png')
                     if hasattr(task_logic, task_function_name):
                         start = JSystem.currentTimeMillis()
                         JDebug.history("[Tasks] %s - Launching %s", friendly_name, task_function_name)

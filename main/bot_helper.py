@@ -20,7 +20,6 @@ from org.sikuli.script import ImagePath
 _R = Robot()
 CONFIG_FILE = 'bot_settings.json'
 BOT_RUNNING = True
-capture_counter = 0
 
 # Config
 CONFIG = {
@@ -31,11 +30,11 @@ CONFIG = {
 # Hotkeys
 Env.addHotkey('x', KeyModifier.CTRL + KeyModifier.SHIFT, bh.trigger_graceful_stop)
 
-def colorAt(x, y):
+def color_at(x, y):
     global _R
 
     colormap = {
-        #name: (Rmin, Rmax, Gmin, Gmax, Bmin, Bmax)
+        #name: (r_min, r_max, g_min, g_max, b_min, b_max)
         'black': (0,10,0,10,0,10),
         'green': (0, 15, 140, 255, 0, 15),
         'yellow': (250,255, 170, 255, 0, 80)
@@ -44,12 +43,12 @@ def colorAt(x, y):
     red = pix.getRed()
     green = pix.getGreen()
     blue = pix.getBlue()
-    for name, (Rmin, Rmax, Gmin, Gmax, Bmin, Bmax) in colormap.items():
-        if red >= Rmin and red <= Rmax and green >= Gmin and green <= Gmax and blue >= Bmin and blue <= Bmax:
+    for name, (r_min, r_max, g_min, g_max, b_min, b_max) in colormap.items():
+        if r_min <= red <= r_max and g_min <= green <= g_max and b_min <= blue <= b_max:
             return name
     return False
 
-def doCapture(filename):
+def do_capture(filename):
     global CONFIG
     target_dir = 'capture'
     target_path = os.path.join(target_dir, filename)
@@ -66,20 +65,28 @@ def duration(start_ts, stop_ts=0):
         stop_ts = JSystem.currentTimeMillis()
     result = ''
     years, remainder = divmod(abs(stop_ts - start_ts), 86400*365)
-    if years: result = result + years + 'y '
+    if years:
+        result = result + years + 'y '
     months, remainder = divmod(remainder, 86400*30)
-    if months: result = result + months + 'M '
+    if months:
+        result = result + months + 'M '
     weeks, remainder = divmod(remainder, 604800)
-    if weeks: result = result + weeks + 'w '
+    if weeks:
+        result = result + weeks + 'w '
     days, remainder = divmod(remainder, 86400)
-    if days: result = result + days + 'd '
+    if days:
+        result = result + days + 'd '
     hours, remainder = divmod(remainder, 3600)
-    if hours: result = result + hours + 'h '
+    if hours:
+        result = result + hours + 'h '
     minutes, remainder = divmod(remainder, 60)
-    if minutes: result = result + minutes + 'm '
+    if minutes:
+        result = result + minutes + 'm '
     seconds, milliseconds = divmod(remainder, 60)
-    if seconds: result = result + seconds + 's '
-    if milliseconds: result = result + milliseconds + 'ms '
+    if seconds:
+        result = result + seconds + 's '
+    if milliseconds:
+        result = result + milliseconds + 'ms '
     return result
     
 def filter_mat_alpha(src_mat, threshold=128):
@@ -142,7 +149,7 @@ def grab_screen_to_mat(region=None):
     return final_bgr_mat
 
 def optimize_alpha_channels(target_dir='images', threshold=128):
-    global CONFIG, tracker
+    global CONFIG, TRACKER
 
     bundle_dir = str(ImagePath.getBundlePath())
     absolute_target_dir = os.path.join(bundle_dir, target_dir)
@@ -155,7 +162,7 @@ def optimize_alpha_channels(target_dir='images', threshold=128):
             continue
         for filename in png_files:
             filepath = os.path.join(root, filename)
-            if not tracker.verify(filepath):
+            if not TRACKER.verify(filepath):
                 try:
                     src = Imgcodecs.imread(filepath, Imgcodecs.IMREAD_UNCHANGED)
                     if not src.empty() and src.channels() >= 4:
@@ -167,7 +174,7 @@ def optimize_alpha_channels(target_dir='images', threshold=128):
                         src.release()
                 except Exception as e:
                     JDebug.error("[Helper] Alpha Optimizer could not write %s:\n%s", filename, str(e))
-                tracker.add(filepath)
+                TRACKER.add(filepath)
     JDebug.info("[bot-info] Alpha optimization scan complete. All indices successfully synchronized.")
 
 def trigger_graceful_stop(event):
@@ -177,7 +184,7 @@ def trigger_graceful_stop(event):
     BOT_RUNNING = False
     raise KeyboardInterrupt
 
-class ImageTracker(object):
+class ImageTracker():
     path = 'images/'
 
     def __init__(self):
@@ -214,7 +221,7 @@ class ImageTracker(object):
                     full_path = os.path.join(self.path, filename)
                     JDebug.info("[ImageTracker]  kind:%s filename:%s", str(kind), str(filename))
 
-                    if kind == Kinds.ENTRY_CREATE or kind == Kinds.ENTRY_MODIFY:
+                    if kind in (Kinds.ENTRY_CREATE, Kinds.ENTRY_MODIFY):
                         try:
                             src = Imgcodecs.imread(full_path, Imgcodecs.IMREAD_UNCHANGED)
                             if not src.empty() and src.channels() >= 4:
@@ -223,7 +230,7 @@ class ImageTracker(object):
                                 optimized_src.release()
                             elif not src.empty():
                                 src.release()
-                        except:
+                        except Exception as e:
                             pass
                         self.add(full_path)
                     elif kind == Kinds.ENTRY_DELETE:
@@ -247,7 +254,7 @@ class ImageTracker(object):
                     'timestamp': os.path.getmtime(file_path),
                     'sha256': get_file_sha256(file_path)
                 }
-            except:
+            except Exception as e:
                 return
         try:
             with open(tracker_path, 'w') as tf:
@@ -295,7 +302,7 @@ class ImageTracker(object):
         try:
             if tracker_data.get('timestamp') != os.path.getmtime(file_path): return False
             if tracker_data.get('sha256') != get_file_sha256(file_path): return False
-        except:
+        except Exception as e:
             return False
         return True
 
@@ -307,5 +314,5 @@ if os.path.exists(CONFIG_FILE):
     except Exception as e:
         JDebug.error("[BotHelper] Unable to load configuration\n%s", str(e))
 
-tracker = ImageTracker()
+TRACKER = ImageTracker()
 optimize_alpha_channels()

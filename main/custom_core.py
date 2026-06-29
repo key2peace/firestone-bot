@@ -27,10 +27,10 @@ def click(location):
     try:
         x = location.getX()
         y = location.getY()
-    except:
+    except Exception as e:
         try:
             x, y = location.getCenter()
-        except:
+        except Exception as e:
             x, y = location
     _R.mouseMove(x, y)
     sleep(0.3)
@@ -45,7 +45,7 @@ def dragDrop(start_location, end_location):
     check_emergency_stop()
     try:
         st_x, st_y = start_location.getX(), start_location.getY()
-    except:
+    except Exception as e:
         st_x, st_y = start_location
     try:
         et_x, et_y = end_location.getX(), end_location.getY()
@@ -81,7 +81,7 @@ def popup(message, title='Bot Notification'):
 def sleep(seconds):
     time.sleep(seconds)
 
-class Do(object):
+class Do():
     @staticmethod
     def popup(message, title='Bot Notification', timeout=3):
         from javax.swing import JOptionPane
@@ -102,7 +102,7 @@ class Do(object):
         except Exception as e:
             JDebug.error("[CoreDo] Render failed\n%s", str(e))
 
-class Region(object):
+class Region():
     def __init__(self, x, y, w, h):
         self.x = x
         self.y = y

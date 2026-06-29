@@ -22,11 +22,11 @@ def run_campaign(match):
             JDebug.history("[Campaign] Heading for daily missions")
             img.click()
             img.waitVanish(img, task_campaign_dm)
-            bh.doCapture('campaign_dm.png')
+            bh.do_capture('campaign_dm.png')
             JDebug.history("[Campaign] Heading for Liberations")
             click((685, 820))
             sleep(1)
-            bh.doCapture('campaign_liberation.png')
+            bh.do_capture('campaign_liberation.png')
             try:
                 #todo rewrite to use colors
                 img2 = find(task_campaign_liberate)
@@ -36,7 +36,7 @@ def run_campaign(match):
                     img3 = _screen.wait(task_campaign_liberate_ok, 300)
                     if img3:
                         JDebug.history("[Campaign] Finished Liberation?")
-                        bh.doCapture('campaign_liberate_done.png')
+                        bh.do_capture('campaign_liberate_done.png')
                         img3.click()
                         img3.waitVanish()
                 dragDrop((1130,430), (730,430))
@@ -52,7 +52,7 @@ def run_check_upgrade():
     main_upgrade = Region(1661, 910, 259, 170)
 
     target_mode = str(bh.CONFIG['upgrade_mode']).lower()
-    while not target_mode in main_upgrade.text().lower():
+    while starget_mode not in main_upgrade.text().lower():
         main_upgrade.click()
         main_upgrade.moveMouseAway()
 
@@ -66,7 +66,7 @@ def run_firestone_collect(match):
 def run_firestone_research(match):
     task_firestone_research_bubble = 'images/tasks/firestone/research_bubble.png'
     task_firestone_research_slotsfull = 'images/tasks/firestone/research_slotsfull.png'
-    while bh.BOT_RUNNING and bh.colorAt(540, 970) == 'green':
+    while bh.BOT_RUNNING and bh.color_at(540, 970) == 'green':
         click((540, 970))
         sleep(1)
     while bh.BOT_RUNNING:
@@ -79,7 +79,7 @@ def run_firestone_research(match):
                 img.click()
                 sleep(1)
                 click((790, 720))
-        except:
+        except Exception as e:
             dragDrop((1130,430), (730,430))
             x = x + 1
         if x == 10:
@@ -93,7 +93,7 @@ def run_firestone_research(match):
                 click((1250, 200))
                 break
             click((1840, 55))
-        except:
+        except Exception as e:
             pass
 
 def run_guild_expeditions(match):
@@ -105,7 +105,7 @@ def run_hero_upgrade():
     while bh.BOT_RUNNING:
         x = 0
         for m in [115, 640, 810, 1010, 1200, 1380, 1600]:
-            if bh.colorAt(m, 930) == 'yellow':
+            if bh.color_at(m, 930) == 'yellow':
                 click((m, 950))
                 sleep(0.5)
             else:
@@ -117,7 +117,7 @@ def run_map(match):
     task_map_okay = 'images/tasks/map/okay.png'
     task_map_zoom = 'images/tasks/map/zoom.png'
 
-    while bh.colorAt(170, 320) == 'green':
+    while bh.color_at(170, 320) == 'green':
         click((170, 320))
         sleep(1)
         click((950, 650))
@@ -136,7 +136,7 @@ def run_map(match):
             for m in missions:
                 m.click()
                 m.waitVanish()
-                if bh.colorAt(1090, 870) == 'green':
+                if bh.color_at(1090, 870) == 'green':
                     click((1090, 870))
                     sleep(0.5)
     click((1840, 55))
@@ -161,7 +161,7 @@ def run_quests(match):
 
 def run_tavern(match):
     while bh.BOT_RUNNING:
-        if bh.colorAt(400, 640) == 'yellow':
+        if bh.color_at(400, 640) == 'yellow':
             click((400,640))
             sleep(0.5)
         else:
