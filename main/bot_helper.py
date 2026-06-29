@@ -50,14 +50,14 @@ def duration(start_ts, stop_ts=0):
     seconds, milliseconds = divmod(remainder, 60)
     if seconds: result = result + seconds + 's '
     if milliseconds: result = result + milliseconds + 'ms '
-    
+
     return result
 
 
 # give a colorname for a specific coordinate
 def colorAt(x, y):
     global r
-    
+
     colormap = {
         #name: (Rmin, Rmax, Gmin, Gmax, Bmin, Bmax)
         'black': (0,10,0,10,0,10),
@@ -70,7 +70,7 @@ def colorAt(x, y):
     blue = pix.getBlue()
     for name, (Rmin, Rmax, Gmin, Gmax, Bmin, Bmax) in colormap.items():
         if red >= Rmin and red <= Rmax and green >= Gmin and green <= Gmax and blue >= Bmin and blue <= Bmax:
-            return name  
+            return name
     return False
 
 # capture a screen for later analysis
@@ -87,7 +87,7 @@ def doCapture(filename):
 
         # 1. Grab screen straight into RAM and filter alpha channels
         raw_mat = grab_screen_to_mat()
-        
+
         # 2. Write matrix directly to the destination folder
         Imgcodecs.imwrite(target_path, raw_mat)
         raw_mat.release()
@@ -114,10 +114,10 @@ def doPopup(message, title=None, timeout=3):
         popup(str(message), title)
     else:
         Do.popup(str(message), title, timeout)
-    
+
 
 # filter alpha channels
-def filter_mat_alpha(src_mat, threshold=128):   
+def filter_mat_alpha(src_mat, threshold=128):
     # Flatten semi-transparency inside an in-memory Mat using OpenCV thresholding
     if src_mat.empty() or src_mat.channels() < 4:
         return src_mat # No alpha channel present, return unmodified
@@ -132,10 +132,10 @@ def filter_mat_alpha(src_mat, threshold=128):
 
     # Merge the corrected channels back into the source matrix
     Core.merge(channels, src_mat)
-    
+
     # Clean up the temporary alpha matrix reference from RAM
     alpha.release()
-    
+
     return src_mat
 
 # Generate a secure SHA-256 hash of the target image file
@@ -152,14 +152,14 @@ def get_suffix_rank(suffix):
         # Standard notations: K, M, B, T mapped to incremental low tiers
         mapping = {'K': 1, 'M': 2, 'B': 3, 'T': 4}
         return mapping.get(suffix.upper(), 0)
-        
+
     if len(suffix) == 2:
         # Calculate rank directly based on ASCII values of the letter combination
         # 'aa' will yield the baseline tier above 'T'
         char1_value = ord(suffix[0].lower()) - ord('a')
         char2_value = ord(suffix[1].lower()) - ord('a')
         return 5 + (char1_value * 26) + char2_value
-        
+
     return 0
 
  # Capture the screen or a specific region directly into a memory Mat (bypasses disk I/O)
@@ -188,7 +188,7 @@ def grab_screen_to_mat(region=None):
         bos.write((pixel >> 8) & 0xFF)  # Green
         bos.write(pixel & 0xFF)         # Blue
         bos.write((pixel >> 24) & 0xFF) # Alpha
-    
+
     byte_array = bos.toByteArray()
 
     # 4. Instantiate temporary 8-bit 4-channel matrix (CV_8UC4)
@@ -228,10 +228,10 @@ def optimize_alpha_channels(target_dir='images', threshold=128):
         png_files = [f for f in files if f.lower().endswith('.png')]
         if not png_files:
             continue
-            
+
         for filename in png_files:
             filepath = os.path.join(root, filename)
-            
+
             # If the file is not verified in the index, optimize and enforce record addition immediately
             if not tracker.verify(filepath):
                 try:
@@ -245,16 +245,16 @@ def optimize_alpha_channels(target_dir='images', threshold=128):
                         src.release()
                 except Exception as err:
                     doError(err, "Alpha Optimization Write -> " + filename)
-                
+
                 # FORCE DIRECT WRITE: Push the file record straight into the index.json
                 tracker.add(filepath)
-                
+
     JDebug.info("[bot-info] Alpha optimization scan complete. All indices successfully synchronized.")
 
 
 def trigger_graceful_stop(event):
     global bot_running
-    
+
     doInfo("[bot-system] Emergency stop triggered! Halting all running tasks...")
     bot_running = False
     raise KeyboardInterrupt
@@ -265,17 +265,17 @@ class ImageTracker(object):
     def __init__(self):
         # Initialize the native Java File WatchService
         self.watcher = FileSystems.getDefault().newWatchService()
-        
+
         # CORRECT JAVA CALL: Fetch the absolute workspace directory safely
         bundle_dir = str(ImagePath.getBundlePath())
         absolute_images_path = os.path.join(bundle_dir, self.path)
         self.path_object = Paths.get(absolute_images_path)
-        
+
         # Register for creation, modification, and deletion events
         self.path_object.register(
-            self.watcher, 
-            Kinds.ENTRY_CREATE, 
-            Kinds.ENTRY_MODIFY, 
+            self.watcher,
+            Kinds.ENTRY_CREATE,
+            Kinds.ENTRY_MODIFY,
             Kinds.ENTRY_DELETE
         )
         self.running = True
@@ -300,10 +300,10 @@ class ImageTracker(object):
                     kind = event.kind()
                     # Context gives the relative filename
                     filename = str(event.context())
-                    
+
                     if not filename.lower().endswith('.png') or config['tracker_file'] in filename:
                         continue
-                        
+
                     full_path = os.path.join(self.path, filename)
                     JDebug.info('[ImageTracker]  kind:'+str(kind)+' filename:'+str(filename))
 
@@ -319,9 +319,9 @@ class ImageTracker(object):
                                 src.release()
                         except:
                             pass
-                            
+
                         self.add(full_path)
-                        
+
                     elif kind == Kinds.ENTRY_DELETE:
                         self.remove(full_path)
 
@@ -348,18 +348,18 @@ class ImageTracker(object):
                 }
             except:
                 return
-            
+
         try:
             with open(tracker_path, 'w') as tf:
                 json.dump(tracker_data, tf, indent=4)
         except Exception as e:
-            doError(e, 'Write Trackerfile ' + file_path)       
+            doError(e, 'Write Trackerfile ' + file_path)
 
     def remove(self, file_path):
         file_dir = os.path.dirname(file_path)
         file_base = os.path.basename(file_path)
         tracker_data = self.get(file_dir)
-        
+
         if file_base in tracker_data:
             del tracker_data[file_base]
 
@@ -368,14 +368,14 @@ class ImageTracker(object):
             with open(tracker_path, 'w') as tf:
                 json.dump(tracker_data, tf, indent=4)
         except Exception as e:
-            doError(e, 'Write Trackerfile ' + file_path)       
+            doError(e, 'Write Trackerfile ' + file_path)
 
     def get(self, file_path):
         file_dir = os.path.dirname(file_path)
         file_base = os.path.basename(file_path)
         tracker_path = os.path.join(file_dir, config['tracker_file'])
         tracker_data = {}
-        
+
         if os.path.exists(tracker_path):
             try:
                 with open(tracker_path, 'r') as tf:
@@ -384,13 +384,13 @@ class ImageTracker(object):
                 doError(e, 'Read Trackerfile ' + file_path)
         else:
             return tracker_data
-                
+
         if os.path.isfile(file_path):
-            if file_base in tracker_data: 
+            if file_base in tracker_data:
                 return tracker_data[file_base]
             else:
                 return {}
-           
+
         return tracker_data
 
     def verify(self, file_path):

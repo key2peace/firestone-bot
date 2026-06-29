@@ -17,7 +17,7 @@ def main_check_upgrade():
         main_upgrade.moveMouseAway()
 
 # Check if we can upgrade hero's or specials
-def main_hero_upgrade(): 
+def main_hero_upgrade():
     while bh.bot_running:
         x = 0
         for m in [115, 640, 810, 1010, 1200, 1380, 1600]:
@@ -43,7 +43,7 @@ task_campaign_liberate = 'images/tasks/campaign/liberate.png'
 task_campaign_liberate_ok = 'images/tasks/campaign/liberate_ok.png'
 def run_campaign(match):
     global task_campaign_dm, task_campaign_liberate, task_campaign_liberate_ok
-    
+
     click((115, 1000))
     try:
         img = _screen.exists(task_campaign_dm)
@@ -71,7 +71,7 @@ def run_campaign(match):
                 dragDrop((1130,430), (730,430))
             except Exception as e:
                 JDebug.error("[Campaign] Liberation\n%s", str(e))
-            click((1820, 70))    
+            click((1820, 70))
         click((1510, 90))
         click((1840, 60))
     except Exception as e:
@@ -95,7 +95,7 @@ def run_firestone_research(match):
     while bh.bot_running and bh.colorAt(540, 970) == 'green':
         click((540, 970))
         sleep(1)
-        
+
     while bh.bot_running:
         x = 0
         try:
@@ -108,7 +108,7 @@ def run_firestone_research(match):
         except:
             dragDrop((1130,430), (730,430))
             x = x + 1
-        
+
         if x == 10:
             break
 

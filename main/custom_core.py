@@ -38,10 +38,10 @@ def click(location):
 
     # 1. Move the mouse cursor instantly to the target pixel destination
     _r.mouseMove(x, y)
-    
+
     # 2. Delay (300ms) to allow Unity UI to register the cursor hover state safely
     sleep(0.3)
-    
+
     # 3. Fire the physical mouse button press and release sequence
     _r.mousePress(InputEvent.BUTTON1_DOWN_MASK)
     sleep(0.01) # Tiny hold delay to ensure OS key-down registration
@@ -105,15 +105,15 @@ class Do(object):
         try:
             pane = JOptionPane(str(message), JOptionPane.INFORMATION_MESSAGE)
             dialog = pane.createDialog(None, str(title))
-            
+
             class CloseAction(ActionListener):
                 def actionPerformed(self, event):
-                    dialog.dispose() 
+                    dialog.dispose()
 
             timer = JTimer(timeout * 1000, CloseAction())
             timer.setRepeats(False)
             timer.start()
-            
+
             dialog.setVisible(True)
         except Exception as e:
             print("[CORE-POPUP-ERROR] Auto-close frame failed: " + str(e))
@@ -129,7 +129,7 @@ class Region(object):
     def getY(self): return self.y
     def getW(self): return self.w
     def getH(self): return self.h
-    
+
     def getCenter(self):
         # Dynamically calculate the midpoint and return it as a Match context
         cx = self.x + int(self.w / 2)
@@ -149,11 +149,11 @@ class Region(object):
             # 2. Compute the mathematical mean of all pixels inside the C++ RAM matrix instantly
             # OpenCV stores channels in BGR layout, so index 0=Blue, 1=Green, 2=Red
             mean_scalar = Core.mean(screen_mat)
-            
+
             avg_blue = int(mean_scalar.val[0])
             avg_green = int(mean_scalar.val[1])
             avg_red = int(mean_scalar.val[2])
-            
+
             # 3. Return a standard Java Color object so it maps 100% transparently to your existing logic
             return Color(avg_red, avg_green, avg_blue)
         except Exception as e:
@@ -163,14 +163,14 @@ class Region(object):
         finally:
             if screen_mat and not screen_mat.empty():
                 screen_mat.release() # Enforce strict native garbage collection to prevent memory leaks
-    
+
     def click(self, target=None):
         if target is None:
             center_x = self.x + int(self.w / 2)
             center_y = self.y + int(self.h / 2)
-            click((center_x, center_y)) 
+            click((center_x, center_y))
         else:
-            click(target) 
+            click(target)
 
     def moveMouseAway(self):
         check_emergency_stop()
@@ -204,7 +204,7 @@ class Region(object):
         res = Mat()
         Imgproc.matchTemplate(screen_mat, template, res, Imgproc.TM_CCOEFF_NORMED)
         mmr = Core.minMaxLoc(res)
-        
+
         highest_score = mmr.maxVal
         top_left = mmr.maxLoc
 
@@ -232,7 +232,7 @@ class Region(object):
         Imgproc.matchTemplate(screen_mat, template, res, Imgproc.TM_CCOEFF_NORMED)
         t_w = template.cols()
         t_h = template.rows()
-        
+
         from org.opencv.core import Point, Scalar
 
         while True:
