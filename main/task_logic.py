@@ -1,8 +1,6 @@
 import bot_helper as bh
 
 from custom_core import *
-from org.sikuli.basics import Debug as JDebug
-
 
 def run_arcane_crystal(match):
     """Perform Arcane Crystal Task"""
@@ -22,29 +20,29 @@ def run_campaign(match):
     try:
         img = _screen.exists(task_campaign_dm)
         if img:
-            JDebug.history("[Campaign] Heading for daily missions")
+            Debug.history("[Campaign] Heading for daily missions")
             img.click()
             img.waitVanish(img, task_campaign_dm)
-            bh.do_capture('campaign_dm.png')
-            JDebug.history("[Campaign] Heading for Liberations")
+            capture('campaign_dm.png')
+            Debug.history("[Campaign] Heading for Liberations")
             click((685, 820))
             sleep(1)
-            bh.do_capture('campaign_liberation.png')
+            capture('campaign_liberation.png')
             try:
                 #todo rewrite to use colors
                 img2 = find(task_campaign_liberate)
                 if img2:
-                    JDebug.history("[Campaign] Select Liberation")
+                    Debug.history("[Campaign] Select Liberation")
                     img2.click()
                     img3 = _screen.wait(task_campaign_liberate_ok, 300)
                     if img3:
-                        JDebug.history("[Campaign] Finished Liberation?")
-                        bh.do_capture('campaign_liberate_done.png')
+                        Debug.history("[Campaign] Finished Liberation?")
+                        capture('campaign_liberate_done.png')
                         img3.click()
                         img3.waitVanish()
                 dragDrop((1130,430), (730,430))
             except Exception as e:
-                JDebug.error("[Campaign] Liberation\n%s", str(e))
+                Debug.error("[Campaign] Liberation\n%s", str(e))
             click((1820, 70))
         click((1510, 90))
         click((1840, 60))
@@ -55,7 +53,7 @@ def run_check_upgrade():
     """Check if hero's can be upgraded"""
     main_upgrade = Region(1661, 910, 259, 170)
 
-    target_mode = str(bh.CONFIG['upgrade_mode']).lower()
+    target_mode = str(CONFIG['upgrade_mode']).lower()
     while starget_mode not in main_upgrade.text().lower():
         main_upgrade.click()
         main_upgrade.moveMouseAway()
@@ -73,16 +71,15 @@ def run_firestone_research(match):
     """Perform Firestone Research Task"""
     task_firestone_research_bubble = 'images/tasks/firestone/research_bubble.png'
     task_firestone_research_slotsfull = 'images/tasks/firestone/research_slotsfull.png'
-    while bh.BOT_RUNNING and bh.color_at(540, 970) == 'green':
+    while check_emergency_stop() and bh.color_at(540, 970) == 'green':
         click((540, 970))
         sleep(1)
-    while bh.BOT_RUNNING:
+    while check_emergency_stop():
         x = 0
         try:
             img = exists(task_firestone_research_bubble)
             if img:
-                JDebug.error("[Firestone Research] Selecting Research")
-                bh.doDebug(img, 'Firestone Research - Bubble')
+                Debug.error("[Firestone Research] Selecting Research")
                 img.click()
                 sleep(1)
                 click((790, 720))
@@ -94,7 +91,7 @@ def run_firestone_research(match):
         try:
             img = exists(task_firestone_research_slotsfull)
             if img:
-                JDebug.error("[Firestone Research] Research slots full")
+                Debug.error("[Firestone Research] Research slots full")
                 click((1400, 350))
                 sleep(1)
                 click((1250, 200))
@@ -111,7 +108,7 @@ def run_guild_expeditions(match):
 
 def run_hero_upgrade():
     """Ensure the upgrade multiplier is set to the configured setting"""
-    while bh.BOT_RUNNING:
+    while check_emergency_stop():
         x = 0
         for m in [115, 640, 810, 1010, 1200, 1380, 1600]:
             if bh.color_at(m, 930) == 'yellow':
@@ -136,7 +133,7 @@ def run_map(match):
         if zoom_match:
             dragDrop(zoom_match, (1290,1040))
     except Exception as e:
-        JDebug.error("[Map] Unable to zoom\n%s", str(e))
+        Debug.error("[Map] Unable to zoom\n%s", str(e))
     for type in ['scout','adventure', 'war', 'monster']:
         missions = findAllList('images/tasks/map/mission/'+type+'.png')
         if missions:
@@ -171,7 +168,7 @@ def run_quests(match):
 
 def run_tavern(match):
     """Perform Tavern Task"""
-    while bh.BOT_RUNNING:
+    while check_emergency_stop():
         if bh.color_at(400, 640) == 'yellow':
             click((400,640))
             sleep(0.5)
