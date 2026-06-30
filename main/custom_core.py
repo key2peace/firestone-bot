@@ -5,6 +5,7 @@ Fully multi-platform utilizing mss, pyautogui, cv2, and pytesseract.
 import cv2
 import hashlib
 import json
+import keyboard
 import mss
 import numpy as np
 import os
@@ -14,7 +15,8 @@ import sys
 import time
 
 import bot_helper as bh
-
+from watchdog.observers import Observer
+from watchdog.events import FileSystemEventHandler, FileSystemEvent
 
 # Internal variables
 CONFIG_FILE = 'bot_settings.json'
@@ -26,9 +28,6 @@ CONFIG = {
     'upgrade_mode': '100',
     'tracker_file': 'index.json'
 }
-
-# Hotkeys
-Env.addHotkey('x', KeyModifier.CTRL + KeyModifier.SHIFT, trigger_graceful_stop)
 
 def capture(filename: str) ->bool:
     """
@@ -144,31 +143,41 @@ def color_at(x: int, y: int) -> str:
 
     return ''
 
-def dragDrop(start_location, end_location) ->None:
-    """Drag the mouse between given coordinates"""
-    global _R
+def dragDrop(start_location: Union[Tuple[int, int], 'Region', 'Match'], 
+             end_location: Union[Tuple[int, int], 'Region', 'Match']) -> None:
+    """
+    Perform a hardware-level drag and drop operation via pyautogui.
 
+    Args:
+        start_location (Union[Tuple[int, int], Region, Match]): Source coordinates.
+        end_location (Union[Tuple[int, int], Region, Match]): Destination coordinates.
+    """
     check_emergency_stop()
+
+    # Extract start coordinates safely
     try:
         st_x, st_y = start_location.getX(), start_location.getY()
-    except Exception as e:
-        st_x, st_y = start_location
+    except AttributeError:
+        try:
+            st_x, st_y = start_location.getCenter().getX(), start_location.getCenter().getY()
+        except AttributeError:
+            st_x, st_y = start_location
+
+    # Extract end coordinates safely
     try:
         et_x, et_y = end_location.getX(), end_location.getY()
-    except:
-        et_x, et_y = end_location
-    _R.mouseMove(st_x, st_y)
-    _R.mousePress(InputEvent.BUTTON1_DOWN_MASK)
-    sleep(0.1)
+    except AttributeError:
+        try:
+            et_x, et_y = end_location.getCenter().getX(), end_location.getCenter().getY()
+        except AttributeError:
+            et_x, et_y = end_location
 
-    steps = 10
-    for i in range(1, steps + 1):
-        curr_x = st_x + int((et_x - st_x) * i / steps)
-        curr_y = st_y + int((et_y - st_y) * i / steps)
-        _R.mouseMove(curr_x, curr_y)
-        sleep(0.01)
-    sleep(0.1)
-    _R.mouseRelease(InputEvent.BUTTON1_DOWN_MASK)
+    # Execute precise drag-and-drop workflow matching Unity engine requirements
+    pyautogui.moveTo(st_x, st_y)
+    time.sleep(0.1)
+    pyautogui.dragTo(et_x, et_y, duration=0.2, button='left')
+    time.sleep(0.1)
+
 
 def duration(start_time_ns: int, stop_time_ns: int = 0):
     """
@@ -209,24 +218,51 @@ def duration(start_time_ns: int, stop_time_ns: int = 0):
             result += f"{amount}{suffix} "
     return result.strip()
 
-def findAllList(image_path: str):
-    """Find an image on the screen and return all matches in a list"""
+def findAllList(image_path: str) -> list:
+    """
+    Locate all matching iterations of a pattern across the entire primary monitor.
+    
+    Bypasses Java Toolkit dependencies by utilizing pyautogui to dynamically
+    fetch screen boundaries, constructing a full-screen viewport Region.
+    
+    Args:
+        image_path (str): The local file path to the target pattern image (.png).
+        
+    Returns:
+        list: A list containing Match nodes for every unique sequence discovered.
+    """
     check_emergency_stop()
-    screen_size = Toolkit.getDefaultToolkit().getScreenSize()
-    full_screen = Region(0, 0, screen_size.width, screen_size.height)
+    
+    # Fetch screen dimensions using pure Python pyautogui layer
+    screen_width, screen_height = pyautogui.size()
+    
+    # Construct a temporary full-screen Region to execute the multi-scan
+    full_screen = Region(0, 0, screen_width, screen_height)
     return full_screen.findAllList(image_path)
 
-def filter_mat_alpha(src_mat, threshold: int = 128):
-    """Perform Alpha Flattening on a given mat"""
-    if src_mat.empty() or src_mat.channels() < 4:
+def filter_mat_alpha(src_mat: np.ndarray, threshold: int = 128) -> np.ndarray:
+    """
+    Perform Alpha Flattening on a given BGR-A matrix using NumPy and OpenCV.
+
+    Args:
+        src_mat (np.ndarray): The source image matrix (BGRA).
+        threshold (int): Binary threshold value for the alpha layer.
+
+    Returns:
+        np.ndarray: The processed matrix with a flattened alpha channel.
+    """
+    if src_mat is None or src_mat.size == 0 or src_mat.shape[2] < 4:
         return src_mat
-    channels = ArrayList()
-    Core.split(src_mat, channels)
-    alpha = channels.get(3)
-    Imgproc.threshold(alpha, alpha, threshold, 255, Imgproc.THRESH_BINARY)
-    Core.merge(channels, src_mat)
-    alpha.release()
-    return src_mat
+
+    # Split channels using native NumPy slicing instead of Java wrappers
+    b_ch, g_ch, r_ch, a_ch = cv2.split(src_mat)
+    
+    # Apply thresholding directly to the alpha channel array
+    _, alpha_thresh = cv2.threshold(a_ch, threshold, 255, cv2.THRESH_BINARY)
+    
+    # Merge channels back efficiently via OpenCV
+    return cv2.merge([b_ch, g_ch, r_ch, alpha_thresh])
+
 
 def capture(filename: str) -> bool:
     """
@@ -374,12 +410,21 @@ def sleep(seconds: float) ->None:
     """Obvious"""
     time.sleep(seconds)
 
-def trigger_graceful_stop(event) ->None:
-    """Perform a shutdown of the script"""
+def trigger_graceful_stop() -> None:
+    """
+    Perform a graceful shutdown of the script.
+    
+    Triggered via the global OS hotkey listener to halt all tasks safely.
+    """
     global BOT_RUNNING
-
     Debug.info("[bot-system] Emergency stop triggered! Halting all running tasks...")
     BOT_RUNNING = False
+
+# Strict C++ Python Hotkey registration replacing Java Env/KeyModifier signatures
+try:
+    keyboard.add_hotkey('ctrl+shift+x', trigger_graceful_stop)
+except Exception as e:
+    Debug.error("[CORE-HOTKEY-ERROR] Failed to register global hotkey: " + str(e))
     raise KeyboardInterrupt
 
 class Debug:
@@ -430,62 +475,32 @@ class Do():
         except Exception as e:
             Debug.error("[CoreDo] Render failed\n%s", str(e))
 
-class ImageTracker():
-    """Keep track of images and alpha flatten them if unknown in database"""
-    path = 'images/'
+class ImageTracker:
+    """Tracks image states and manages active alpha channel flattening via watchdog."""
+    path: str = 'images/'
 
-    def __init__(self):
-        self.watcher = FileSystems.getDefault().newWatchService()
-        bundle_dir = str(ImagePath.getBundlePath())
-        absolute_images_path = os.path.join(bundle_dir, self.path)
-        self.path_object = Paths.get(absolute_images_path)
-        self.path_object.register(
-            self.watcher,
-            Kinds.ENTRY_CREATE,
-            Kinds.ENTRY_MODIFY,
-            Kinds.ENTRY_DELETE
-        )
-        self.running = True
+    def __init__(self) -> None:
+        self.running: bool = True
+        bundle_dir = os.path.dirname(os.path.abspath(__file__)) if '__file__' in globals() else os.getcwd()
+        self.absolute_images_path = os.path.join(bundle_dir, self.path)
+        
+        # Ensure the directory exists before starting the watchdog observer
+        if not os.path.exists(self.absolute_images_path):
+            os.makedirs(self.absolute_images_path)
 
-    def __del__(self):
+        # Initialize the watchdog system
+        self.event_handler = ImageEventHandler(self)
+        self.observer = Observer()
+        self.observer.schedule(self.event_handler, path=self.absolute_images_path, recursive=False)
+        self.observer.start()
+
+    def __del__(self) -> None:
         self.running = False
         try:
-            self.watcher.close()
-        except:
+            self.observer.stop()
+            self.observer.join()
+        except Exception:
             pass
-
-    def _listen(self):
-        while self.running:
-            try:
-                key = self.watcher.poll(1, java.util.concurrent.TimeUnit.SECONDS)
-                if not key:
-                    continue
-                for event in key.pollEvents():
-                    kind = event.kind()
-                    filename = str(event.context())
-                    if not filename.lower().endswith('.png') or CONFIG['tracker_file'] in filename:
-                        continue
-                    full_path = os.path.join(self.path, filename)
-                    Debug.info("[ImageTracker]  kind:%s filename:%s", str(kind), str(filename))
-
-                    if kind in (Kinds.ENTRY_CREATE, Kinds.ENTRY_MODIFY):
-                        try:
-                            src = Imgcodecs.imread(full_path, Imgcodecs.IMREAD_UNCHANGED)
-                            if not src.empty() and src.channels() >= 4:
-                                optimized_src = filter_mat_alpha(src)
-                                Imgcodecs.imwrite(full_path, optimized_src)
-                                optimized_src.release()
-                            elif not src.empty():
-                                src.release()
-                        except Exception as e:
-                            pass
-                        self.add(full_path)
-                    elif kind == Kinds.ENTRY_DELETE:
-                        self.remove(full_path)
-                if not key.reset():
-                    break
-            except:
-                pass
 
     def add(self, file_path: str, data=None) ->None:
         """Add a file to the database with the given data, if not provided it will be calculated"""
@@ -557,6 +572,9 @@ class ImageTracker():
         except Exception as e:
             return False
         return True
+    def in_directory(file_path: str) ->bool:
+        """Check if the file is still a member of our folder range."""
+        
 
 class Region(object):
     """

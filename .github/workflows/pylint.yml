@@ -34,5 +34,5 @@ jobs:
         if [ -n "$TARGET_FILES" ]; then
           pylint $TARGET_FILES --rcfile=.pylintrc
         else
-        fi
           echo "No python files found in repository to lint."
+        fi
