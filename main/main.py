@@ -1,36 +1,45 @@
 """
-Main Execution Loop for Firestone Bot.
-Orchestrates task logic sequences with high-precision time tracking.
+Main Entry Point and Workflow Runner for Firestone Bot.
+
+Acts as the central orchestrator, executing modular gameplay subroutines
+while monitoring the application lifecycle and emergency shutdown signals.
 """
 import time
 import task_logic
 
 from custom_core import *
 
-sleep(10)
 
-# Crazygames dutch gamebar
-try:
-    img = exists('images/misc/gamebar_maximize.png')
-    if img:
-        Debug.info("[Crazygames] Going fullscreen")
-        img.click()
-        img.waitVanish()
-except Exception as e:
-    pass
+def main() -> None:
+    """
+    Execute the primary automation lifecycle loop in local scope.
+    
+    Coordinates sequential execution of task routines and ensures safe
+    termination handling when lifecycle interrupt thresholds are breached.
+    """
+    sleep(10)
+    Debug.info("[system] Firestone Bot engine active. Starting main loop.")
 
-# Crazygames gamebar
-try:
-    img = exists('images/misc/gamebar.png')
-    if img:
-        Debug.info("[Crazygames] Disabling bottom gamebar")
-        img.click()
-        img.waitVanish()
-except Exception as e:
-    pass
+    # Crazygames dutch gamebar
+    try:
+        img = exists('images/misc/gamebar_maximize.png')
+        if img:
+            Debug.info("[Crazygames] Going fullscreen")
+            img.click()
+            img.waitVanish()
+    except Exception as e:
+        pass
 
+    # Crazygames gamebar
+    try:
+        img = exists('images/misc/gamebar.png')
+        if img:
+            Debug.info("[Crazygames] Disabling bottom gamebar")
+            img.click()
+            img.waitVanish()
+    except Exception as e:
+        pass
 
-try:
     # Patterns
     main_finished = Region(0, 200, 130, 290)
     tasks = {
@@ -47,14 +56,15 @@ try:
         'quests':         ('images/tasks/quests.png',         'run_quests'),
         'tavern':         ('images/tasks/tavern.png',         'run_tavern')
     }
-    task_logic.run_check_upgrade()
-    Debug.info("[Main] Entering main loop")
-    while check_emergency_stop():
-        task_logic.run_hero_upgrade()
-        for name, (pattern, task_function_name) in tasks.items():
-            friendly_name = name.replace('_', ' ').title()
+    
+    try:
+        task_logic.run_check_upgrade()
+        Debug.info("[Main] Entering main loop")
+        while check_emergency_stop():
+            task_logic.run_hero_upgrade()
+            for name, (pattern, task_function_name) in tasks.items():
+                friendly_name = name.replace('_', ' ').title()
 
-            try:
                 match = main_finished.exists(pattern)
                 if match:
                     Debug.history("[Tasks] %s detected", friendly_name)
@@ -70,10 +80,10 @@ try:
                         Debug.history("[Tasks] %s - Finished in %s", friendly_name, duration(start))
                     else:
                         Debug.history("[Tasks] %s\nMissing handler %s", friendly_name, task_function_name)
-            except Exception as e:
-                Debug.error("[Tasks] %s\n%s", friendly_name, str(e))
 
-except KeyboardInterrupt as e:
-    Debug.info("[Main] Received KeyboardInterrupt\n%s", str(e))
-except RuntimeError as e:
-    Debug.info("[Main] Received KeyboardInterrupt\n%s", str(e))
+    except (KeyboardInterrupt, RuntimeError) as e:
+        Debug.info("[Main] Received Exception\n%s", str(e))
+
+if __name__ == "__main__":
+    # Ensure top-level entry point isolation for compiled binary stability
+    main()

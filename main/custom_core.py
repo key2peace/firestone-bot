@@ -30,7 +30,7 @@ CONFIG = {
 # Hotkeys
 Env.addHotkey('x', KeyModifier.CTRL + KeyModifier.SHIFT, trigger_graceful_stop)
 
-def capture(filename):
+def capture(filename: str) ->bool:
     """
     Capture the current live screen layout and save it to the capture directory.
 
@@ -45,11 +45,11 @@ def capture(filename):
     """
     check_emergency_stop()
     target_dir = 'capture'
-    
+
     # Ensure the target directory path exists securely on the OS file system
     if not os.path.exists(target_dir):
         os.makedirs(target_dir)
-        
+
     target_path = os.path.join(target_dir, filename)
 
     if not os.path.exists(target_path):
@@ -61,30 +61,30 @@ def capture(filename):
         except Exception as e:
             Debug.error("[CORE-CAPTURE-ERROR] Failed to write matrix: " + str(e))
             return False
-            
+
     return False
 
 
-def check_emergency_stop():
+def check_emergency_stop() ->bool:
     """helper to enforce faster shutdown of the script"""
     global BOT_RUNNING
     if not BOT_RUNNING:
         raise RuntimeError("Emergency Abort")
     return True
 
-def click(location):
+def click(location) ->None:
     """
     Perform a hardware-level mouse click via pyautogui.
 
-    Integrates precise hover-settle and post-click animation delays 
+    Integrates precise hover-settle and post-click animation delays
     to guarantee registration within the Unity game engine.
 
     Args:
-        location (tuple|Region|Match): The target coordinates destination. 
+        location (tuple|Region|Match): The target coordinates destination.
             Can be a pure (x, y) tuple, a Region, or a Match node.
 
     Raises:
-        RuntimeError: If the execution thread is stopped or the pyautogui 
+        RuntimeError: If the execution thread is stopped or the pyautogui
             fail-safe is triggered via a screen corner.
     """
     check_emergency_stop()
@@ -108,11 +108,43 @@ def click(location):
         pyautogui.mouseUp()
         time.sleep(0.3)
     except pyautogui.FailSafeException:
-        global _bot_running
-        _bot_running = False
+        global BOT_RUNNING
+        BOT_RUNNING = False
         raise RuntimeError("Fail-Safe Triggered via Screen Corner")
 
-def dragDrop(start_location, end_location):
+def color_at(x: int, y: int) -> str:
+    """
+    Get the color from a specified coordinate pixel and return a color name.
+
+    Evaluates the raw RGB channels against a bounding-box color spectrum map
+    to provide resilient color identification despite anti-aliasing.
+
+    Args:
+        x (int): The absolute X-coordinate layout pixel anchor.
+        y (int): The absolute Y-coordinate layout pixel anchor.
+
+    Returns:
+        str|bool: The designated color name string if a valid match is located,
+            otherwise empty string.
+    """
+    check_emergency_stop()
+
+    colormap = {
+        # name: r_min, r_max, g_min, g_max, b_min, b_max
+        'black': (0, 10, 0, 10, 0, 10),
+        'green': (0, 15, 140, 255, 0, 15),
+        'yellow': (250, 255, 170, 255, 0, 80)
+    }
+
+    red, green, blue = get_pixel_color(x, y)
+
+    for name, (r_min, r_max, g_min, g_max, b_min, b_max) in colormap.items():
+        if r_min <= red <= r_max and g_min <= green <= g_max and b_min <= blue <= b_max:
+            return name
+
+    return ''
+
+def dragDrop(start_location, end_location) ->None:
     """Drag the mouse between given coordinates"""
     global _R
 
@@ -138,25 +170,25 @@ def dragDrop(start_location, end_location):
     sleep(0.1)
     _R.mouseRelease(InputEvent.BUTTON1_DOWN_MASK)
 
-def duration(start_time_ns, stop_time_ns=0):
+def duration(start_time_ns: int, stop_time_ns: int = 0):
     """
     Calculate the elapsed time in milliseconds since the provided nanosecond anchor.
 
-    Utilizes time.time_ns() to bypass floating-point rounding errors and 
+    Utilizes time.time_ns() to bypass floating-point rounding errors and
     extract hardware-accurate metrics using integer mathematics.
 
     Args:
-        start_time_ns (int): The absolute nanosecond integer timestamp 
+        start_time_ns (int): The absolute nanosecond integer timestamp
             generated via time.time_ns() at the start sequence.
-        stop_time_ns (int): optional nanosecond timestamp to diff against. 
-            if not provided, current will we used.        
+        stop_time_ns (int): optional nanosecond timestamp to diff against.
+            if not provided, current will we used.
 
     Returns:
         str: A formatted string representing the duration, e.g., '145ms'.
     """
     # 1. Correctly anchor the stop timestamp if omitted by the caller
     stop_ts = stop_time_ns if stop_time_ns else time.time_ns()
-    
+
     diff = abs(stop_ts - start_time_ns)
     result = ''
     mapping = [
@@ -177,14 +209,14 @@ def duration(start_time_ns, stop_time_ns=0):
             result += f"{amount}{suffix} "
     return result.strip()
 
-def findAllList(image_path):
+def findAllList(image_path: str):
     """Find an image on the screen and return all matches in a list"""
     check_emergency_stop()
     screen_size = Toolkit.getDefaultToolkit().getScreenSize()
     full_screen = Region(0, 0, screen_size.width, screen_size.height)
     return full_screen.findAllList(image_path)
 
-def filter_mat_alpha(src_mat, threshold=128):
+def filter_mat_alpha(src_mat, threshold: int = 128):
     """Perform Alpha Flattening on a given mat"""
     if src_mat.empty() or src_mat.channels() < 4:
         return src_mat
@@ -196,7 +228,61 @@ def filter_mat_alpha(src_mat, threshold=128):
     alpha.release()
     return src_mat
 
-def get_file_sha256(filepath):
+def capture(filename: str) -> bool:
+    """
+    Capture the current live screen layout and save it to the capture directory.
+
+    Bypasses external helper dependencies by utilizing the native, localized
+    grab_screen_to_mat memory buffer pipeline and writing directly via cv2.
+
+    Args:
+        filename (str): The target destination filename for the generated image.
+
+    Returns:
+        bool: True if the file was successfully written to disk, otherwise False.
+    """
+    check_emergency_stop()
+    target_dir = 'capture'
+
+    if not os.path.exists(target_dir):
+        os.makedirs(target_dir)
+
+    target_path = os.path.join(target_dir, filename)
+
+    if not os.path.exists(target_path):
+        try:
+            raw_mat = grab_screen_to_mat()
+            success = cv2.imwrite(target_path, raw_mat)
+            return success
+        except Exception as e:
+            Debug.error("[CORE-CAPTURE-ERROR] Failed to write matrix: %s", str(e))
+            return False
+
+    return False
+
+def get_pixel_color(x: int, y: int) -> tuple[int, int, int]:
+    """
+    Retrieve the exact RGB color values of a specific screen pixel coordinate.
+
+    Replaces the legacy Java layer with a lightweight multi-platform
+    pyautogui pixel buffer evaluation.
+
+    Args:
+        x (int): The absolute X-coordinate layout pixel anchor.
+        y (int): The absolute Y-coordinate layout pixel anchor.
+
+    Returns:
+        tuple[int, int, int]: A tuple containing the (Red, Green, Blue) channels.
+    """
+    check_emergency_stop()
+    try:
+        return pyautogui.pixel(x, y)
+    except Exception as e:
+        Debug.error("[CORE-PIXEL-ERROR] Failed to extract color map coordinates: %s", str(e))
+        return (0, 0, 0)
+
+
+def get_file_sha256(filepath: str):
     """Get the SHA-256 checksum of a file"""
     hasher = hashlib.sha256()
     with open(filepath, 'rb') as f:
@@ -204,14 +290,14 @@ def get_file_sha256(filepath):
         hasher.update(buf)
     return hasher.hexdigest()
 
-def grab_screen_to_mat(region=None):
+def grab_screen_to_mat(region: Region = None):
     """
     Instantly grab the screen monitor or region coordinates into a BGR Mat.
 
     Utilizes mss for raw OS-level memory buffer extraction in < 2ms.
 
     Args:
-        region (Region, optional): The specific bounded area to capture. 
+        region (Region, optional): The specific bounded area to capture.
             If None, defaults to capturing the primary monitor bounds.
 
     Returns:
@@ -231,7 +317,7 @@ def grab_screen_to_mat(region=None):
     frame_np = np.array(sct_img)
     return cv2.cvtColor(frame_np, cv2.COLOR_BGRA2BGR)
 
-def optimize_alpha_channels(target_dir='images', threshold=128):
+def optimize_alpha_channels(target_dir: str = 'images', threshold: int = 128) ->None:
     """Walk through the images folder and alpha flatten unprocessed images"""
     global CONFIG, TRACKER
 
@@ -261,7 +347,7 @@ def optimize_alpha_channels(target_dir='images', threshold=128):
                 TRACKER.add(filepath)
     Debug.info("[bot-info] Alpha optimization scan complete. All indices successfully synchronized.")
 
-def popup(message, title='Bot Notification'):
+def popup(message: str, title: str = 'Bot Notification') ->None:
     """Generate a popup with the given message and title"""
     check_emergency_stop()
     from javax.swing import JOptionPane
@@ -270,11 +356,25 @@ def popup(message, title='Bot Notification'):
     except Exception as e:
         Debug.error("[CorePopup] Render failed\n%s", str(e))
 
-def sleep(seconds):
+def press_key(key_name: str) ->None:
+    """
+    Simulate a native hardware keypress and release sequence.
+
+    Args:
+        key_name (str): The alphanumeric identifier string (e.g., 'enter', 'space').
+    """
+    check_emergency_stop()
+    try:
+        pyautogui.press(key_name)
+    except pyautogui.FailSafeException:
+        raise RuntimeError("Fail-Safe Triggered via Screen Corner")
+
+
+def sleep(seconds: float) ->None:
     """Obvious"""
     time.sleep(seconds)
 
-def trigger_graceful_stop(event):
+def trigger_graceful_stop(event) ->None:
     """Perform a shutdown of the script"""
     global BOT_RUNNING
 
@@ -289,28 +389,28 @@ class Debug:
     """
 
     @staticmethod
-    def info(msg, *args):
+    def info(msg: str, *args) ->None:
         """Log standard system configuration and informational messages."""
         print(f"[info] [bot-info] {msg}" % args)
 
     @staticmethod
-    def warn(msg, *args):
+    def warn(msg: str, *args) ->None:
         """Log warning messages."""
         print(f"[warn] [bot-info] {msg}" % args)
 
     @staticmethod
-    def error(msg, *args):
+    def error(msg: str, *args) ->None:
         """Log runtime exceptions and critical failures."""
         print(f"[error] [bot-error] {msg}" % args)
 
     @staticmethod
-    def history(msg, *args):
+    def history(msg: str, *args) ->None:
         """Log high-priority structural task logic execution history."""
         print(f"[log] [bot-history] {msg}" % args)
 
 class Do():
     @staticmethod
-    def popup(message, title='Bot Notification', timeout=3):
+    def popup(message: str, title: str = 'Bot Notification', timeout: float = 3) ->None:
         """Generate a popup with the given message and title, which autovanishes after a given timeout"""
         from javax.swing import JOptionPane
         from java.awt.event import ActionListener
@@ -387,7 +487,7 @@ class ImageTracker():
             except:
                 pass
 
-    def add(self, file_path, data=None):
+    def add(self, file_path: str, data=None) ->None:
         """Add a file to the database with the given data, if not provided it will be calculated"""
         if not file_path.lower().endswith('.png'): return
         file_dir = os.path.dirname(file_path)
@@ -410,7 +510,7 @@ class ImageTracker():
         except Exception as e:
             Debug.error("[ImageTracker] Failed writing trackerfile in %s:\n%s", str(file_path), str(e))
 
-    def get(self, file_path):
+    def get(self, file_path: str):
         """Get trackerdata of a file or directory"""
         file_dir = os.path.dirname(file_path)
         file_base = os.path.basename(file_path)
@@ -432,7 +532,7 @@ class ImageTracker():
         else:
             return tracker_data
 
-    def remove(self, file_path):
+    def remove(self, file_path: str) ->None:
         """Remove a file from the tracker"""
         file_dir = os.path.dirname(file_path)
         file_base = os.path.basename(file_path)
@@ -446,7 +546,7 @@ class ImageTracker():
         except Exception as e:
             Debug.error("[ImageTracker] Failed writing trackerfile in %s:\n%s", str(file_path), str(e))
 
-    def verify(self, file_path):
+    def verify(self, file_path: str) ->bool:
         """Verify a file against the database"""
         if not os.path.exists(file_path): return False
         tracker_data = self.get(file_path)
@@ -469,7 +569,7 @@ class Region(object):
         h (int): The structural height of the bounded viewport zone in pixels.
     """
 
-    def __init__(self, x, y, w, h):
+    def __init__(self, x: int, y: int, w: int, h: int):
         """
         Initialize the screen region boundaries.
 
@@ -488,11 +588,11 @@ class Region(object):
         """
         Execute a targeted mouse click relative to this region.
 
-        If no target path is supplied, it automatically calculates and fires 
+        If no target path is supplied, it automatically calculates and fires
         the click event straight at the geometric center of this region.
 
         Args:
-            target (tuple|Region|Match, optional): A specific target location 
+            target (tuple|Region|Match, optional): A specific target location
                 within or outside the region bounds. Defaults to None.
         """
         if target is None:
@@ -502,11 +602,11 @@ class Region(object):
         else:
             click(target)
 
-    def exists(self, image_path, timeout=0):
+    def exists(self, image_path: str, timeout: float = 3):
         """
         Scan the region bounds utilizing pure Python cv2 template matching.
 
-        Supports both standard 3-channel BGR evaluation and advanced 
+        Supports both standard 3-channel BGR evaluation and advanced
         4-channel alpha transparency masking to ignore moving game backgrounds.
 
         Args:
@@ -514,12 +614,12 @@ class Region(object):
             timeout (int, optional): Legacy parameter for compatibility. Defaults to 0.
 
         Returns:
-            Match|bool: A specialized Match object if the pattern is located, 
+            Match|bool: A specialized Match object if the pattern is located,
                 otherwise False.
         """
         check_emergency_stop()
         screen_mat = grab_screen_to_mat(self)
-        
+
         template_rgba = cv2.imread(image_path, cv2.IMREAD_UNCHANGED)
         if template_rgba is None:
             return False
@@ -528,16 +628,16 @@ class Region(object):
             alpha_channel = template_rgba[:, :, 3]
             _, mask = cv2.threshold(alpha_channel, 254, 255, cv2.THRESH_BINARY)
             template_bgr = cv2.cvtColor(template_rgba, cv2.COLOR_BGRA2BGR)
-            
+
             res = cv2.matchTemplate(screen_mat, template_bgr, cv2.TM_SQDIFF_NORMED, mask=mask)
             min_val, _, min_loc, _ = cv2.minMaxLoc(res)
-            
+
             is_matched = min_val <= 0.1
             top_left = min_loc
         else:
             res = cv2.matchTemplate(screen_mat, template_rgba, cv2.TM_CCOEFF_NORMED)
             _, max_val, _, max_loc = cv2.minMaxLoc(res)
-            
+
             is_matched = max_val >= 0.9
             top_left = max_loc
 
@@ -546,22 +646,22 @@ class Region(object):
             abs_y = self.y + top_left[1]
             h_size, w_size = template_rgba.shape[:2]
             return Match(abs_x, abs_y, 1.0, w_size, h_size)
-            
+
         return False
 
-    def findAllList(self, image_path):
+    def findAllList(self, image_path: str) ->list[Match]:
         """
         Locate all matching iterations of a pattern within this region boundaries.
 
         Iteratively scans the viewport matrix utilizing OpenCV template matching
-        with alpha-masking, zeroing out discovered match zones inside the 
+        with alpha-masking, zeroing out discovered match zones inside the
         accumulator to capture multiple unique instances without duplicates.
 
         Args:
             image_path (str): The local file path to the target pattern image (.png).
 
         Returns:
-            list[Match]: A list containing Match nodes for every unique sequence 
+            list[Match]: A list containing Match nodes for every unique sequence
                 discovered, or an empty list if no matches exist.
         """
         check_emergency_stop()
@@ -582,61 +682,61 @@ class Region(object):
             alpha_channel = template_rgba[:, :, 3]
             _, mask = cv2.threshold(alpha_channel, 254, 255, cv2.THRESH_BINARY)
             template_bgr = cv2.cvtColor(template_rgba, cv2.COLOR_BGRA2BGR)
-            
+
             # Execute base masking template matching
             res = cv2.matchTemplate(screen_mat, template_bgr, cv2.TM_SQDIFF_NORMED, mask=mask)
-            
+
             # Multi-match loop utilizing zero-masking for SQDIFF (0.0 is perfect, 1.0 is background)
             while True:
                 check_emergency_stop()
                 min_val, _, min_loc, _ = cv2.minMaxLoc(res)
-                
+
                 # Halt the loop if the match confidence drops below 90% (threshold > 0.1)
                 if min_val > 0.1:
                     break
-                
+
                 abs_x = self.x + min_loc[0]
                 abs_y = self.y + min_loc[1]
                 found_matches.append(Match(abs_x, abs_y, 1.0 - min_val, w_size, h_size))
-                
+
                 # Zero-masking for SQDIFF: Fill the found region with 1.0 (worst match possible)
                 # to completely hide it from subsequent minMaxLoc evaluations
                 cv2.rectangle(
-                    res, 
-                    min_loc, 
-                    (min_loc[0] + w_size, min_loc[1] + h_size), 
-                    1.0, 
+                    res,
+                    min_loc,
+                    (min_loc[0] + w_size, min_loc[1] + h_size),
+                    1.0,
                     -1
                 )
         else:
             # Traditional fallback multi-matching for standard 3-channel BGR images
             res = cv2.matchTemplate(screen_mat, template_rgba, cv2.TM_CCOEFF_NORMED)
-            
+
             while True:
                 check_emergency_stop()
                 _, max_val, _, max_loc = cv2.minMaxLoc(res)
-                
+
                 # Halt the loop if the match confidence drops below 90% (threshold < 0.9)
                 if max_val < 0.9:
                     break
-                
+
                 abs_x = self.x + max_loc[0]
                 abs_y = self.y + max_loc[1]
                 found_matches.append(Match(abs_x, abs_y, max_val, w_size, h_size))
-                
+
                 # Zero-masking for CCOEFF: Fill the found region with 0.0 (no match)
                 # to hide it from subsequent max evaluations
                 cv2.rectangle(
-                    res, 
-                    max_loc, 
-                    (max_loc[0] + w_size, max_loc[1] + h_size), 
-                    0.0, 
+                    res,
+                    max_loc,
+                    (max_loc[0] + w_size, max_loc[1] + h_size),
+                    0.0,
                     -1
                 )
 
         return found_matches
 
-    def getCenter(self):
+    def getCenter(self) ->Match:
         """
         Calculate and return the structural midpoint coordinates of the region.
 
@@ -647,7 +747,7 @@ class Region(object):
         cy = self.y + int(self.h / 2)
         return Match(cx, cy, 1.0, 0, 0)
 
-    def getH(self):
+    def getH(self) ->int:
         """
         Return the structural height parameter of this zone.
 
@@ -656,7 +756,7 @@ class Region(object):
         """
         return self.h
 
-    def getW(self):
+    def getW(self) ->int:
         """
         Return the structural width parameter of this zone.
 
@@ -665,7 +765,7 @@ class Region(object):
         """
         return self.w
 
-    def getX(self):
+    def getX(self) ->int:
         """
         Return the absolute top-left X-coordinate anchor.
 
@@ -674,7 +774,7 @@ class Region(object):
         """
         return self.x
 
-    def getY(self):
+    def getY(self) ->int:
         """
         Return the absolute top-left Y-coordinate anchor.
 
@@ -683,11 +783,11 @@ class Region(object):
         """
         return self.y
 
-    def moveMouseAway(self):
+    def moveMouseAway(self) ->None:
         """
         Teleport the OS cursor safely outside the active evaluation boundaries.
 
-        Positions the mouse 10 pixels to the right of this region's right edge 
+        Positions the mouse 10 pixels to the right of this region's right edge
         to clear the viewport for subsequent frame scans.
 
         Raises:
@@ -703,7 +803,7 @@ class Region(object):
             _bot_running = False
             raise RuntimeError("Fail-Safe Triggered via Screen Corner")
 
-    def text(self, psm=6, whitelist="0123456789KMBT"):
+    def text(self, psm: int = 6, whitelist: str = "0123456789KMBT") ->str:
         """
         Process optical character recognition (OCR) inside the bounded area.
 
@@ -724,7 +824,7 @@ class Region(object):
                 stripped of trailing carriage returns and whitespaces.
         """
         check_emergency_stop()
-        
+
         # 1. Grab the live frame buffer directly into a numpy BGR matrix
         screen_mat = grab_screen_to_mat(self)
         if screen_mat is None or screen_mat.size == 0:
@@ -733,32 +833,32 @@ class Region(object):
         try:
             # 2. Advanced Pre-Processing: Force grayscale optimization
             gray = cv2.cvtColor(screen_mat, cv2.COLOR_BGR2GRAY)
-            
+
             # 3. Fire binary inversion thresholding to maximize contrast (Unity font isolation)
             _, thresh = cv2.threshold(gray, 0, 255, cv2.THRESH_BINARY_INV + cv2.THRESH_OTSU)
-            
+
             # 4. Construct configuration string including PSM and strict whitelisting flags
             config_flags = f"--psm {psm}"
             if whitelist:
                 config_flags += f" -c tessedit_char_whitelist={whitelist}"
-            
+
             # 5. Extract bytes straight from RAM without writing temporary images to the disk
             import pytesseract
             raw_text = pytesseract.image_to_string(thresh, config=config_flags)
-            
+
             return raw_text.strip()
-            
+
         except Exception as e:
             Debug.error("[OCR] Failed to parse matrix text: {e}")
             return ""
 
-    def wait(self, image_path, timeout=3):
+    def wait(self, image_path: str, timeout: float = 3):
         """
         Block thread execution until a pattern match registers within this region.
 
         Args:
             image_path (str): The local file path to the target pattern image (.png).
-            timeout (int|float, optional): Maximum execution hold time in seconds. 
+            timeout (int|float, optional): Maximum execution hold time in seconds.
                 Defaults to 3.
 
         Returns:
@@ -772,14 +872,14 @@ class Region(object):
             time.sleep(0.2)
         return False
 
-    def waitVanish(self, image_path=None, timeout=3):
+    def waitVanish(self, image_path: str = None, timeout:  float = 3):
         """
         Block thread execution until the target state pattern disappears from this region.
 
         Args:
-            image_path (str, optional): The target pattern image to monitor. 
+            image_path (str, optional): The target pattern image to monitor.
                 If None, immediately resolves True. Defaults to None.
-            timeout (int|float, optional): Maximum execution hold time in seconds. 
+            timeout (int|float, optional): Maximum execution hold time in seconds.
                 Defaults to 3.
 
         Returns:
@@ -796,11 +896,11 @@ class Region(object):
 
 
 class Match(Region):
-    def __init__(self, x, y, score, w=0, h=0):
+    def __init__(self, x: int, y: int, score: float, w: int = 0, h:  int = 0):
         super(Match, self).__init__(x, y, w, h)
         self.score = score
 
-    def getScore(self):
+    def getScore(self) ->float:
         """Get the current match score"""
         return self.score
 

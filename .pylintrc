@@ -1,0 +1,35 @@
+[MASTER]
+# Load and parse C-extensions in RAM so Pylint can read compiled C++ members
+generated-members=cv2.*,pytesseract.*
+extension-pkg-whitelist=cv2,numpy,mss,pytesseract
+
+[MESSAGES CONTROL]
+# Enable all checks by default, disable specific formatting noise
+disable=
+    C0301, # Line too long (handled by editor/formatter)
+    C0103, # Invalid name syntax (allows SikuliX-legacy names like dragDrop)
+    R0903  # Too few public methods (essential for simple coordinate dataclasses)
+
+[REPORTS]
+# Keep the console output clean and direct for GitHub Actions logs
+output-format=colorized
+reports=no
+
+[BASIC]
+# Method and argument names configuration (flexible for camelCase and snake_case)
+method-rgx=[a-z_][a-zA-Z0-9_]{2,30}$
+argument-rgx=[a-z_][a-zA-Z0-9_]{2,30}$
+
+[TYPECHECK]
+# Ensure type hints are parsed properly without throwing missing member bugs
+ignored-modules=cv2,mss,pyautogui,pytesseract
+
+[DESIGN]
+# Adjust limits to support modular bot automation task scripts
+max-args=7
+max-attributes=10
+max-locals=20
+
+[FORMAT]
+# Ensure strict layout rules for clear documentation parsing
+expected-line-ending-format=LF

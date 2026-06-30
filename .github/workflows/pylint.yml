@@ -1,6 +1,13 @@
 name: Pylint
 
-on: [push]
+on: [push, pull_request]
+
+concurrency:
+  group: pylint-ci-${{ github.head_ref || github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
 
 jobs:
   build:
@@ -14,10 +21,18 @@ jobs:
       uses: actions/setup-python@main
       with:
         python-version: ${{ matrix.python-version }}
+        cache: 'pip'
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
+        pip install -r requirements.txt
         pip install pylint
     - name: Analysing the code with pylint
       run: |
-        pylint $(git ls-files '*.py')
+        # Dynamically capture all python files across any matrix folder structure
+        TARGET_FILES=$(git ls-files '*.py')
+        if [ -n "$TARGET_FILES" ]; then
+          pylint $TARGET_FILES --rcfile=.pylintrc
+        else
+        fi
+          echo "No python files found in repository to lint."

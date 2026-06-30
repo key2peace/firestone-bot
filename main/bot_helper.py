@@ -3,8 +3,6 @@ Centralized Helper Utilities for Firestone Bot.
 
 Maintains custom loose helper functions specific to the gameplay layers.
 """
-from custom_core import *
-
 
 def get_suffix_rank(suffix: str) -> int:
     """

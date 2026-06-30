@@ -1,0 +1,5 @@
+opencv-python>=4.8.0
+mss>=9.0.0
+pyautogui>=0.9.54
+pytesseract>=0.3.10
+watchdog>=3.0.0
