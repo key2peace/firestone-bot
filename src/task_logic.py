@@ -8,15 +8,17 @@ and lifecycle guards are handled natively through the custom core framework.
 import time
 
 from custom_core import (
-    Region,
     capture,
     click,
     color_at,
+    CONFIG,
+    Debug,
     dragDrop,
     duration_text,
+    exists,
     findAllList,
-    sleep,
-    Debug
+    Region,
+    sleep
 )
 
 def run_arcane_crystal() -> None:
@@ -93,7 +95,7 @@ def run_check_upgrade() -> None:
 
     # Establish the precise viewport bounds for the primary upgrade button canvas
     main_upgrade = Region(1661, 910, 259, 170)
-    target_mode = str(custom_core.CONFIG['upgrade_mode']).lower()
+    target_mode = str(CONFIG['upgrade_mode']).lower()
 
     # Cycle selector modes inline until text configuration criteria are met
     while target_mode not in main_upgrade.text().lower():

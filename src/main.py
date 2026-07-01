@@ -8,11 +8,12 @@ import time
 import task_logic
 
 from custom_core import (
-    Region,
+    BOT_RUNNING,
+    capture,
+    Debug,
     duration_text,
-    mss,
-    sleep,
-    Debug
+    Region,
+    sleep
 )
 
 def main() -> None:
@@ -25,30 +26,30 @@ def main() -> None:
     sleep(10)
     Debug.info("[system] Firestone Bot engine active. Starting main loop.")
 
-    _mss_client = mss.mss()
+    _screen = Region(0, 0, 1920, 1080)
+    main_finished = Region(0, 200, 130, 290)
 
     # Crazygames dutch gamebar
     try:
-        img = _mss_client.monitors.exists('images/misc/gamebar_maximize.png')
+        img = _screen.exists('images/misc/gamebar_maximize.png')
         if img:
             Debug.info("[Crazygames] Going fullscreen")
             img.click()
             img.waitVanish()
-    except Exception as cg_1:
+    except Exception:
         pass
 
     # Crazygames gamebar
     try:
-        img = _mss_client.monitors.exists('images/misc/gamebar.png')
+        img = _screen.exists('images/misc/gamebar.png')
         if img:
             Debug.info("[Crazygames] Disabling bottom gamebar")
             img.click()
             img.waitVanish()
-    except Exception as cg_2:
+    except Exception:
         pass
 
     # Patterns
-    main_finished = Region(0, 200, 130, 290)
     tasks = {
         'arcane_crystal': ('images/tasks/arcane_crystal.png', 'run_arcane_crystal'),
         'arena_of_kings': ('images/tasks/arena_of_kings.png', 'run_arena_of_kings'),
@@ -69,7 +70,7 @@ def main() -> None:
         Debug.info("[Main] Entering main loop")
         while True:
             # Enforce execution suspension if the core state drops into fallback
-            while not custom_core.BOT_RUNNING:
+            while not BOT_RUNNING:
                 sleep(5)
             task_logic.run_hero_upgrade()
             for name, (pattern, task_function_name) in tasks.items():
@@ -86,11 +87,7 @@ def main() -> None:
                         start = time.time_ns()
                         Debug.history("[Tasks] %s - Launching %s", friendly_name, task_function_name)
                         actual_function = getattr(task_logic, task_function_name)
-                        # Check if the function requires an arg and send match along if it does
-                        if len(actual_function.__code__.co_varnames[:actual_function.__code__.co_argcount]):
-                            actual_function(match = match)
-                        else:
-                            actual_function()
+                        actual_function()
                         Debug.history("[Tasks] %s - Finished in %s", friendly_name, duration_text(start))
                     else:
                         Debug.history("[Tasks] %s\nMissing handler %s", friendly_name, task_function_name)

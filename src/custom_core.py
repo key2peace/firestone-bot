@@ -8,15 +8,16 @@ import json
 import os
 import time
 import threading
+import tkinter as tk
+
+from typing import Any, ClassVar, Dict, Optional, Tuple, Union
 
 import cv2
 import mss
 import numpy as np
-import tkinter as tk
 import pyautogui
 import pytesseract
 
-from typing import Any, ClassVar, Dict, Optional, Tuple, Union
 from watchdog.observers import Observer
 
 # Internal variables
