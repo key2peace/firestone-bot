@@ -13,7 +13,7 @@ from custom_core import *
 def main() -> None:
     """
     Execute the primary automation lifecycle loop in local scope.
-    
+
     Coordinates sequential execution of task routines and ensures safe
     termination handling when lifecycle interrupt thresholds are breached.
     """
@@ -56,11 +56,11 @@ def main() -> None:
         'quests':         ('images/tasks/quests.png',         'run_quests'),
         'tavern':         ('images/tasks/tavern.png',         'run_tavern')
     }
-    
+
     try:
         task_logic.run_check_upgrade()
         Debug.info("[Main] Entering main loop")
-        while check_emergency_stop():
+        while BOT_RUNNING:
             task_logic.run_hero_upgrade()
             for name, (pattern, task_function_name) in tasks.items():
                 friendly_name = name.replace('_', ' ').title()

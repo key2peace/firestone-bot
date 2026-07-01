@@ -5,7 +5,6 @@ Fully multi-platform utilizing mss, pyautogui, cv2, and pytesseract.
 import cv2
 import hashlib
 import json
-import keyboard
 import mss
 import numpy as np
 import os
@@ -42,7 +41,7 @@ def capture(filename: str) ->bool:
     Returns:
         bool: True if the file was successfully written to disk, otherwise False.
     """
-    check_emergency_stop()
+
     target_dir = 'capture'
 
     # Ensure the target directory path exists securely on the OS file system
@@ -63,14 +62,6 @@ def capture(filename: str) ->bool:
 
     return False
 
-
-def check_emergency_stop() ->bool:
-    """helper to enforce faster shutdown of the script"""
-    global BOT_RUNNING
-    if not BOT_RUNNING:
-        raise RuntimeError("Emergency Abort")
-    return True
-
 def click(location) ->None:
     """
     Perform a hardware-level mouse click via pyautogui.
@@ -86,7 +77,7 @@ def click(location) ->None:
         RuntimeError: If the execution thread is stopped or the pyautogui
             fail-safe is triggered via a screen corner.
     """
-    check_emergency_stop()
+
     try:
         x_coord = location.getX()
         y_coord = location.getY()
@@ -126,7 +117,6 @@ def color_at(x: int, y: int) -> str:
         str|bool: The designated color name string if a valid match is located,
             otherwise empty string.
     """
-    check_emergency_stop()
 
     colormap = {
         # name: r_min, r_max, g_min, g_max, b_min, b_max
@@ -143,7 +133,7 @@ def color_at(x: int, y: int) -> str:
 
     return ''
 
-def dragDrop(start_location: Union[Tuple[int, int], 'Region', 'Match'], 
+def dragDrop(start_location: Union[Tuple[int, int], 'Region', 'Match'],
              end_location: Union[Tuple[int, int], 'Region', 'Match']) -> None:
     """
     Perform a hardware-level drag and drop operation via pyautogui.
@@ -152,7 +142,6 @@ def dragDrop(start_location: Union[Tuple[int, int], 'Region', 'Match'],
         start_location (Union[Tuple[int, int], Region, Match]): Source coordinates.
         end_location (Union[Tuple[int, int], Region, Match]): Destination coordinates.
     """
-    check_emergency_stop()
 
     # Extract start coordinates safely
     try:
@@ -221,21 +210,20 @@ def duration(start_time_ns: int, stop_time_ns: int = 0):
 def findAllList(image_path: str) -> list:
     """
     Locate all matching iterations of a pattern across the entire primary monitor.
-    
+
     Bypasses Java Toolkit dependencies by utilizing pyautogui to dynamically
     fetch screen boundaries, constructing a full-screen viewport Region.
-    
+
     Args:
         image_path (str): The local file path to the target pattern image (.png).
-        
+
     Returns:
         list: A list containing Match nodes for every unique sequence discovered.
     """
-    check_emergency_stop()
-    
+
     # Fetch screen dimensions using pure Python pyautogui layer
     screen_width, screen_height = pyautogui.size()
-    
+
     # Construct a temporary full-screen Region to execute the multi-scan
     full_screen = Region(0, 0, screen_width, screen_height)
     return full_screen.findAllList(image_path)
@@ -256,10 +244,10 @@ def filter_mat_alpha(src_mat: np.ndarray, threshold: int = 128) -> np.ndarray:
 
     # Split channels using native NumPy slicing instead of Java wrappers
     b_ch, g_ch, r_ch, a_ch = cv2.split(src_mat)
-    
+
     # Apply thresholding directly to the alpha channel array
     _, alpha_thresh = cv2.threshold(a_ch, threshold, 255, cv2.THRESH_BINARY)
-    
+
     # Merge channels back efficiently via OpenCV
     return cv2.merge([b_ch, g_ch, r_ch, alpha_thresh])
 
@@ -277,7 +265,7 @@ def capture(filename: str) -> bool:
     Returns:
         bool: True if the file was successfully written to disk, otherwise False.
     """
-    check_emergency_stop()
+
     target_dir = 'capture'
 
     if not os.path.exists(target_dir):
@@ -310,7 +298,7 @@ def get_pixel_color(x: int, y: int) -> tuple[int, int, int]:
     Returns:
         tuple[int, int, int]: A tuple containing the (Red, Green, Blue) channels.
     """
-    check_emergency_stop()
+
     try:
         return pyautogui.pixel(x, y)
     except Exception as e:
@@ -383,14 +371,44 @@ def optimize_alpha_channels(target_dir: str = 'images', threshold: int = 128) ->
                 TRACKER.add(filepath)
     Debug.info("[bot-info] Alpha optimization scan complete. All indices successfully synchronized.")
 
-def popup(message: str, title: str = 'Bot Notification') ->None:
-    """Generate a popup with the given message and title"""
+def popup(message: str, title: str = "Bot Notification", timeout: float = 0) -> None:
+    """
+    Display a cross-platform alert dialog with an optional auto-vanish timeout.
+
+    Fires a native GUI message box. If a timeout greater than zero is specified,
+    spawns a non-blocking background worker to automatically dismiss the canvas
+    after the expiration threshold to prevent thread stagnation.
+
+    Args:
+        message (str): Body content text to render inside the dialog.
+        title (str): Header title of the popup window frame.
+        timeout (float): Seconds to wait before auto-closing. 0 blocks indefinitely.
+    """
     check_emergency_stop()
-    from javax.swing import JOptionPane
+
+    if timeout <= 0:
+        # Standard blocking alert dialog
+        pyautogui.alert(text=str(message), title=str(title), button="OK")
+        return
+
+    def auto_close_worker() -> None:
+        """Background worker thread that counts down and forcefully kills the dialog."""
+        time.sleep(timeout)
+        # Locate the specific alert window by its title and close it safely
+        for window in pyautogui.getWindowsWithTitle(title):
+            try:
+                window.close()
+            except Exception:
+                pass
+
     try:
-        JOptionPane.showMessageDialog(None, str(message), str(title), JOptionPane.INFORMATION_MESSAGE)
-    except Exception as e:
-        Debug.error("[CorePopup] Render failed\n%s", str(e))
+        # Spawn the closer thread and immediately execute the alert interface
+        closer_thread = threading.Thread(target=auto_close_worker, daemon=True)
+        closer_thread.start()
+        pyautogui.alert(text=str(message), title=str(title), button="OK")
+    except Exception as error:
+        Debug.error(f"[CorePopup] Render failed: {error}")
+
 
 def press_key(key_name: str) ->None:
     """
@@ -399,7 +417,7 @@ def press_key(key_name: str) ->None:
     Args:
         key_name (str): The alphanumeric identifier string (e.g., 'enter', 'space').
     """
-    check_emergency_stop()
+
     try:
         pyautogui.press(key_name)
     except pyautogui.FailSafeException:
@@ -409,23 +427,6 @@ def press_key(key_name: str) ->None:
 def sleep(seconds: float) ->None:
     """Obvious"""
     time.sleep(seconds)
-
-def trigger_graceful_stop() -> None:
-    """
-    Perform a graceful shutdown of the script.
-    
-    Triggered via the global OS hotkey listener to halt all tasks safely.
-    """
-    global BOT_RUNNING
-    Debug.info("[bot-system] Emergency stop triggered! Halting all running tasks...")
-    BOT_RUNNING = False
-
-# Strict C++ Python Hotkey registration replacing Java Env/KeyModifier signatures
-try:
-    keyboard.add_hotkey('ctrl+shift+x', trigger_graceful_stop)
-except Exception as e:
-    Debug.error("[CORE-HOTKEY-ERROR] Failed to register global hotkey: " + str(e))
-    raise KeyboardInterrupt
 
 class Debug:
     """
@@ -453,128 +454,185 @@ class Debug:
         """Log high-priority structural task logic execution history."""
         print(f"[log] [bot-history] {msg}" % args)
 
-class Do():
-    @staticmethod
-    def popup(message: str, title: str = 'Bot Notification', timeout: float = 3) ->None:
-        """Generate a popup with the given message and title, which autovanishes after a given timeout"""
-        from javax.swing import JOptionPane
-        from java.awt.event import ActionListener
-        from javax.swing import Timer as JTimer
 
-        check_emergency_stop()
-        try:
-            pane = JOptionPane(str(message), JOptionPane.INFORMATION_MESSAGE)
-            dialog = pane.createDialog(None, str(title))
-            class CloseAction(ActionListener):
-                def actionPerformed(self, event):
-                    dialog.dispose()
-            timer = JTimer(timeout * 1000, CloseAction())
-            timer.setRepeats(False)
-            timer.start()
-            dialog.setVisible(True)
-        except Exception as e:
-            Debug.error("[CoreDo] Render failed\n%s", str(e))
+class ImageEventHandler:
+    """
+    Routes and handles active file system events for monitored image assets.
+
+    Intercepts creation, modification, deletion, and relocation boundaries
+    within the image directory to synchronize metadata records with the tracker.
+    """
+
+    def __init__(self, tracker: 'ImageTracker') -> None:
+        """
+        Initialize the event handler with a reference to the core tracker.
+
+        Args:
+            tracker (ImageTracker): The parent tracking database manager instance.
+        """
+        self.tracker: 'ImageTracker' = tracker
+
+    def on_any_event(self, event: Any) -> None:
+        """
+        Process incoming filesystem mutations safely and dispatch tracking overrides.
+
+        Evaluates event types inline, filters out directories, enforces strict
+        PNG file format extensions, and triggers internal database synchronization.
+
+        Args:
+            event (Any): The raw watchdog FileSystemEvent object context.
+        """
+        if event.is_directory:
+            return
+
+        # 1. Process standard Creation and Modification loops
+        if event.event_type in ('created', 'modified'):
+            if not event.src_path.lower().endswith('.png') or not self.tracker.in_folder(event.src_path):
+                return
+            if self.tracker.verify(event.src_path):
+                return
+
+            try:
+                src = cv2.imread(event.src_path, cv2.IMREAD_UNCHANGED)
+                if src is not None:
+                    # Execute alpha-channel optimization if image has 4 channels
+                    if len(src.shape) == 3 and src.shape[2] == 4:
+                        optimized_src = filter_mat_alpha(src)
+                        cv2.imwrite(event.src_path, optimized_src)
+                    self.tracker.add(event.src_path)
+            except Exception as error:
+                Debug.error(f"[ImageTracker] Optimization failed for {event.src_path}: {error}")
+
+        # 2. Process Move and Rename loops with asset migration tracking
+        elif event.event_type == 'moved':
+            if event.dest_path.lower().endswith('.png') and self.tracker.in_folder(event.dest_path):
+                existing_data = self.tracker.get(event.src_path)
+                if existing_data:
+                    try:
+                        # Re-evaluate live modified timestamp after filesystem transition
+                        existing_data['timestamp'] = os.path.getmtime(event.dest_path)
+                    except OSError:
+                        existing_data['timestamp'] = time.time()
+                    self.tracker.add(event.dest_path, existing_data)
+                else:
+                    self.tracker.add(event.dest_path)
+
+            # Synchronously clean up the old file reference path key
+            self.tracker.remove(event.src_path)
+
+        # 3. Process direct Deletion loops
+        elif event.event_type == 'deleted':
+            if event.src_path.lower().endswith('.png'):
+                self.tracker.remove(event.src_path)
+
 
 class ImageTracker:
-    """Tracks image states and manages active alpha channel flattening via watchdog."""
-    path: str = 'images/'
+    """
+    Manages structured metadata persistence layers for workspace image files.
+
+    Utilizes an un-threaded filesystem observer to track changes and flushes
+    state histories dynamically into localized workspace configuration records.
+    """
+
+    path: ClassVar[str] = 'images/'
 
     def __init__(self) -> None:
-        self.running: bool = True
+        """Initialize workspace folders, load JSON states, and activate the directory observer."""
+        from watchdog.observers import Observer
+
         bundle_dir = os.path.dirname(os.path.abspath(__file__)) if '__file__' in globals() else os.getcwd()
-        self.absolute_images_path = os.path.join(bundle_dir, self.path)
-        
-        # Ensure the directory exists before starting the watchdog observer
+        self.absolute_images_path: str = os.path.join(bundle_dir, self.path)
+
         if not os.path.exists(self.absolute_images_path):
             os.makedirs(self.absolute_images_path)
 
-        # Initialize the watchdog system
-        self.event_handler = ImageEventHandler(self)
-        self.observer = Observer()
+        self.event_handler: ImageEventHandler = ImageEventHandler(self)
+        self.observer: Observer = Observer()
         self.observer.schedule(self.event_handler, path=self.absolute_images_path, recursive=False)
         self.observer.start()
 
     def __del__(self) -> None:
-        self.running = False
+        """Enforce standard observer termination hooks during instance destruction."""
         try:
             self.observer.stop()
             self.observer.join()
         except Exception:
             pass
 
-    def add(self, file_path: str, data=None) ->None:
-        """Add a file to the database with the given data, if not provided it will be calculated"""
-        if not file_path.lower().endswith('.png'): return
+    def add(self, file_path: str, data: Optional[Dict[str, Any]] = None) -> None:
+        """Write file hashes and timestamps into the localized directory tracking dictionary."""
+        if not file_path.lower().endswith('.png'):
+            return
         file_dir = os.path.dirname(file_path)
         file_base = os.path.basename(file_path)
         tracker_path = os.path.join(file_dir, CONFIG['tracker_file'])
         tracker_data = self.get(file_dir)
-        if data:
-            tracker_data[file_base] = data
-        else:
-            try:
-                tracker_data[file_base] = {
-                    'timestamp': os.path.getmtime(file_path),
-                    'sha256': get_file_sha256(file_path)
-                }
-            except Exception as e:
-                return
+
         try:
-            with open(tracker_path, 'w') as tf:
+            tracker_data[file_base] = data or {
+                'timestamp': os.path.getmtime(file_path),
+                'sha256': get_file_sha256(file_path)
+            }
+            with open(tracker_path, 'w', encoding='utf-8') as tf:
                 json.dump(tracker_data, tf, indent=4)
-        except Exception as e:
-            Debug.error("[ImageTracker] Failed writing trackerfile in %s:\n%s", str(file_path), str(e))
+        except (OSError, IOError) as error:
+            Debug.error(f"[ImageTracker] Failed writing to {tracker_path}: {error}")
 
-    def get(self, file_path: str):
-        """Get trackerdata of a file or directory"""
+    def get(self, file_path: str) -> Dict[str, Any]:
+        """Fetch tracking configurations mapped to a specific filename target key."""
+        file_dir = os.path.dirname(file_path) if os.path.isfile(file_path) else file_path
+        tracker_path = os.path.join(file_dir, CONFIG['tracker_file'])
+
+        if not os.path.exists(tracker_path):
+            return {}
+        try:
+            with open(tracker_path, 'r', encoding='utf-8') as tf:
+                tracker_data = json.load(tf)
+            if os.path.isfile(file_path):
+                return tracker_data.get(os.path.basename(file_path), {})
+            return tracker_data
+        except (OSError, IOError, json.JSONDecodeError):
+            return {}
+
+    def in_folder(self, file_path: str) -> bool:
+        """Validate if an external file path falls within monitored branch roots."""
+        norm_target = os.path.normpath(file_path).replace('\\', '/')
+        norm_root = os.path.normpath(self.absolute_images_path).replace('\\', '/')
+
+        if not norm_root.endswith('/'):
+            norm_root += '/'
+        return norm_target.startswith(norm_root)
+
+    def remove(self, file_path: str) -> None:
+        """Purge an existing tracking sequence dictionary record from the config file."""
         file_dir = os.path.dirname(file_path)
         file_base = os.path.basename(file_path)
         tracker_path = os.path.join(file_dir, CONFIG['tracker_file'])
-        tracker_data = {}
-        if os.path.exists(tracker_path):
-            try:
-                with open(tracker_path, 'r') as tf:
-                    tracker_data = json.load(tf)
-            except Exception as e:
-                Debug.error("[ImageTracker] Failed readig trackerfile in %s:\n%s", str(file_path), str(e))
-        else:
-            return tracker_data
-        if os.path.isfile(file_path):
-            if file_base in tracker_data:
-                return tracker_data[file_base]
-            else:
-                return {}
-        else:
-            return tracker_data
-
-    def remove(self, file_path: str) ->None:
-        """Remove a file from the tracker"""
-        file_dir = os.path.dirname(file_path)
-        file_base = os.path.basename(file_path)
         tracker_data = self.get(file_dir)
+
         if file_base in tracker_data:
             del tracker_data[file_base]
-        tracker_path = os.path.join(file_dir, CONFIG['tracker_file'])
-        try:
-            with open(tracker_path, 'w') as tf:
-                json.dump(tracker_data, tf, indent=4)
-        except Exception as e:
-            Debug.error("[ImageTracker] Failed writing trackerfile in %s:\n%s", str(file_path), str(e))
+            try:
+                with open(tracker_path, 'w', encoding='utf-8') as tf:
+                    json.dump(tracker_data, tf, indent=4)
+            except (OSError, IOError) as error:
+                Debug.error(f"[ImageTracker] Failed clearing key from {tracker_path}: {error}")
 
-    def verify(self, file_path: str) ->bool:
-        """Verify a file against the database"""
-        if not os.path.exists(file_path): return False
-        tracker_data = self.get(file_path)
-        if not tracker_data: return False
-        try:
-            if tracker_data.get('timestamp') != os.path.getmtime(file_path): return False
-            if tracker_data.get('sha256') != get_file_sha256(file_path): return False
-        except Exception as e:
+    def verify(self, file_path: str) -> bool:
+        """Validate live file timestamps and hashes against historic state tracking data."""
+        if not os.path.exists(file_path):
             return False
-        return True
-    def in_directory(file_path: str) ->bool:
-        """Check if the file is still a member of our folder range."""
-        
+        data = self.get(file_path)
+        if not data or 'timestamp' not in data:
+            return False
+
+        try:
+            return data['timestamp'] == os.path.getmtime(file_path) and \
+                   data['sha256'] == get_file_sha256(file_path)
+        except (OSError, IOError):
+            return False
+
+
 
 class Region(object):
     """
@@ -635,7 +693,7 @@ class Region(object):
             Match|bool: A specialized Match object if the pattern is located,
                 otherwise False.
         """
-        check_emergency_stop()
+
         screen_mat = grab_screen_to_mat(self)
 
         template_rgba = cv2.imread(image_path, cv2.IMREAD_UNCHANGED)
@@ -682,7 +740,7 @@ class Region(object):
             list[Match]: A list containing Match nodes for every unique sequence
                 discovered, or an empty list if no matches exist.
         """
-        check_emergency_stop()
+
         found_matches = []
 
         # 1. Grab the live frame buffer directly into a numpy BGR matrix
@@ -706,7 +764,6 @@ class Region(object):
 
             # Multi-match loop utilizing zero-masking for SQDIFF (0.0 is perfect, 1.0 is background)
             while True:
-                check_emergency_stop()
                 min_val, _, min_loc, _ = cv2.minMaxLoc(res)
 
                 # Halt the loop if the match confidence drops below 90% (threshold > 0.1)
@@ -731,7 +788,6 @@ class Region(object):
             res = cv2.matchTemplate(screen_mat, template_rgba, cv2.TM_CCOEFF_NORMED)
 
             while True:
-                check_emergency_stop()
                 _, max_val, _, max_loc = cv2.minMaxLoc(res)
 
                 # Halt the loop if the match confidence drops below 90% (threshold < 0.9)
@@ -811,7 +867,7 @@ class Region(object):
         Raises:
             RuntimeError: If the pyautogui screen corner fail-safe triggers.
         """
-        check_emergency_stop()
+
         target_x = self.x + self.w + 10
         target_y = self.y + int(self.h / 2)
         try:
@@ -841,7 +897,6 @@ class Region(object):
             str: The extracted plain text string parsed from the screen matrix,
                 stripped of trailing carriage returns and whitespaces.
         """
-        check_emergency_stop()
 
         # 1. Grab the live frame buffer directly into a numpy BGR matrix
         screen_mat = grab_screen_to_mat(self)
