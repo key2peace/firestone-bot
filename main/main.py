@@ -8,14 +8,12 @@ import time
 import task_logic
 
 from custom_core import (
-    Match,
     Region,
-    duration,
-    exists,
+    duration_text,
+    mss,
     sleep,
     Debug
 )
-
 
 def main() -> None:
     """
@@ -27,9 +25,11 @@ def main() -> None:
     sleep(10)
     Debug.info("[system] Firestone Bot engine active. Starting main loop.")
 
+    _mss_client = mss.mss()
+
     # Crazygames dutch gamebar
     try:
-        img = exists('images/misc/gamebar_maximize.png')
+        img = _mss_client.monitors.exists('images/misc/gamebar_maximize.png')
         if img:
             Debug.info("[Crazygames] Going fullscreen")
             img.click()
@@ -39,7 +39,7 @@ def main() -> None:
 
     # Crazygames gamebar
     try:
-        img = exists('images/misc/gamebar.png')
+        img = _mss_client.monitors.exists('images/misc/gamebar.png')
         if img:
             Debug.info("[Crazygames] Disabling bottom gamebar")
             img.click()
@@ -89,9 +89,9 @@ def main() -> None:
                         # Check if the function requires an arg and send match along if it does
                         if len(actual_function.__code__.co_varnames[:actual_function.__code__.co_argcount]):
                             actual_function(match = match)
-                        else
+                        else:
                             actual_function()
-                        Debug.history("[Tasks] %s - Finished in %s", friendly_name, duration(start))
+                        Debug.history("[Tasks] %s - Finished in %s", friendly_name, duration_text(start))
                     else:
                         Debug.history("[Tasks] %s\nMissing handler %s", friendly_name, task_function_name)
 

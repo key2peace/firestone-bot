@@ -8,7 +8,8 @@ extension-pkg-whitelist=cv2,numpy,mss,pytesseract
 disable=
     C0301, # Line too long (handled by editor/formatter)
     C0103, # Invalid name syntax (allows SikuliX-legacy names like dragDrop)
-    R0903  # Too few public methods (essential for simple coordinate dataclasses)
+    R0903, # Too few public methods (essential for simple coordinate dataclasses)
+    C0302  # Too many lines in module (x/1000) (too-many-lines)
 
 [REPORTS]
 # Keep the console output clean and direct for GitHub Actions logs

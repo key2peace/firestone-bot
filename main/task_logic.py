@@ -8,13 +8,12 @@ and lifecycle guards are handled natively through the custom core framework.
 import time
 
 from custom_core import (
-    Match,
     Region,
     capture,
     click,
     color_at,
     dragDrop,
-    duration,
+    duration_text,
     exists,
     findAllList,
     sleep,
@@ -43,8 +42,6 @@ def run_arena_of_kings() -> None:
 
 def run_campaign() ->None:
     """Perform Campaign Task"""
-    _screen = Region(0, 0, 1920, 1080)
-    task_campaign_liberate_ok = 'images/tasks/campaign/liberate_ok.png'
 
     # Check if we can claim loot
     if color_at(80, 1000) == 'green':
@@ -68,14 +65,14 @@ def run_campaign() ->None:
             click((200, 800))
 
             # Liberation moving on, waiting for finish
-            start_ts = time.ns()
+            start_ts = time.time_ns()
             while True:
                 if color_at(870, 770) == 'green' and color_at(960, 720) == 'blue_liberation_won':
-                    Debug.history("[Campaign] Liberation successfully finished in %s", duration(start_ts))
+                    Debug.history("[Campaign] Liberation successfully finished in %s", duration_text(start_ts))
                     click((870, 770))
                     break
-                elif color_at(870, 770) == 'green' and color_at(960, 720) == 'blue_liberation_lost':
-                    Debug.history("[Campaign] Liberation successfully finished in %s", duration(start_ts))
+                if color_at(870, 770) == 'green' and color_at(960, 720) == 'blue_liberation_lost':
+                    Debug.history("[Campaign] Liberation successfully finished in %s", duration_text(start_ts))
                     winning = False
                     click((870, 770))
                     break
@@ -97,7 +94,7 @@ def run_check_upgrade() -> None:
 
     # Establish the precise viewport bounds for the primary upgrade button canvas
     main_upgrade = Region(1661, 910, 259, 170)
-    target_mode = str(CONFIG['upgrade_mode']).lower()
+    target_mode = str(custom_core.CONFIG['upgrade_mode']).lower()
 
     # Cycle selector modes inline until text configuration criteria are met
     while target_mode not in main_upgrade.text().lower():
@@ -209,7 +206,6 @@ def run_map() -> None:
     normalizes the map viewport scale via drag-and-drop zoom controls to align
     icon dimensions. Phase 3 scans and dispatches type-specific campaigns.
     """
-    task_map_okay = 'images/tasks/map/okay.png'
     task_map_zoom = 'images/tasks/map/zoom.png'
 
     while color_at(170, 320) == 'green':

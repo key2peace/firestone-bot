@@ -2,20 +2,20 @@
 Pure Python Custom Core API for Firestone Bot.
 Fully multi-platform utilizing mss, pyautogui, cv2, and pytesseract.
 """
-import cv2
+
 import hashlib
 import json
-import mss
-import numpy as np
 import os
-import pyautogui
-import pytesseract
-import sys
 import time
 
-import bot_helper as bh
+import cv2
+import mss
+import numpy as np
+import tkinter as tk
+import pyautogui
+import pytesseract
+
 from watchdog.observers import Observer
-from watchdog.events import FileSystemEventHandler, FileSystemEvent
 
 # Internal variables
 CONFIG_FILE = 'bot_settings.json'
@@ -172,7 +172,7 @@ def dragDrop(start_location: Union[Tuple[int, int], 'Region', 'Match'],
     time.sleep(0.1)
 
 
-def duration(start_time_ns: int, stop_time_ns: int = 0):
+def duration_text(start_time_ns: int, stop_time_ns: int = 0):
     """
     Calculate the elapsed time in milliseconds since the provided nanosecond anchor.
 
@@ -331,6 +331,8 @@ def grab_screen_to_mat(region: Region = None):
     Returns:
         numpy.ndarray: A standard 3-channel OpenCV BGR image matrix.
     """
+    _mss_client = mss.mss()
+
     if region:
         monitor = {
             "top": region.y,
@@ -541,8 +543,6 @@ class ImageTracker:
 
     def __init__(self) -> None:
         """Initialize workspace folders, load JSON states, and activate the directory observer."""
-        from watchdog.observers import Observer
-
         bundle_dir = os.path.dirname(os.path.abspath(__file__)) if '__file__' in globals() else os.getcwd()
         self.absolute_images_path: str = os.path.join(bundle_dir, self.path)
 
@@ -637,7 +637,7 @@ class ImageTracker:
 
 
 
-class Region(object):
+class Region():
     """
     A bounded screen viewport coordinate zone supporting OpenCV scans and OCR.
 
@@ -870,8 +870,6 @@ class Region(object):
         Args:
             duration (float): Seconds to retain the visual canvas bounding overlay.
         """
-        import tkinter as tk
-
         # 1. Initialize a borderless top-level widget wrapper
         root = tk.Tk()
         root.overrideredirect(True)
@@ -917,8 +915,8 @@ class Region(object):
         try:
             pyautogui.moveTo(target_x, target_y)
         except pyautogui.FailSafeException:
-            global _bot_running
-            _bot_running = False
+            global BOT_RUNNING
+            BOT_RUNNING = False
             raise RuntimeError("Fail-Safe Triggered via Screen Corner")
 
     def text(self, psm: int = 6, whitelist: str = "0123456789KMBT") ->str:
@@ -960,7 +958,6 @@ class Region(object):
                 config_flags += f" -c tessedit_char_whitelist={whitelist}"
 
             # 5. Extract bytes straight from RAM without writing temporary images to the disk
-            import pytesseract
             raw_text = pytesseract.image_to_string(thresh, config=config_flags)
 
             return raw_text.strip()
