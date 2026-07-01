@@ -7,7 +7,14 @@ while monitoring the application lifecycle and emergency shutdown signals.
 import time
 import task_logic
 
-from custom_core import *
+from custom_core import (
+    Match,
+    Region,
+    duration,
+    exists,
+    sleep,
+    Debug
+)
 
 
 def main() -> None:
@@ -27,7 +34,7 @@ def main() -> None:
             Debug.info("[Crazygames] Going fullscreen")
             img.click()
             img.waitVanish()
-    except Exception as e:
+    except Exception as cg_1:
         pass
 
     # Crazygames gamebar
@@ -37,7 +44,7 @@ def main() -> None:
             Debug.info("[Crazygames] Disabling bottom gamebar")
             img.click()
             img.waitVanish()
-    except Exception as e:
+    except Exception as cg_2:
         pass
 
     # Patterns
@@ -60,7 +67,10 @@ def main() -> None:
     try:
         task_logic.run_check_upgrade()
         Debug.info("[Main] Entering main loop")
-        while BOT_RUNNING:
+        while True:
+            # Enforce execution suspension if the core state drops into fallback
+            while not custom_core.BOT_RUNNING:
+                sleep(5)
             task_logic.run_hero_upgrade()
             for name, (pattern, task_function_name) in tasks.items():
                 friendly_name = name.replace('_', ' ').title()
@@ -76,12 +86,16 @@ def main() -> None:
                         start = time.time_ns()
                         Debug.history("[Tasks] %s - Launching %s", friendly_name, task_function_name)
                         actual_function = getattr(task_logic, task_function_name)
-                        actual_function(match)
+                        # Check if the function requires an arg and send match along if it does
+                        if len(actual_function.__code__.co_varnames[:actual_function.__code__.co_argcount]):
+                            actual_function(match = match)
+                        else
+                            actual_function()
                         Debug.history("[Tasks] %s - Finished in %s", friendly_name, duration(start))
                     else:
                         Debug.history("[Tasks] %s\nMissing handler %s", friendly_name, task_function_name)
 
-    except (KeyboardInterrupt, RuntimeError) as e:
+    except KeyboardInterrupt as e:
         Debug.info("[Main] Received Exception\n%s", str(e))
 
 if __name__ == "__main__":

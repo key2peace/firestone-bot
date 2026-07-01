@@ -97,10 +97,10 @@ def click(location) ->None:
         time.sleep(0.01)
         pyautogui.mouseUp()
         time.sleep(0.3)
-    except pyautogui.FailSafeException:
+    except pyautogui.FailSafeException as e:
         global BOT_RUNNING
         BOT_RUNNING = False
-        raise RuntimeError("Fail-Safe Triggered via Screen Corner")
+        Debug.info("[CoreClick] Mouse in failsafe corner, pausing bot.\n%s", e)
 
 def color_at(x: int, y: int) -> str:
     """
@@ -121,7 +121,11 @@ def color_at(x: int, y: int) -> str:
     colormap = {
         # name: r_min, r_max, g_min, g_max, b_min, b_max
         'black': (0, 10, 0, 10, 0, 10),
+        'blue_liberation_lost': (32, 35, 75, 80, 123, 128),
+        'brown_liberation_won': (192, 197, 143, 146, 99, 103),
+        'lightbrown_research_full': (228, 236, 205, 215, 180, 190),
         'green': (0, 15, 140, 255, 0, 15),
+        'red': (240, 255, 0, 10, 0, 10),
         'yellow': (250, 255, 170, 255, 0, 80)
     }
 
@@ -384,7 +388,6 @@ def popup(message: str, title: str = "Bot Notification", timeout: float = 0) -> 
         title (str): Header title of the popup window frame.
         timeout (float): Seconds to wait before auto-closing. 0 blocks indefinitely.
     """
-    check_emergency_stop()
 
     if timeout <= 0:
         # Standard blocking alert dialog
@@ -856,6 +859,47 @@ class Region(object):
             int: Absolute Y-axis anchor coordinate.
         """
         return self.y
+
+    def highlight(self, duration: float = 0.5) -> None:
+        """
+        Draw a cross-platform red border overlay around the match coordinates.
+
+        Spawns a transient, click-through borderless canvas utilizing built-in
+        Tkinter bindings to guarantee seamless operation across all operating systems.
+
+        Args:
+            duration (float): Seconds to retain the visual canvas bounding overlay.
+        """
+        import tkinter as tk
+
+        # 1. Initialize a borderless top-level widget wrapper
+        root = tk.Tk()
+        root.overrideredirect(True)
+        root.attributes("-topmost", True)
+
+        # 2. Map geometry to perfectly frame the match dimensions
+        root.geometry(f"{self.w}x{self.h}+{self.x}+{self.y}")
+
+        # 3. Configure a click-through transparent background with a solid red border
+        # 'wm_attributes' handles transparency options natively across platforms
+        if root.tk.call('tk', 'windowingsystem') == 'win32':
+            root.wm_attributes("-transparentcolor", "white")
+            canvas_bg = "white"
+        else:
+            root.wait_visibility(root)
+            root.wm_attributes("-alpha", 0.8) # Fallback smooth opacity for Unix/Mac
+            canvas_bg = "black"
+
+        canvas = tk.Canvas(root, width=self.w, height=self.h, bg=canvas_bg, highlightthickness=0)
+        canvas.pack()
+
+        # Draw a thick 3-pixel red rectangular outline inside the overlay bounds
+        canvas.create_rectangle(0, 0, self.w, self.h, outline="red", width=3)
+
+        # 4. Process interface frame cycles and automatically close after timeout
+        root.update()
+        time.sleep(duration)
+        root.destroy()
 
     def moveMouseAway(self) ->None:
         """
