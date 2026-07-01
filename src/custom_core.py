@@ -275,7 +275,7 @@ def get_pixel_color(x: int, y: int) -> tuple[int, int, int]:
 def get_file_sha256(filepath: str):
     """Get the SHA-256 checksum of a file"""
     hasher = hashlib.sha256()
-    with open(filepath, 'rb') as f:
+    with open(filepath, 'rb', encoding='utf-8') as f:
         buf = f.read()
         hasher.update(buf)
     return hasher.hexdigest()
@@ -311,12 +311,10 @@ def grab_screen_to_mat(region: Region = None):
 
 def optimize_alpha_channels(target_dir: str = 'images', threshold: int = 128) ->None:
     """Walk through the images folder and alpha flatten unprocessed images"""
-    global CONFIG, TRACKER
-
     if not os.path.exists(target_dir):
         return
     Debug.info("[bot-info] Starting full image workspace alpha channel optimization scan...")
-    for root, dirs, files in os.walk(target_dir):
+    for root, _, files in os.walk(target_dir):
         png_files = [f for f in files if f.lower().endswith('.png')]
         if not png_files:
             continue
@@ -631,7 +629,7 @@ class Region():
         else:
             click(target)
 
-    def exists(self, image_path: str, timeout: float = 3):
+    def exists(self, image_path: str):
         """
         Scan the region bounds utilizing pure Python cv2 template matching.
 
@@ -640,7 +638,6 @@ class Region():
 
         Args:
             image_path (str): The local file path to the pattern image (.png).
-            timeout (int, optional): Legacy parameter for compatibility. Defaults to 0.
 
         Returns:
             Match|bool: A specialized Match object if the pattern is located,
@@ -956,7 +953,7 @@ class Region():
 
 class Match(Region):
     def __init__(self, x: int, y: int, score: float, w: int = 0, h:  int = 0):
-        super(Match, self).__init__(x, y, w, h)
+        super().__init__()
         self.score = score
 
     def getScore(self) ->float:
@@ -965,7 +962,7 @@ class Match(Region):
 
 if os.path.exists(CONFIG_FILE):
     try:
-        with open(CONFIG_FILE, 'r') as f:
+        with open(CONFIG_FILE, 'r', encoding='utf-8') as f:
             loaded_config = json.load(f)
             CONFIG.update(loaded_config)
     except Exception as e:

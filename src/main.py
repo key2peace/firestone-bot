@@ -30,24 +30,18 @@ def main() -> None:
     main_finished = Region(0, 200, 130, 290)
 
     # Crazygames dutch gamebar
-    try:
-        img = _screen.exists('images/misc/gamebar_maximize.png')
-        if img:
-            Debug.info("[Crazygames] Going fullscreen")
-            img.click()
-            img.waitVanish()
-    except Exception:
-        pass
+    img = _screen.exists('images/misc/gamebar_maximize.png')
+    if img:
+        Debug.info("[Crazygames] Going fullscreen")
+        img.click()
+        img.waitVanish()
 
     # Crazygames gamebar
-    try:
-        img = _screen.exists('images/misc/gamebar.png')
-        if img:
-            Debug.info("[Crazygames] Disabling bottom gamebar")
-            img.click()
-            img.waitVanish()
-    except Exception:
-        pass
+    img = _screen.exists('images/misc/gamebar.png')
+    if img:
+        Debug.info("[Crazygames] Disabling bottom gamebar")
+        img.click()
+        img.waitVanish()
 
     # Patterns
     tasks = {
