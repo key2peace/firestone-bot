@@ -7,6 +7,7 @@ import hashlib
 import json
 import os
 import time
+import threading
 
 import cv2
 import mss
@@ -15,6 +16,7 @@ import tkinter as tk
 import pyautogui
 import pytesseract
 
+from typing import Any, ClassVar, Dict, Optional, Tuple, Union
 from watchdog.observers import Observer
 
 # Internal variables
@@ -41,7 +43,6 @@ def capture(filename: str) ->bool:
     Returns:
         bool: True if the file was successfully written to disk, otherwise False.
     """
-
     target_dir = 'capture'
 
     # Ensure the target directory path exists securely on the OS file system
@@ -77,7 +78,6 @@ def click(location) ->None:
         RuntimeError: If the execution thread is stopped or the pyautogui
             fail-safe is triggered via a screen corner.
     """
-
     try:
         x_coord = location.getX()
         y_coord = location.getY()
@@ -117,7 +117,6 @@ def color_at(x: int, y: int) -> str:
         str|bool: The designated color name string if a valid match is located,
             otherwise empty string.
     """
-
     colormap = {
         # name: r_min, r_max, g_min, g_max, b_min, b_max
         'black': (0, 10, 0, 10, 0, 10),
@@ -146,7 +145,6 @@ def dragDrop(start_location: Union[Tuple[int, int], 'Region', 'Match'],
         start_location (Union[Tuple[int, int], Region, Match]): Source coordinates.
         end_location (Union[Tuple[int, int], Region, Match]): Destination coordinates.
     """
-
     # Extract start coordinates safely
     try:
         st_x, st_y = start_location.getX(), start_location.getY()
@@ -170,7 +168,6 @@ def dragDrop(start_location: Union[Tuple[int, int], 'Region', 'Match'],
     time.sleep(0.1)
     pyautogui.dragTo(et_x, et_y, duration=0.2, button='left')
     time.sleep(0.1)
-
 
 def duration_text(start_time_ns: int, stop_time_ns: int = 0):
     """
@@ -224,7 +221,6 @@ def findAllList(image_path: str) -> list:
     Returns:
         list: A list containing Match nodes for every unique sequence discovered.
     """
-
     # Fetch screen dimensions using pure Python pyautogui layer
     screen_width, screen_height = pyautogui.size()
 
@@ -255,39 +251,6 @@ def filter_mat_alpha(src_mat: np.ndarray, threshold: int = 128) -> np.ndarray:
     # Merge channels back efficiently via OpenCV
     return cv2.merge([b_ch, g_ch, r_ch, alpha_thresh])
 
-
-def capture(filename: str) -> bool:
-    """
-    Capture the current live screen layout and save it to the capture directory.
-
-    Bypasses external helper dependencies by utilizing the native, localized
-    grab_screen_to_mat memory buffer pipeline and writing directly via cv2.
-
-    Args:
-        filename (str): The target destination filename for the generated image.
-
-    Returns:
-        bool: True if the file was successfully written to disk, otherwise False.
-    """
-
-    target_dir = 'capture'
-
-    if not os.path.exists(target_dir):
-        os.makedirs(target_dir)
-
-    target_path = os.path.join(target_dir, filename)
-
-    if not os.path.exists(target_path):
-        try:
-            raw_mat = grab_screen_to_mat()
-            success = cv2.imwrite(target_path, raw_mat)
-            return success
-        except Exception as e:
-            Debug.error("[CORE-CAPTURE-ERROR] Failed to write matrix: %s", str(e))
-            return False
-
-    return False
-
 def get_pixel_color(x: int, y: int) -> tuple[int, int, int]:
     """
     Retrieve the exact RGB color values of a specific screen pixel coordinate.
@@ -302,13 +265,11 @@ def get_pixel_color(x: int, y: int) -> tuple[int, int, int]:
     Returns:
         tuple[int, int, int]: A tuple containing the (Red, Green, Blue) channels.
     """
-
     try:
         return pyautogui.pixel(x, y)
     except Exception as e:
         Debug.error("[CORE-PIXEL-ERROR] Failed to extract color map coordinates: %s", str(e))
         return (0, 0, 0)
-
 
 def get_file_sha256(filepath: str):
     """Get the SHA-256 checksum of a file"""
@@ -351,12 +312,10 @@ def optimize_alpha_channels(target_dir: str = 'images', threshold: int = 128) ->
     """Walk through the images folder and alpha flatten unprocessed images"""
     global CONFIG, TRACKER
 
-    bundle_dir = str(ImagePath.getBundlePath())
-    absolute_target_dir = os.path.join(bundle_dir, target_dir)
-    if not os.path.exists(absolute_target_dir):
+    if not os.path.exists(target_dir):
         return
     Debug.info("[bot-info] Starting full image workspace alpha channel optimization scan...")
-    for root, dirs, files in os.walk(absolute_target_dir):
+    for root, dirs, files in os.walk(target_dir):
         png_files = [f for f in files if f.lower().endswith('.png')]
         if not png_files:
             continue
@@ -364,11 +323,11 @@ def optimize_alpha_channels(target_dir: str = 'images', threshold: int = 128) ->
             filepath = os.path.join(root, filename)
             if not TRACKER.verify(filepath):
                 try:
-                    src = Imgcodecs.imread(filepath, Imgcodecs.IMREAD_UNCHANGED)
+                    src = cv2.imread(filepath, cv2.IMREAD_UNCHANGED)
                     if not src.empty() and src.channels() >= 4:
                         Debug.info("[bot-info] Optimizing alpha layers for: " + str(filename))
                         optimized_src = filter_mat_alpha(src, threshold)
-                        Imgcodecs.imwrite(filepath, optimized_src)
+                        cv2.imwrite(filepath, optimized_src)
                         optimized_src.release()
                     elif not src.empty():
                         src.release()
@@ -414,7 +373,6 @@ def popup(message: str, title: str = "Bot Notification", timeout: float = 0) -> 
     except Exception as error:
         Debug.error(f"[CorePopup] Render failed: {error}")
 
-
 def press_key(key_name: str) ->None:
     """
     Simulate a native hardware keypress and release sequence.
@@ -422,12 +380,10 @@ def press_key(key_name: str) ->None:
     Args:
         key_name (str): The alphanumeric identifier string (e.g., 'enter', 'space').
     """
-
     try:
         pyautogui.press(key_name)
     except pyautogui.FailSafeException:
         raise RuntimeError("Fail-Safe Triggered via Screen Corner")
-
 
 def sleep(seconds: float) ->None:
     """Obvious"""
@@ -459,7 +415,6 @@ class Debug:
         """Log high-priority structural task logic execution history."""
         print(f"[log] [bot-history] {msg}" % args)
 
-
 class ImageEventHandler:
     """
     Routes and handles active file system events for monitored image assets.
@@ -467,7 +422,6 @@ class ImageEventHandler:
     Intercepts creation, modification, deletion, and relocation boundaries
     within the image directory to synchronize metadata records with the tracker.
     """
-
     def __init__(self, tracker: 'ImageTracker') -> None:
         """
         Initialize the event handler with a reference to the core tracker.
@@ -530,7 +484,6 @@ class ImageEventHandler:
             if event.src_path.lower().endswith('.png'):
                 self.tracker.remove(event.src_path)
 
-
 class ImageTracker:
     """
     Manages structured metadata persistence layers for workspace image files.
@@ -538,7 +491,6 @@ class ImageTracker:
     Utilizes an un-threaded filesystem observer to track changes and flushes
     state histories dynamically into localized workspace configuration records.
     """
-
     path: ClassVar[str] = 'images/'
 
     def __init__(self) -> None:
@@ -635,8 +587,6 @@ class ImageTracker:
         except (OSError, IOError):
             return False
 
-
-
 class Region():
     """
     A bounded screen viewport coordinate zone supporting OpenCV scans and OCR.
@@ -647,7 +597,6 @@ class Region():
         w (int): The structural width of the bounded viewport zone in pixels.
         h (int): The structural height of the bounded viewport zone in pixels.
     """
-
     def __init__(self, x: int, y: int, w: int, h: int):
         """
         Initialize the screen region boundaries.
@@ -696,7 +645,6 @@ class Region():
             Match|bool: A specialized Match object if the pattern is located,
                 otherwise False.
         """
-
         screen_mat = grab_screen_to_mat(self)
 
         template_rgba = cv2.imread(image_path, cv2.IMREAD_UNCHANGED)
@@ -743,7 +691,6 @@ class Region():
             list[Match]: A list containing Match nodes for every unique sequence
                 discovered, or an empty list if no matches exist.
         """
-
         found_matches = []
 
         # 1. Grab the live frame buffer directly into a numpy BGR matrix
@@ -909,7 +856,6 @@ class Region():
         Raises:
             RuntimeError: If the pyautogui screen corner fail-safe triggers.
         """
-
         target_x = self.x + self.w + 10
         target_y = self.y + int(self.h / 2)
         try:
@@ -939,7 +885,6 @@ class Region():
             str: The extracted plain text string parsed from the screen matrix,
                 stripped of trailing carriage returns and whitespaces.
         """
-
         # 1. Grab the live frame buffer directly into a numpy BGR matrix
         screen_mat = grab_screen_to_mat(self)
         if screen_mat is None or screen_mat.size == 0:
@@ -1007,7 +952,6 @@ class Region():
                 return True
             time.sleep(0.2)
         return False
-
 
 class Match(Region):
     def __init__(self, x: int, y: int, score: float, w: int = 0, h:  int = 0):

@@ -14,7 +14,6 @@ from custom_core import (
     color_at,
     dragDrop,
     duration_text,
-    exists,
     findAllList,
     sleep,
     Debug
