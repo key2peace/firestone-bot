@@ -671,7 +671,7 @@ class Region():
             abs_x = self.x + top_left[0]
             abs_y = self.y + top_left[1]
             h_size, w_size = template_rgba.shape[:2]
-            return Match(abs_x, abs_y, 1.0, w_size, h_size)
+            return Match(abs_x, abs_y, w_size, h_size, 1.0)
 
         return False
 
@@ -721,7 +721,7 @@ class Region():
 
                 abs_x = self.x + min_loc[0]
                 abs_y = self.y + min_loc[1]
-                found_matches.append(Match(abs_x, abs_y, 1.0 - min_val, w_size, h_size))
+                found_matches.append(Match(abs_x, abs_y, w_size, h_size, 1.0 - min_val))
 
                 # Zero-masking for SQDIFF: Fill the found region with 1.0 (worst match possible)
                 # to completely hide it from subsequent minMaxLoc evaluations
@@ -745,7 +745,7 @@ class Region():
 
                 abs_x = self.x + max_loc[0]
                 abs_y = self.y + max_loc[1]
-                found_matches.append(Match(abs_x, abs_y, max_val, w_size, h_size))
+                found_matches.append(Match(abs_x, abs_y, w_size, h_size, max_val))
 
                 # Zero-masking for CCOEFF: Fill the found region with 0.0 (no match)
                 # to hide it from subsequent max evaluations
@@ -768,7 +768,7 @@ class Region():
         """
         cx = self.x + int(self.w / 2)
         cy = self.y + int(self.h / 2)
-        return Match(cx, cy, 1.0, 0, 0)
+        return Match(cx, cy, 0, 0, 1.0)
 
     def getH(self) ->int:
         """
@@ -952,7 +952,24 @@ class Region():
         return False
 
 class Match(Region):
-    def __init__(self, x: int, y: int, score: float, w: int = 0, h:  int = 0):
+    """
+    Represents a verified visual template match within a specific screen region.
+    
+    Inherits structural spatial properties from Region while appending a 
+    confidence score metric generated during the OpenCV template matching phase.
+    """
+
+    def __init__(self, x: int, y: int, w: int = 0, h: int = 0, score: float):
+        """
+        Initialize a visual template match instance.
+
+        Args:
+            x (int): The absolute X-coordinate of the match location.
+            y (int): The absolute Y-coordinate of the match location.
+            w (int, optional): The width of the matched boundary. Defaults to 0.
+            h (int, optional): The height of the matched boundary. Defaults to 0.
+            score (float): The confidence matching coefficient from OpenCV.
+        """
         super().__init__(x, y, w, h)
         self.score = score
 

@@ -15,7 +15,6 @@ from custom_core import (
     Debug,
     dragDrop,
     duration_text,
-    findAllList,
     Region,
     sleep
 )
