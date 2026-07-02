@@ -959,7 +959,7 @@ class Match(Region):
     confidence score metric generated during the OpenCV template matching phase.
     """
 
-    def __init__(self, x: int, y: int, w: int = 0, h: int = 0, score: float):
+    def __init__(self, x: int, y: int, w: int = 0, h: int = 0, score: float = 1.0):
         """
         Initialize a visual template match instance.
 
