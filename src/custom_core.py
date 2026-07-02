@@ -10,7 +10,7 @@ import time
 import threading
 import tkinter as tk
 
-from typing import Any, ClassVar, Dict, Optional, Tuple, Union
+from typing import Any, ClassVar, Dict, List, Optional, Tuple, Union
 
 import cv2
 import mss
