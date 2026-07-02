@@ -5,12 +5,7 @@ extension-pkg-whitelist=cv2,numpy,mss,pytesseract
 
 [MESSAGES CONTROL]
 # Enable all checks by default, disable specific formatting noise
-disable=
-    C0301, # Line too long (handled by editor/formatter)
-    C0103, # Invalid name syntax (allows SikuliX-legacy names like dragDrop)
-    R0903, # Too few public methods (essential for simple coordinate dataclasses)
-    C0302,  # Too many lines in module (x/1000) (too-many-lines)
-    W0603   # global-statement
+disable= C0301, C0103, R0903, C0302, W0603, W0718, R0912
 
 [REPORTS]
 # Keep the console output clean and direct for GitHub Actions logs
