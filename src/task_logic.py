@@ -97,6 +97,7 @@ def run_check_upgrade() -> None:
 
     # Cycle selector modes inline until text configuration criteria are met
     while target_mode not in main_upgrade.text().lower():
+        Debug.info(main_upgrade.text())
         main_upgrade.click()
         main_upgrade.moveMouseAway()
 
@@ -161,6 +162,73 @@ def run_firestone_research() -> None:
             click((1250, 200))
             break
     click((1840, 55))
+
+import time
+import os
+from custom_core import Region, dragDrop, sleep, Debug
+
+# Static UI region boundaries for the War Machine Garage interface
+# Modify these coordinates to match your active Chrome browser resolution
+MACHINE_NAME_REGION = Region(800, 150, 300, 50)   # Viewport framing the text header
+BIG_IMAGE_REGION = Region(400, 300, 500, 400)    # Bounding box of the central vehicle sprite
+CAROUSEL_FIRST_SLOT = (450, 850)                 # Active X/Y anchor of the leftmost icon slot
+
+# Explicit spatial width of a single carousel item icon including spacing margins
+SWIPE_DISTANCE_X = 120
+
+def run_garage_asset_scraper() -> None:
+    """
+    Execute a linear dragDrop carousel scraper within the War Machine Garage.
+
+    Iterates through the vehicle carousel using fixed-distance spatial swipes,
+    capturing visual assets and compiling an inventory database via live OCR.
+    Stops automatically once a duplicate machine name sequence is detected.
+    """
+    Debug.info("Initializing automated Garage asset scraper workflow...")
+    scanned_machines: list[str] = []
+
+    # Calculate static start and end vectors for the horizontal dragDrop timeline
+    start_x, start_y = CAROUSEL_FIRST_SLOT
+    end_x = start_x - SWIPE_DISTANCE_X
+    end_y = start_y  # Maintain perfect horizontal trajectory during the swipe motion
+
+    # Ensure output asset target destination directory exists to prevent I/O traps
+    os.makedirs("src/images/war_machines", exist_ok=True)
+
+    while True:
+        # Give the Unity WASM interface a brief window to settle pre-inference
+        sleep(0.5)
+
+        # Extract and sanitize the active vehicle name via outline-dissolving OCR
+        raw_name = MACHINE_NAME_REGION.text()
+        machine_name = "".join(c for c in raw_name if c.isalnum()).strip()
+
+        # Dynamic fallback signature if OCR encounters a temporary visual occlusion
+        if not machine_name:
+            machine_name = f"unknown_machine_{int(time.time())}"
+
+        # Loop termination engine: stop once the carousels wrap-around index hits a duplicate
+        if machine_name in scanned_machines:
+            Debug.info(f"Scraper sequence completed. Wrapped to existing target: '{machine_name}'")
+            break
+
+        Debug.info(f"Target machine identified: '{machine_name}'. Capturing assets...")
+        scanned_machines.append(machine_name)
+
+        # Slice a clean template matrix crop of the current vehicle sprite
+        # Saved unignored to fuel background context validation on subsequent repository pushes
+        output_path = f"src/images/war_machines/{machine_name.lower()}.png"
+        BIG_IMAGE_REGION.capture(output_path)
+
+        # Execute linear shift transition to pull the adjacent asset into focus
+        Debug.info(f"Executing dragDrop swipe from X:{start_x} to X:{end_x}...")
+        dragDrop(start_x, start_y, end_x, end_y)
+
+        # Grant the Unity rendering engine ample headroom to clear scroll inertial animations
+        sleep(0.8)
+
+    Debug.info(f"Garage scraper cycle finished cleanly. Total unique assets mapped: {len(scanned_machines)}")
+
 
 
 def run_guild_expeditions() -> None:

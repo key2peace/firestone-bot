@@ -1,6 +1,18 @@
 {
     "offline_progress.png": {
-        "sha256": "14ca5b98d14fa55835b48936ba9fc543d6a8a9f64123fe7171d9f536c3f0320a", 
-        "timestamp": 1782502898.781632
+        "timestamp": 1782706994.6448572,
+        "sha256": "14ca5b98d14fa55835b48936ba9fc543d6a8a9f64123fe7171d9f536c3f0320a"
+    },
+    "claim.png": {
+        "timestamp": 1782706994.6438565,
+        "sha256": "eb26a919b5fb8b1b4ad6488a435f7ecaa1f0ff9db965ffbef4ffe323b51c3e2d"
+    },
+    "gamebar.png": {
+        "timestamp": 1782706994.6438565,
+        "sha256": "4a1f821fef51e50a037a20fb292dd8bf55cb743ef0378ec2d8069c385c057b5b"
+    },
+    "gamebar_maximize.png": {
+        "timestamp": 1782706994.6438565,
+        "sha256": "ceed9291b64a9eac3bf7b099257e54d901121eff79abc54085db0f6e8ff715c9"
     }
 }

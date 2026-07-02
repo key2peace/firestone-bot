@@ -23,7 +23,7 @@ def main() -> None:
     Coordinates sequential execution of task routines and ensures safe
     termination handling when lifecycle interrupt thresholds are breached.
     """
-    sleep(10)
+    sleep(20)
     Debug.info("[system] Firestone Bot engine active. Starting main loop.")
 
     _screen = Region(0, 0, 1920, 1080)

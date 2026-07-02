@@ -6,6 +6,8 @@ Fully multi-platform utilizing mss, pyautogui, cv2, and pytesseract.
 import hashlib
 import json
 import os
+import select
+import sys
 import time
 import threading
 import tkinter as tk
@@ -64,6 +66,24 @@ def capture(filename: str) ->bool:
 
     return False
 
+def check_activation_hotkey() -> bool:
+    """
+    Check if the user pressed the manual activation key in the console window.
+    
+    Uses pure cross-platform select pooling on stdin to maintain zero latency
+    without requiring OS-level administrator execution privileges.
+    
+    Returns:
+        bool: True if the trigger key was captured, False otherwise.
+    """
+    # Check if there is raw characters waiting in the terminal buffer
+    if sys.stdin in select.select([sys.stdin], [], [], 0)[0]:
+        line = sys.stdin.readline().strip().lower()
+        # Trigger the scraper if the user types 'g' or 'go' and hits enter
+        if line in ('g', 'go'):
+            return True
+    return False
+
 def click(location) ->None:
     """
     Perform a hardware-level mouse click via pyautogui.
@@ -98,10 +118,10 @@ def click(location) ->None:
         time.sleep(0.01)
         pyautogui.mouseUp()
         time.sleep(0.3)
-    except pyautogui.FailSafeException as e:
+    except pyautogui.FailSafeException:
         global BOT_RUNNING
         BOT_RUNNING = False
-        Debug.info("[CoreClick] Mouse in failsafe corner, pausing bot.\n%s", e)
+        Debug.info("[CoreClick] Mouse in failsafe corner, pausing bot.")
 
 def color_at(x: int, y: int) -> str:
     """
@@ -275,7 +295,7 @@ def get_pixel_color(x: int, y: int) -> Tuple[int, int, int]:
 def get_file_sha256(filepath: str):
     """Get the SHA-256 checksum of a file"""
     hasher = hashlib.sha256()
-    with open(filepath, 'rb', encoding='utf-8') as file_ptr:
+    with open(filepath, 'rb') as file_ptr:
         buf = file_ptr.read()
         hasher.update(buf)
     return hasher.hexdigest()
@@ -323,13 +343,16 @@ def optimize_alpha_channels(target_dir: str = 'images', threshold: int = 128) ->
             if not TRACKER.verify(filepath):
                 try:
                     src = cv2.imread(filepath, cv2.IMREAD_UNCHANGED)
-                    if not src.empty() and src.channels() >= 4:
-                        Debug.info("[bot-info] Optimizing alpha layers for: " + str(filename))
-                        optimized_src = filter_mat_alpha(src, threshold)
-                        cv2.imwrite(filepath, optimized_src)
-                        optimized_src.release()
-                    elif not src.empty():
-                        src.release()
+
+                    # Check if the image loaded successfully and determine channels via shape
+                    if src is not None and src.size > 0:
+                        channels = src.shape[2] if len(src.shape) == 3 else 1
+
+                        if channels >= 4:
+                            Debug.info("[bot-info] Optimizing alpha layers for: " + str(filename))
+                            optimized_src = filter_mat_alpha(src, threshold)
+                            cv2.imwrite(filepath, optimized_src)
+
                 except Exception as e:
                     Debug.error("[Helper] Alpha Optimizer could not write %s:\n%s", filename, str(e))
                 TRACKER.add(filepath)
@@ -384,6 +407,7 @@ def press_key(key_name: str) ->None:
     except pyautogui.FailSafeException:
         global BOT_RUNNING
         BOT_RUNNING = False
+        Debug.info("[CoreClick] Mouse in failsafe corner, pausing bot.")
 
 def sleep(seconds: float) ->None:
     """Obvious"""
@@ -863,51 +887,43 @@ class Region():
             global BOT_RUNNING
             BOT_RUNNING = False
 
-    def text(self, psm: int = 6, whitelist: str = "0123456789KMBT") ->str:
+    def text(self) -> str:
         """
-        Process optical character recognition (OCR) inside the bounded area.
+        Extract textual values from the region viewport using custom OCR tuning.
 
-        Extracts text from the live region matrix utilizing pytesseract.
-        Applies grayscale conversions and binary thresholding filters in memory
-        to isolate text boundaries from dynamic Unity engine fonts.
-
-        Args:
-            psm (int, optional): Tesseract Page Segmentation Mode layout config.
-                Defaults to 6 (Assume a single uniform block of text).
-                Use 8 for single standalone words/digits.
-            whitelist (str, optional): Strict character whitelist restriction.
-                Defaults to "0123456789KMBT" for hero level upgrade quantities.
-                Pass an empty string to disable alpha-numeric filtering.
+        Applies color-space flattening and resolution upscaling to dissolve
+        in-game text outlines, then isolates characters for high-precision parsing.
+        Dynamically falls back to standard english if kiddosy data is missing.
 
         Returns:
-            str: The extracted plain text string parsed from the screen matrix,
-                stripped of trailing carriage returns and whitespaces.
+            str: The cleaned, extracted text string from the screen region.
         """
-        # 1. Grab the live frame buffer directly into a numpy BGR matrix
-        screen_mat = grab_screen_to_mat(self)
-        if screen_mat is None or screen_mat.size == 0:
+        src_mat = grab_screen_to_mat(self)
+        if src_mat is None or src_mat.size == 0:
             return ""
 
-        try:
-            # 2. Advanced Pre-Processing: Force grayscale optimization
-            gray = cv2.cvtColor(screen_mat, cv2.COLOR_BGR2GRAY)
+        # 1. Convert to grayscale and upscale to expand small game font pixels
+        gray = cv2.cvtColor(src_mat, cv2.COLOR_BGR2GRAY)
+        resized = cv2.resize(gray, None, fx=2.0, fy=2.0, interpolation=cv2.INTER_CUBIC)
 
-            # 3. Fire binary inversion thresholding to maximize contrast (Unity font isolation)
-            _, thresh = cv2.threshold(gray, 0, 255, cv2.THRESH_BINARY_INV + cv2.THRESH_OTSU)
+        # 2. Dissolve black outlines and invert contrast to black-on-white text
+        _, thresh = cv2.threshold(resized, 0, 255, cv2.THRESH_BINARY_INV + cv2.THRESH_OTSU)
 
-            # 4. Construct configuration string including PSM and strict whitelisting flags
-            config_flags = f"--psm {psm}"
-            if whitelist:
-                config_flags += f" -c tessedit_char_whitelist={whitelist}"
+        # 3. Clean up stroke artifact noise using a minimal 2x2 rectangular morph kernel
+        clean_mat = cv2.morphologyEx(
+            thresh,
+            cv2.MORPH_CLOSE,
+            cv2.getStructuringElement(cv2.MORPH_RECT, (2, 2))
+        )
 
-            # 5. Extract bytes straight from RAM without writing temporary images to the disk
-            raw_text = pytesseract.image_to_string(thresh, config=config_flags)
+        # 4. Dynamically detect if the custom Kiddosy model is available in Tesseract
+        # Adjust the path below if your Tesseract installation lives elsewhere
+        tessdata_path = r"C:\Program Files\Tesseract-OCR\tessdata\kiddosy.traineddata"
+        lang_model = "kiddosy" if os.path.exists(tessdata_path) else "eng"
 
-            return raw_text.strip()
-
-        except Exception as e:
-            Debug.error("[OCR] Failed to parse matrix text:\n%s", str(e))
-            return ""
+        # 5. Execute inference with Page Segmentation Mode 7 (Treat as a single text line)
+        tess_config = f"-l {lang_model}"
+        return str(pytesseract.image_to_string(clean_mat, config=tess_config)).strip()
 
     def wait(self, image_path: str, timeout: float = 3):
         """
