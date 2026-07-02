@@ -252,7 +252,7 @@ def filter_mat_alpha(src_mat: np.ndarray, threshold: int = 128) -> np.ndarray:
     # Merge channels back efficiently via OpenCV
     return cv2.merge([b_ch, g_ch, r_ch, alpha_thresh])
 
-def get_pixel_color(x: int, y: int) -> tuple[int, int, int]:
+def get_pixel_color(x: int, y: int) -> Tuple[int, int, int]:
     """
     Retrieve the exact RGB color values of a specific screen pixel coordinate.
 
@@ -675,7 +675,7 @@ class Region():
 
         return False
 
-    def findAllList(self, image_path: str) ->list[Match]:
+    def findAllList(self, image_path: str) ->List[Match]:
         """
         Locate all matching iterations of a pattern within this region boundaries.
 
