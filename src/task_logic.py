@@ -133,6 +133,7 @@ def run_firestone_research() -> None:
     pixel color scans. Phase 2 processes active template research bubbles and
     executes screen drag operations to initialize new available projects.
     """
+    _screen = Region(0, 0, 1920, 1080)
     task_firestone_research_bubble = 'images/tasks/firestone/research_bubble.png'
 
     while color_at(540, 970) == 'green':
@@ -141,7 +142,7 @@ def run_firestone_research() -> None:
 
     while True:
         no_bubbles = 0
-        img = exists(task_firestone_research_bubble)
+        img = _screen.exists(task_firestone_research_bubble)
         if img:
             Debug.error("[Firestone Research] Selecting Research")
             img.click()
@@ -206,6 +207,7 @@ def run_map() -> None:
     normalizes the map viewport scale via drag-and-drop zoom controls to align
     icon dimensions. Phase 3 scans and dispatches type-specific campaigns.
     """
+    _screen = Region(0, 0, 1920, 1080)
     task_map_zoom = 'images/tasks/map/zoom.png'
 
     while color_at(170, 320) == 'green':
@@ -214,12 +216,12 @@ def run_map() -> None:
         click((950, 650))
         sleep(0.5)
 
-    zoom_match = exists(task_map_zoom)
+    zoom_match = _screen.exists(task_map_zoom)
     if zoom_match:
         dragDrop(zoom_match, (1290, 1040))
 
     for mission_type in ['scout', 'adventure', 'war', 'monster']:
-        missions = findAllList('images/tasks/map/mission/' + mission_type + '.png')
+        missions = _screen.findAllList('images/tasks/map/mission/' + mission_type + '.png')
         if missions:
             for m in missions:
                 m.click()

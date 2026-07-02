@@ -203,7 +203,7 @@ def duration_text(start_time_ns: int, stop_time_ns: int = 0):
         ('µs', 1000),
         ('ns', 1)
     ]
-    for suffix, divider in divider:
+    for suffix, divider in mapping:
         amount, diff = divmod(diff, divider)
         if amount:
             result += f"{amount}{suffix} "
@@ -275,8 +275,8 @@ def get_pixel_color(x: int, y: int) -> tuple[int, int, int]:
 def get_file_sha256(filepath: str):
     """Get the SHA-256 checksum of a file"""
     hasher = hashlib.sha256()
-    with open(filepath, 'rb', encoding='utf-8') as f:
-        buf = f.read()
+    with open(filepath, 'rb', encoding='utf-8') as file_ptr:
+        buf = file_ptr.read()
         hasher.update(buf)
     return hasher.hexdigest()
 
@@ -382,7 +382,8 @@ def press_key(key_name: str) ->None:
     try:
         pyautogui.press(key_name)
     except pyautogui.FailSafeException:
-        raise RuntimeError("Fail-Safe Triggered via Screen Corner")
+        global BOT_RUNNING
+        BOT_RUNNING = False
 
 def sleep(seconds: float) ->None:
     """Obvious"""
@@ -861,7 +862,6 @@ class Region():
         except pyautogui.FailSafeException:
             global BOT_RUNNING
             BOT_RUNNING = False
-            raise RuntimeError("Fail-Safe Triggered via Screen Corner")
 
     def text(self, psm: int = 6, whitelist: str = "0123456789KMBT") ->str:
         """
@@ -906,7 +906,7 @@ class Region():
             return raw_text.strip()
 
         except Exception as e:
-            Debug.error("[OCR] Failed to parse matrix text: {e}")
+            Debug.error("[OCR] Failed to parse matrix text:\n%s", str(e))
             return ""
 
     def wait(self, image_path: str, timeout: float = 3):
@@ -953,7 +953,7 @@ class Region():
 
 class Match(Region):
     def __init__(self, x: int, y: int, score: float, w: int = 0, h:  int = 0):
-        super().__init__()
+        super().__init__(x, y, w, h)
         self.score = score
 
     def getScore(self) ->float:
