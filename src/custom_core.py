@@ -944,7 +944,6 @@ class Region():
         try:
             pyautogui.moveTo(target_x, target_y)
         except pyautogui.FailSafeException:
-            global LOCKFILE
             if os.path.exists(LOCKFILE):
                 os.remove(LOCKFILE)
 

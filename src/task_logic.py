@@ -7,6 +7,7 @@ and lifecycle guards are handled natively through the custom core framework.
 """
 import os
 import time
+import cv2
 
 from custom_core import (
     capture,
@@ -194,7 +195,7 @@ def run_garage_asset_scraper() -> None:
     end_y = start_y  # Maintain perfect horizontal trajectory during the swipe motion
 
     # Ensure output asset target destination directory exists to prevent I/O traps
-    os.makedirs("src/images/war_machines", exist_ok=True)
+    os.makedirs("capture/war_machines", exist_ok=True)
 
     while True:
         # Give the Unity WASM interface a brief window to settle pre-inference
@@ -218,19 +219,17 @@ def run_garage_asset_scraper() -> None:
 
         # Slice a clean template matrix crop of the current vehicle sprite
         # Saved unignored to fuel background context validation on subsequent repository pushes
-        output_path = f"src/images/war_machines/{machine_name.lower()}.png"
-        BIG_IMAGE_REGION.capture(output_path)
+        output_path = f"capture/war_machines/{machine_name.lower()}.png"
+        cv2.imwrite(output_path, grab_screen_to_mat(BIG_IMAGE_REGION))
 
         # Execute linear shift transition to pull the adjacent asset into focus
         Debug.info(f"Executing dragDrop swipe from X:{start_x} to X:{end_x}...")
-        dragDrop(start_x, start_y, end_x, end_y)
+        dragDrop((start_x, start_y), (end_x, end_y))
 
         # Grant the Unity rendering engine ample headroom to clear scroll inertial animations
         sleep(0.8)
 
     Debug.info(f"Garage scraper cycle finished cleanly. Total unique assets mapped: {len(scanned_machines)}")
-
-
 
 def run_guild_expeditions() -> None:
     """

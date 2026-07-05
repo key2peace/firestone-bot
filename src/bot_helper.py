@@ -3,6 +3,7 @@ Centralized Helper Utilities for Firestone Bot.
 
 Maintains custom loose helper functions specific to the gameplay layers.
 """
+import re
 import time
 
 from custom_core import (
@@ -63,3 +64,46 @@ def get_suffix_rank(suffix: str) -> int:
         return 5 + (char1_value * 26) + char2_value
 
     return 0
+
+def parse_ui_timeout(ocr_text: str) -> float | None:
+    """
+    Convert a game UI duration string (d hh:mm:ss) into an absolute UNIX timestamp.
+
+    Extracts days, hours, minutes, and seconds safely via localized regex matching
+    to calculate the precise future epoch execution boundary.
+
+    Args:
+        ocr_text (str): Raw string output captured from the target UI region.
+
+    Returns:
+        float | None: Future UNIX timestamp, or None if no valid timer is detected.
+    """
+    if not ocr_text:
+        return None
+
+    # Onbreekbare regex die flexibel omgaat met eventuele OCR-witruimtes of letters
+    # Vangt optioneel de dagen (d) op, gevolgd door hh:mm:ss
+    timer_pattern = r"(?:(\d+)\s*d\s+)?(\d{2}):(\d{2}):(\d{2})"
+    match = re.search(timer_pattern, ocr_text.lower())
+
+    if not match:
+        return None
+
+    try:
+        # Extract groups and safely default the days to 0 if not present in UI
+        days_str, hours_str, minutes_str, seconds_str = match.groups()
+
+        days = int(days_str) if days_str else 0
+        hours = int(hours_str)
+        minutes = int(minutes_str)
+        seconds = int(seconds_str)
+
+        # Convert the duration matrix directly into absolute seconds
+        total_cooldown_seconds = (days * 86400) + (hours * 3600) + (minutes * 60) + seconds
+
+        # Return the absolute execution boundary timestamp
+        return time.time() + total_cooldown_seconds
+
+    except (ValueError, TypeError) as error:
+        Debug.error(f"[TIMEOUT-PARSE-ERROR] Failed to map UI clock vector: {error}")
+        return None
