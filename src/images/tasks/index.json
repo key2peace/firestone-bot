@@ -46,5 +46,13 @@
     "pirates_price.png": {
         "timestamp": 1783230616.5953066,
         "sha256": "93926a11d659a213a2981e16c3f2227dca9b11b980d553a10af770df5be259fa"
+    },
+    "sign_in.png": {
+        "timestamp": 1783276254.844778,
+        "sha256": "24cc4e398fc1ef4303ef8e78b60d81165b9f66651928deb16337834305a4370b"
+    },
+    "challenge.png": {
+        "timestamp": 1783279101.571005,
+        "sha256": "5672b94d2933126afcc74cc9d74b9461175930434717e748de0b4c0bfd4b60b9"
     }
 }

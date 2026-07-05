@@ -2,7 +2,6 @@
 Pure Python Custom Core API for Firestone Bot.
 Fully multi-platform utilizing mss, pyautogui, cv2, and pytesseract.
 """
-
 import hashlib
 import json
 import os
@@ -28,6 +27,8 @@ from watchdog.observers import Observer
 CONFIG_FILE = 'bot_settings.json'
 LOCKFILE = '.bot_running'
 BOT_STARTED = time.time_ns()
+OLLAMA_SESSION_CONTEXT = None
+
 if os.path.exists(LOCKFILE):
     os.remove(LOCKFILE)
 
@@ -35,18 +36,33 @@ if os.path.exists(LOCKFILE):
 CONFIG = {
     'upgrade_mode': '100',
     'tracker_file': 'index.json',
-    'ollama_url': 'http://localhost:11434/api/generate'
+    'ollama_url': 'http://localhost:11434/api/generate',
     'ollama_model': 'llama3.2:latest'
 }
 
 def ask_local_ollama(prompt: str) -> str:
+    global OLLAMA_SESSION_CONTEXT
+
+    payload = {
+        "model": CONFIG['ollama_model'],
+        "prompt": prompt,
+        "stream": False
+    }
+
+    # Als er al een actieve sessie is, haken we die er direct aan
+    if OLLAMA_SESSION_CONTEXT is not None:
+        payload["context"] = OLLAMA_SESSION_CONTEXT
+
     try:
-        response = requests.post(
-            CONFIG['ollama_url'],
-            json={"model": CONFIG['ollama_model'], "prompt": prompt, "stream": False}
-        )
-        return response.json().get("response", "")
-    except Exception:
+        response = requests.post(CONFIG['ollama_url'], json=payload)
+        data = response.json()
+
+        # Sla de nieuwe, geüpdatete sessie-tokens direct op voor de volgende klik
+        OLLAMA_SESSION_CONTEXT = data.get("context")
+
+        return data.get("response", "")
+    except Exception as error:
+        Debug.error("Ollama connection failed: %s", error)
         return ""
 
 def capture(filename: str) ->bool:
@@ -74,12 +90,12 @@ def capture(filename: str) ->bool:
         try:
             return cv2.imwrite(target_path, grab_screen_to_mat())
         except Exception as e:
-            Debug.error("[CORE-CAPTURE-ERROR] Failed to write matrix: " + str(e))
+            Debug.error("[Capture] Failed to write matrix: " + str(e))
             return False
 
     return False
 
-def click(location) ->None:
+def click(location: tuple[int, int]) ->None:
     """
     Perform a hardware-level mouse click via pyautogui.
 
@@ -87,27 +103,14 @@ def click(location) ->None:
     to guarantee registration within the Unity game engine.
 
     Args:
-        location (tuple|Region|Match): The target coordinates destination.
+        location (tuple): The target coordinates destination.
             Can be a pure (x, y) tuple, a Region, or a Match node.
 
     Raises:
         RuntimeError: If the execution thread is stopped or the pyautogui
             fail-safe is triggered via a screen corner.
     """
-    if in_safezone():
-        return
-
-    try:
-        x_coord = location.getX()
-        y_coord = location.getY()
-    except AttributeError:
-        try:
-            x_coord, y_coord = location.getCenter()
-        except AttributeError:
-            try:
-                x_coord, y_coord = location
-            except (TypeError, ValueError):
-                return
+    x_coord, y_coord = location
 
     try:
         pyautogui.moveTo(x_coord, y_coord)
@@ -117,9 +120,7 @@ def click(location) ->None:
         pyautogui.mouseUp()
         time.sleep(0.3)
     except pyautogui.FailSafeException:
-        if os.path.exists(LOCKFILE):
-            os.remove(LOCKFILE)
-        Debug.info("[CoreClick] Mouse in failsafe corner, pausing bot.")
+        toggle_br()
 
 def color_at(x: int, y: int) -> str:
     """
@@ -164,9 +165,6 @@ def dragDrop(start_location: Union[Tuple[int, int], 'Region', 'Match'],
         start_location (Union[Tuple[int, int], Region, Match]): Source coordinates.
         end_location (Union[Tuple[int, int], Region, Match]): Destination coordinates.
     """
-    if in_safezone():
-        return
-
     # Extract start coordinates safely
     try:
         x1, y1 = start_location.getX(), start_location.getY()
@@ -188,7 +186,7 @@ def dragDrop(start_location: Union[Tuple[int, int], 'Region', 'Match'],
     # Execute precise drag-and-drop workflow matching Unity engine requirements
     pyautogui.moveTo(int(x1), int(y1))
     time.sleep(0.1)
-    pyautogui.dragTo(int(x2), int(y2), duration=0.2, button='left')
+    pyautogui.dragTo(int(x2), int(y2), 2, button='left')
     time.sleep(0.1)
 
 def duration_text(start_time_ns: int, stop_time_ns: int = 0):
@@ -290,7 +288,7 @@ def get_pixel_color(x: int, y: int) -> Tuple[int, int, int]:
     try:
         return pyautogui.pixel(x, y)
     except Exception as e:
-        Debug.error("[CORE-PIXEL-ERROR] Failed to extract color map coordinates: %s", str(e))
+        Debug.error("[get_pixel_color] Failed to extract color map coordinates: %s", str(e))
         return (0, 0, 0)
 
 def get_file_sha256(filepath: str):
@@ -324,20 +322,8 @@ def grab_screen_to_mat(region_obj: Region = None) -> 'np.ndarray | None':
             return cv2.cvtColor(np.array(_mss_client.grab(monitor)), cv2.COLOR_BGRA2BGR)
 
     except Exception as error:  # pylint: disable=broad-exception-caught
-        Debug.error("[CORE-CAPTURE-ERROR] Failed to write matrix: %s", str(error))
+        Debug.error("[grab_screen_to_mat] Failed to write matrix: %s", str(error))
         return None
-
-def in_safezone() -> bool:
-    """
-    Check if the mouse is in the safe-zone (top left corner)
-    """
-    current_x, current_y = _mouse_controller.position
-    if current_x < 5 and current_y < 5:
-        if os.path.exists(LOCKFILE):
-            os.remove(LOCKFILE)
-        Debug.error("Bot aborted via corner safezone movement!")
-        return False
-    return True
 
 def toggle_br() -> None:
     """Toggle LOCKFULE existance"""
@@ -345,19 +331,13 @@ def toggle_br() -> None:
         os.remove(LOCKFILE)
     else:
         with open(LOCKFILE, 'x', encoding='utf-8'):
-            pass
-
-def on_keypress(key) -> None:
-    """
-    Background thread listener callback for key press.
-    """
-    Debug.info("Key pressed: %s", key)
+            Debug.info('Pausing game')
 
 def on_keyrelease(key) -> None:
     """
     Background thread listener callback for key release.
     """
-    Debug.info("Key released: %s", key)
+    #Debug.info("Key released: %s", key)
 
     try:
         # (un)pausing the game using Scroll Lock
@@ -396,14 +376,14 @@ def optimize_alpha_channels(target_dir: str = 'images', threshold: int = 128) ->
                         channels = src.shape[2] if len(src.shape) == 3 else 1
 
                         if channels >= 4:
-                            Debug.info("[bot-info] Optimizing alpha layers for: %s", str(filename))
+                            Debug.info("[optimize_alpha_channels] Optimizing alpha layers for: %s", str(filename))
                             optimized_src = filter_mat_alpha(src, threshold)
                             cv2.imwrite(filepath, optimized_src)
 
                 except Exception as e:
-                    Debug.error("[Helper] Alpha Optimizer could not write %s:\n%s", filename, str(e))
+                    Debug.error("[optimize_alpha_channels] Alpha Optimizer could not write %s:\n%s", filename, str(e))
                 TRACKER.add(filepath)
-    Debug.info("Alpha optimization scan complete. All indices successfully synchronized.")
+    Debug.info("[optimize_alpha_channels] Alpha optimization scan complete. All indices successfully synchronized.")
 
 def popup(message: str, title: str = 'Bot Notification', timeout: float = 0) -> None:
     """
@@ -495,38 +475,66 @@ def similarity(img1: np.ndarray, img2: np.ndarray) -> float:
         return float(max_val)
 
     except cv2.error as error:
-        Debug.error("[CORE-SIMILARITY-ERROR] Template evaluation failed:\n%s", str(error))
+        Debug.error("[CoreSimilarity] Template evaluation failed:\n%s", str(error))
         return 0.0
 
 def sleep(seconds: float) ->None:
     """Obvious"""
     time.sleep(seconds)
 
+import time
+
 class Debug:
     """
-    Pure Python drop-in replacement for the SikuliX Java Debug logger.
-    Keeps console logs fully backward compatible without modifying task layers.
+    A simple colorful terminal logger supporting variable arguments.
     """
 
     @staticmethod
-    def info(msg: str, *args) ->None:
-        """Log standard system configuration and informational messages."""
-        print(f"[info] {msg}" % args)
-
-    @staticmethod
-    def warn(msg: str, *args) ->None:
-        """Log warning messages."""
-        print(f"[warn] {msg}" % args)
-
-    @staticmethod
-    def error(msg: str, *args) ->None:
+    def error(msg: str, *args) -> None:
         """Log runtime exceptions and critical failures."""
-        print(f"[error] {msg}" % args)
+        Debug.output('error', msg, *args)
 
     @staticmethod
-    def history(msg: str, *args) ->None:
+    def info(msg: str, *args) -> None:
+        """Log standard system configuration and informational messages."""
+        Debug.output('info', msg, *args)
+
+    @staticmethod
+    def history(msg: str, *args) -> None:
         """Log high-priority structural task logic execution history."""
-        print(f"[history] {msg}" % args)
+        Debug.output('history', msg, *args)
+
+    @staticmethod
+    def warn(msg: str, *args) -> None:
+        """Log warning messages."""
+        Debug.output('warn', msg, *args)
+
+    @staticmethod
+    def output(loglevel: str, msg: str, *args) -> None:
+        """Format and print the log message with ANSI color codes."""
+        colors = {
+            'error': '\033[31m',
+            'info': '\033[32m',
+            'warn': '\033[33m',
+            'history': '\033[36m',
+            'bold': '\033[1m',
+            'underline': '\033[4m'
+        }
+        color = colors.get(loglevel, '\033[0m')
+        timestamp = time.strftime('%Y-%m-%d %H:%M:%S')
+        padded_level = loglevel.rjust(7)
+
+        # Als er extra argumenten zijn meegegeven voor string formatting (zoals %s)
+        if args:
+            try:
+                # Voer de traditionele Python string-formatting veilig uit
+                formatted_msg = msg % args
+                print(f"{color}[{timestamp}][{padded_level}] {formatted_msg}\033[0m")
+            except TypeError:
+                # Fallback mocht de formatting-syntax niet matchen met de args
+                print(f"{color}[{timestamp}][{padded_level}] {msg} {args}\033[0m")
+        else:
+            print(f"{color}[{timestamp}][{padded_level}] {msg}\033[0m")
 
 class ImageEventHandler:
     """
@@ -730,9 +738,6 @@ class Region():
         Execute a zero-latency click on the center of this region.
         Automatically evaluates the hardware emergency safezone before acting.
         """
-        if in_safezone():
-            return
-
         center_x = int(self.x + (self.w / 2))
         center_y = int(self.y + (self.h / 2))
 
@@ -1013,18 +1018,13 @@ class Region():
             tess_config += f" -c tessedit_char_whitelist={expect}"
 
         raw_output = str(pytesseract.image_to_string(clean_mat, config=tess_config)).strip()
-        if expect:
-            trials = 0
-            while trials < 2:
-                if not re.search(r'^['+expect+']+$', raw_output.lower()):
-                    clean_mat = cv2.bitwise_not(clean_mat)
-                    raw_output = str(pytesseract.image_to_string(clean_mat, config=tess_config)).strip()
-                    trials += 1
-                else:
-                    return raw_output
+        if not raw_output:
+            raw_output = str(pytesseract.image_to_string(cv2.bitwise_not(clean_mat), config=tess_config)).strip()
+
+        if expect and not re.search("^["+expect+"]+$", raw_output.lower()):
             return ''
         return raw_output
-            
+
     def wait(self, image_path: str, timeout: float = 3):
         """
         Block thread execution until a pattern match registers within this region.
@@ -1093,16 +1093,26 @@ class Match(Region):
         """Get the current match score"""
         return self.score
 
+os.system("color")
 if os.path.exists(CONFIG_FILE):
     try:
         with open(CONFIG_FILE, 'r', encoding='utf-8') as f:
             loaded_config = json.load(f)
             CONFIG.update(loaded_config)
     except Exception as e:
-        Debug.error("[BotHelper] Unable to load configuration\n%s", str(e))
+        Debug.error("[Core] Unable to load configuration\n%s", str(e))
 
 TRACKER = ImageTracker()
 optimize_alpha_channels()
-keyboard_listener = keyboard.Listener(on_press=on_keypress, on_release=on_keyrelease)
+keyboard_listener = keyboard.Listener(on_release=on_keyrelease)
 keyboard_listener.start()
+
+initAi = """
+We are going to play Firestone Idle RPG together, specifically Arena of Kings.
+I will give you the name of the machine, the level and the amount and color of the stars of both my team and the opponent in the order of slots.
+Based on this information, you willdetermine if I have a chance against this opponent or not.
+If I have a chance, you only reply with YES, otherwise only with NO
+Are you ready for this?
+"""
+#Debug.info("Ollama test: %s\n%s", str(initAi), ask_local_ollama(initAi))
 

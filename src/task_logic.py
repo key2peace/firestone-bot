@@ -8,7 +8,15 @@ and lifecycle guards are handled natively through the custom core framework.
 import os
 import time
 import cv2
+import pyautogui
 
+from bot_helper import (
+    dailies,
+    get_next_reset,
+    get_suffix_rank,
+    parse_ui_timeout,
+    tasks
+)
 from custom_core import (
     capture,
     click,
@@ -42,15 +50,15 @@ def run_arena_of_kings() -> None:
     click((1855, 115))
 
 
-def run_campaign() ->None:
+def run_campaign() ->None|int:
     """Perform Campaign Task"""
+    timestamps = [get_next_reset()]
 
     # Check if we can claim loot
     if color_at(80, 1000) == 'green':
         click((80, 1000))
-    next_loot = Region(230, 830, 200, 40).text()
-    if next_loot:
-        Debug.info("Next Campaign loot in: %s", str(next_loot))
+    next_loot = Region(230, 830, 200, 40).text('0123456789:')
+    Debug.info("Next Campaign loot in: %s", str(next_loot))
 
     # Check for daily missions
     if color_at(1870, 990) == 'red':
@@ -65,29 +73,45 @@ def run_campaign() ->None:
 
         # Loop through available liberations
         winning = True
-        while winning and color_at(200, 800) == 'green':
-            Debug.history("[Campaign] Select Liberation")
-            click((200, 800))
+        attempts = 0
+        while winning and attempts < 5:
+            if  color_at(200, 800) == 'green':
+                Debug.history("[Campaign] Select Liberation")
+                click((200, 800))
 
-            # Liberation moving on, waiting for finish
-            start_ts = time.time_ns()
-            while True:
-                if color_at(870, 770) == 'green' and color_at(960, 720) == 'blue_liberation_won':
-                    Debug.history("[Campaign] Liberation successfully finished in %s", duration_text(start_ts))
-                    click((870, 770))
-                    break
-                if color_at(870, 770) == 'green' and color_at(960, 720) == 'blue_liberation_lost':
-                    Debug.history("[Campaign] Liberation successfully finished in %s", duration_text(start_ts))
-                    winning = False
-                    click((870, 770))
-                    break
-                sleep(5)
+                # Liberation moving on, waiting for finish
+                start_ts = time.time_ns()
+                while True:
+                    if color_at(870, 770) == 'green' and color_at(960, 690) == 'brown_liberation_won':
+                        Debug.history("[Campaign] Liberation successfully finished in %s", duration_text(start_ts))
+                        click((870, 770))
+                        break
+                    if color_at(870, 770) == 'green' and color_at(960, 720) == 'blue_liberation_lost':
+                        Debug.history("[Campaign] Liberation successfully finished in %s", duration_text(start_ts))
+                        winning = False
+                        click((870, 770))
+                        break
+                    sleep(5)
+            else:
+                attempts += 1
             if winning:
                 # drag the screen 420 pixels to the left
                 dragDrop((1000,430), (580,430))
         click((1820, 70))
     click((1510, 90))
     click((1840, 60))
+    return min(timestamps)
+
+def run_challenge() -> None:
+    """
+    Run monster challenge.
+    """
+    while color_at(870, 960) == 'green':
+        click((950, 960))
+        pyautogui.moveTo(950, 1030)
+        sleep(3)
+
+    click((1840, 55))
 
 def run_check_upgrade() -> None:
     """
@@ -151,7 +175,7 @@ def run_firestone_research() -> None:
         no_bubbles = 0
         img = _screen.exists(task_firestone_research_bubble)
         if img:
-            Debug.error("[Firestone Research] Selecting Research")
+            Debug.history("[Firestone Research] Selecting Research")
             img.click()
             sleep(1)
             click((790, 720))
@@ -224,7 +248,6 @@ def run_garage_asset_scraper() -> None:
         cv2.imwrite(output_path, grab_screen_to_mat(BIG_IMAGE_REGION))
 
         # Execute linear shift transition to pull the adjacent asset into focus
-        Debug.info(f"Executing dragDrop swipe from X:{start_x} to X:{end_x}...")
         dragDrop((start_x, start_y), (end_x, end_y))
 
         # Grant the Unity rendering engine ample headroom to clear scroll inertial animations
@@ -275,6 +298,7 @@ def run_map() -> None:
     icon dimensions. Phase 3 scans and dispatches type-specific campaigns.
     """
     _screen = Region(0, 0, 1920, 1080)
+    _area = Region(140, 60, 1630, 950)
     task_map_zoom = 'images/tasks/map/zoom.png'
 
     for y in [470, 320]:
@@ -289,16 +313,17 @@ def run_map() -> None:
         dragDrop(zoom_match, (1290, 1040))
 
     for mission_type in ['scout', 'adventure', 'war', 'monster']:
-        missions = _screen.findAllList('images/tasks/map/mission/' + mission_type + '.png')
+        missions = _area.findAllList('images/tasks/map/mission/' + mission_type + '.png')
         if missions:
             for m in missions:
                 m.click()
                 m.waitVanish()
                 if color_at(1090, 870) == 'green':
                     click((1090, 870))
-                    sleep(0.5)
                 else:
+                    click((1530, 220))
                     break
+                sleep(0.5)
 
     click((1840, 55))
 
@@ -349,19 +374,22 @@ def run_quests() -> None:
     Navigates through multiple quest category tabs and sequentially triggers
     claim buttons using fixed index ranges to collect accumulated rewards.
     """
-
-    click((760, 130))
-    for _ in range(5):
-        click((1450, 300))
+    for x in [760, 1170]:
+        click((x, 130))
         sleep(1)
-
-    click((1170, 130))
-    for _ in range(5):
-        click((1450, 300))
-        sleep(1)
+        while color_at(1380, 300) == 'green':
+            click((13900, 300))
+            sleep(1)
 
     click((1840, 55))
 
+def run_signin() -> int:
+    """
+    Collect Sign-In Bonus
+    """
+    click((1360, 930))
+    click((1840, 55))
+    return get_next_reset()
 
 def run_tavern() -> None:
     """
