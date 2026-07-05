@@ -41,6 +41,9 @@ CONFIG = {
 }
 
 def ask_local_ollama(prompt: str) -> str:
+    """
+    Ollama interface
+    """
     global OLLAMA_SESSION_CONTEXT
 
     payload = {
@@ -54,7 +57,10 @@ def ask_local_ollama(prompt: str) -> str:
         payload["context"] = OLLAMA_SESSION_CONTEXT
 
     try:
-        response = requests.post(CONFIG['ollama_url'], json=payload)
+        response = requests.post(CONFIG['ollama_url'], json=payload, timeout=60)
+        if not response:
+            return ""
+
         data = response.json()
 
         # Sla de nieuwe, geüpdatete sessie-tokens direct op voor de volgende klik
