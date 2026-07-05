@@ -28,6 +28,8 @@ def main() -> None:
     Coordinates sequential execution of task routines and ensures safe
     termination handling when lifecycle interrupt thresholds are breached.
     """
+    global tasks
+
     while not os.path.exists(LOCKFILE):
         sleep(1)
     Debug.info("[system] Firestone Bot engine active. Starting main loop.")
@@ -75,7 +77,7 @@ def main() -> None:
                         actual_function = getattr(task_logic, task_function_name)
                         timeout_return = actual_function()
                         if timeout_return:
-                            tasks[name][2] = timeout_return
+                            tasks[name] = (pattern, task_function_name, timeout_return)
                         Debug.history("[Tasks] %s - Finished in %s", friendly_name, duration_text(start))
                     else:
                         Debug.history("[Tasks] %s\nMissing handler %s", friendly_name, task_function_name)

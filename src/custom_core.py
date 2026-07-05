@@ -6,7 +6,6 @@ import hashlib
 import json
 import os
 import re
-import requests
 import time
 import threading
 import tkinter as tk
@@ -19,6 +18,7 @@ import mss.tools
 import numpy as np
 import pyautogui
 import pytesseract
+import requests
 
 from pynput import keyboard
 from watchdog.observers import Observer
@@ -481,8 +481,6 @@ def similarity(img1: np.ndarray, img2: np.ndarray) -> float:
 def sleep(seconds: float) ->None:
     """Obvious"""
     time.sleep(seconds)
-
-import time
 
 class Debug:
     """
@@ -1115,4 +1113,3 @@ If I have a chance, you only reply with YES, otherwise only with NO
 Are you ready for this?
 """
 #Debug.info("Ollama test: %s\n%s", str(initAi), ask_local_ollama(initAi))
-
