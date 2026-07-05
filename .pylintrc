@@ -5,7 +5,7 @@ extension-pkg-whitelist=cv2,numpy,mss,pytesseract
 
 [MESSAGES CONTROL]
 # Enable all checks by default, disable specific formatting noise
-disable= C0301, C0103, R0903, C0302, W0603, W0718, R0912
+disable= C0301, C0103, R0903, C0302, W0603, W0718, R0912, R1702
 
 [REPORTS]
 # Keep the console output clean and direct for GitHub Actions logs

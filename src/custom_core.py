@@ -308,6 +308,7 @@ def grab_screen_to_mat(region_obj: Region = None) -> 'np.ndarray | None':
         return None
 
 def toggle_br() -> None:
+    """Toggle LOCKFULE existance"""
     if os.path.exists(LOCKFILE):
         os.remove(LOCKFILE)
     else:
