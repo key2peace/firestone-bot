@@ -6,8 +6,6 @@ Fully multi-platform utilizing mss, pyautogui, cv2, and pytesseract.
 import hashlib
 import json
 import os
-import select
-import sys
 import time
 import threading
 import tkinter as tk
@@ -102,7 +100,6 @@ def click(location) ->None:
         pyautogui.mouseUp()
         time.sleep(0.3)
     except pyautogui.FailSafeException:
-        global LOCKFILE
         if os.path.exists(LOCKFILE):
             os.remove(LOCKFILE)
         Debug.info("[CoreClick] Mouse in failsafe corner, pausing bot.")
@@ -295,10 +292,10 @@ def grab_screen_to_mat(region_obj: Region = None) -> 'np.ndarray | None':
             # Define the exact bounding box required by mss
             if region_obj:
                 monitor = {
-                    "top": int(region_obj.y),
-                    "left": int(region_obj.x),
-                    "width": int(region_obj.w),
-                    "height": int(region_obj.h)
+                    'top': int(region_obj.y),
+                    'left': int(region_obj.x),
+                    'width': int(region_obj.w),
+                    'height': int(region_obj.h)
                 }
             else:
                 monitor = _mss_client.monitors[1]
@@ -307,21 +304,21 @@ def grab_screen_to_mat(region_obj: Region = None) -> 'np.ndarray | None':
             return cv2.cvtColor(np.array(_mss_client.grab(monitor)), cv2.COLOR_BGRA2BGR)
 
     except Exception as error:  # pylint: disable=broad-exception-caught
-        Debug.error(f"[CORE-CAPTURE-ERROR] Failed to write matrix: {error}")
+        Debug.error("[CORE-CAPTURE-ERROR] Failed to write matrix: %s", str(error))
         return None
 
 def toggle_br() -> None:
-    global LOCKFILE
     if os.path.exists(LOCKFILE):
         os.remove(LOCKFILE)
     else:
-        open(LOCKFILE, "x")
+        with open(LOCKFILE, 'x', encoding='utf-8'):
+            pass
 
 def on_keypress(key) -> None:
     """
     Background thread listener callback for key press.
     """
-    #Debug.info("Key pressed: %s", key)
+    Debug.info("Key pressed: %s", key)
 
 def on_keyrelease(key) -> None:
     """
@@ -366,7 +363,7 @@ def optimize_alpha_channels(target_dir: str = 'images', threshold: int = 128) ->
                         channels = src.shape[2] if len(src.shape) == 3 else 1
 
                         if channels >= 4:
-                            Debug.info("[bot-info] Optimizing alpha layers for: " + str(filename))
+                            Debug.info("[bot-info] Optimizing alpha layers for: %s", str(filename))
                             optimized_src = filter_mat_alpha(src, threshold)
                             cv2.imwrite(filepath, optimized_src)
 
@@ -375,7 +372,7 @@ def optimize_alpha_channels(target_dir: str = 'images', threshold: int = 128) ->
                 TRACKER.add(filepath)
     Debug.info("Alpha optimization scan complete. All indices successfully synchronized.")
 
-def popup(message: str, title: str = "Bot Notification", timeout: float = 0) -> None:
+def popup(message: str, title: str = 'Bot Notification', timeout: float = 0) -> None:
     """
     Display a cross-platform alert dialog with an optional auto-vanish timeout.
 
@@ -391,7 +388,7 @@ def popup(message: str, title: str = "Bot Notification", timeout: float = 0) -> 
 
     if timeout <= 0:
         # Standard blocking alert dialog
-        pyautogui.alert(text=str(message), title=str(title), button="OK")
+        pyautogui.alert(text=str(message), title=str(title), button='OK')
         return
 
     def auto_close_worker() -> None:
@@ -408,9 +405,9 @@ def popup(message: str, title: str = "Bot Notification", timeout: float = 0) -> 
         # Spawn the closer thread and immediately execute the alert interface
         closer_thread = threading.Thread(target=auto_close_worker, daemon=True)
         closer_thread.start()
-        pyautogui.alert(text=str(message), title=str(title), button="OK")
+        pyautogui.alert(text=str(message), title=str(title), button='OK')
     except Exception as error:
-        Debug.error(f"[CorePopup] Render failed: {error}")
+        Debug.error("[CorePopup] Render failed:\n%s", str(error))
 
 def press_key(key_name: str) ->None:
     """
@@ -422,7 +419,6 @@ def press_key(key_name: str) ->None:
     try:
         pyautogui.press(key_name)
     except pyautogui.FailSafeException:
-        global LOCKFILE
         if os.path.exists(LOCKFILE):
             os.remove(LOCKFILE)
         Debug.info("[CoreClick] Mouse in failsafe corner, pausing bot.")
@@ -466,7 +462,7 @@ def similarity(img1: np.ndarray, img2: np.ndarray) -> float:
         return float(max_val)
 
     except cv2.error as error:
-        Debug.error(f"[CORE-SIMILARITY-ERROR] Template evaluation failed: {error}")
+        Debug.error("[CORE-SIMILARITY-ERROR] Template evaluation failed:\n%s", str(error))
         return 0.0
 
 def sleep(seconds: float) ->None:
@@ -544,7 +540,7 @@ class ImageEventHandler:
                         cv2.imwrite(event.src_path, optimized_src)
                     self.tracker.add(event.src_path)
             except Exception as error:
-                Debug.error(f"[ImageTracker] Optimization failed for {event.src_path}: {error}")
+                Debug.error("[ImageTracker] Optimization failed for %s:\n%s", str(event.src_path), str(error))
 
         # 2. Process Move and Rename loops with asset migration tracking
         elif event.event_type == 'moved':
@@ -615,7 +611,7 @@ class ImageTracker:
             with open(tracker_path, 'w', encoding='utf-8') as tf:
                 json.dump(tracker_data, tf, indent=4)
         except (OSError, IOError) as error:
-            Debug.error(f"[ImageTracker] Failed writing to {tracker_path}: {error}")
+            Debug.error("[ImageTracker] Failed writing to %s:\n%s", str(tracker_path), str(error))
 
     def get(self, file_path: str) -> Dict[str, Any]:
         """Fetch tracking configurations mapped to a specific filename target key."""
@@ -655,7 +651,7 @@ class ImageTracker:
                 with open(tracker_path, 'w', encoding='utf-8') as tf:
                     json.dump(tracker_data, tf, indent=4)
             except (OSError, IOError) as error:
-                Debug.error(f"[ImageTracker] Failed clearing key from {tracker_path}: {error}")
+                Debug.error("[ImageTracker] Failed clearing key from %s:\n%s", str(tracker_path), str(error))
 
     def verify(self, file_path: str) -> bool:
         """Validate live file timestamps and hashes against historic state tracking data."""
@@ -903,7 +899,7 @@ class Region():
         # 1. Initialize a borderless top-level widget wrapper
         root = tk.Tk()
         root.overrideredirect(True)
-        root.attributes("-topmost", True)
+        root.attributes('-topmost', True)
 
         # 2. Map geometry to perfectly frame the match dimensions
         root.geometry(f"{self.w}x{self.h}+{self.x}+{self.y}")
@@ -911,18 +907,18 @@ class Region():
         # 3. Configure a click-through transparent background with a solid red border
         # 'wm_attributes' handles transparency options natively across platforms
         if root.tk.call('tk', 'windowingsystem') == 'win32':
-            root.wm_attributes("-transparentcolor", "white")
-            canvas_bg = "white"
+            root.wm_attributes('-transparentcolor', 'white')
+            canvas_bg = 'white'
         else:
             root.wait_visibility(root)
-            root.wm_attributes("-alpha", 0.8) # Fallback smooth opacity for Unix/Mac
-            canvas_bg = "black"
+            root.wm_attributes('-alpha', 0.8) # Fallback smooth opacity for Unix/Mac
+            canvas_bg = 'black'
 
         canvas = tk.Canvas(root, width=self.w, height=self.h, bg=canvas_bg, highlightthickness=0)
         canvas.pack()
 
         # Draw a thick 3-pixel red rectangular outline inside the overlay bounds
-        canvas.create_rectangle(0, 0, self.w, self.h, outline="red", width=3)
+        canvas.create_rectangle(0, 0, self.w, self.h, outline='red', width=3)
 
         # 4. Process interface frame cycles and automatically close after timeout
         root.update()
@@ -960,7 +956,7 @@ class Region():
         """
         src_mat = grab_screen_to_mat(self)
         if src_mat is None or src_mat.size == 0:
-            return ""
+            return ''
 
         # 1. Convert to grayscale and upscale to expand small game font pixels
         gray = cv2.cvtColor(src_mat, cv2.COLOR_BGR2GRAY)

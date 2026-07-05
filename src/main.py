@@ -54,7 +54,7 @@ def main() -> None:
         Debug.info("[Main] Entering main loop")
         while True:
             # Enforce execution suspension if the core state drops into fallback
-            while not not os.path.exists(LOCKFILE):
+            while not os.path.exists(LOCKFILE):
                 sleep(1)
             task_logic.run_hero_upgrade()
             for name, (pattern, task_function_name, timeout) in tasks.items():
