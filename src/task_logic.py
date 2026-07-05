@@ -5,6 +5,7 @@ Provides alphabetically organized gameplay handlers dispatched dynamically
 via the main automation loop. All visual state checks, hardware inputs,
 and lifecycle guards are handled natively through the custom core framework.
 """
+import os
 import time
 
 from custom_core import (
@@ -45,6 +46,9 @@ def run_campaign() ->None:
     # Check if we can claim loot
     if color_at(80, 1000) == 'green':
         click((80, 1000))
+    next_loot = Region(230, 830, 200, 40).text()
+    if next_loot:
+        Debug.info("Next Campaign loot in: %s", str(next_loot))
 
     # Check for daily missions
     if color_at(1870, 990) == 'red':
@@ -136,9 +140,10 @@ def run_firestone_research() -> None:
     _screen = Region(0, 0, 1920, 1080)
     task_firestone_research_bubble = 'images/tasks/firestone/research_bubble.png'
 
-    while color_at(540, 970) == 'green':
-        click((540, 970))
-        sleep(1)
+    if color_at(1215, 980) == 'green':
+        click((1215, 980))
+    if color_at(520, 980) == 'green':
+        click((520, 980))
 
     while True:
         no_bubbles = 0
@@ -162,10 +167,6 @@ def run_firestone_research() -> None:
             click((1250, 200))
             break
     click((1840, 55))
-
-import time
-import os
-from custom_core import Region, dragDrop, sleep, Debug
 
 # Static UI region boundaries for the War Machine Garage interface
 # Modify these coordinates to match your active Chrome browser resolution
@@ -257,8 +258,7 @@ def run_hero_upgrade() -> None:
         # Exact horizontal pixel anchors for the hero upgrade triggers
         for x_coord in [115, 640, 810, 1010, 1200, 1380, 1600]:
             if color_at(x_coord, 930) == 'yellow':
-                click((x_coord, 950))
-                sleep(0.5)
+                click((x_coord + 10, 960))
             else:
                 inactive_slots += 1
 
@@ -277,11 +277,12 @@ def run_map() -> None:
     _screen = Region(0, 0, 1920, 1080)
     task_map_zoom = 'images/tasks/map/zoom.png'
 
-    while color_at(170, 320) == 'green':
-        click((170, 320))
-        sleep(1)
-        click((950, 650))
-        sleep(0.5)
+    for y in [470, 320]:
+        if color_at(110, y) == 'green':
+            click((110, y))
+            sleep(1)
+            click((950, 650))
+            sleep(0.5)
 
     zoom_match = _screen.exists(task_map_zoom)
     if zoom_match:
@@ -296,6 +297,8 @@ def run_map() -> None:
                 if color_at(1090, 870) == 'green':
                     click((1090, 870))
                     sleep(0.5)
+                else:
+                    break
 
     click((1840, 55))
 
@@ -322,6 +325,22 @@ def run_pickaxe() -> None:
     click((690, 660))
     click((1840, 55))
 
+def run_pirates_price() -> None:
+    """
+    Execute the Pirates Price tool allocation and interaction routine.
+
+    Interacts with the localized mining area coordinates before triggering
+    global exit anchors to return execution back to the primary canvas.
+    """
+    claimed = False
+    while not claimed:
+        for x in [483, 790, 1097, 1404]:
+            if color_at(x, 910) == 'green':
+                click((x, 910))
+                claimed = True
+        dragDrop((1500, 800), (272, 800))
+        sleep(2)
+    click((1840, 55))
 
 def run_quests() -> None:
     """

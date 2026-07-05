@@ -4,16 +4,21 @@ Main Entry Point and Workflow Runner for Firestone Bot.
 Acts as the central orchestrator, executing modular gameplay subroutines
 while monitoring the application lifecycle and emergency shutdown signals.
 """
+import os
 import time
 import task_logic
 
 from custom_core import (
-    BOT_RUNNING,
     capture,
     Debug,
     duration_text,
+    LOCKFILE,
     Region,
     sleep
+)
+
+from bot_helper import (
+    tasks
 )
 
 def main() -> None:
@@ -23,7 +28,8 @@ def main() -> None:
     Coordinates sequential execution of task routines and ensures safe
     termination handling when lifecycle interrupt thresholds are breached.
     """
-    sleep(20)
+    while not os.path.exists(LOCKFILE):
+        sleep(1)
     Debug.info("[system] Firestone Bot engine active. Starting main loop.")
 
     _screen = Region(0, 0, 1920, 1080)
@@ -43,39 +49,25 @@ def main() -> None:
         img.click()
         img.waitVanish()
 
-    # Patterns
-    tasks = {
-        'arcane_crystal': ('images/tasks/arcane_crystal.png', 'run_arcane_crystal'),
-        'arena_of_kings': ('images/tasks/arena_of_kings.png', 'run_arena_of_kings'),
-        'campaign':       ('images/tasks/campaign.png',       'run_campaign'),
-        'engineer':       ('images/tasks/engineer.png',       'run_engineer'),
-        'firestone_collect': ('images/tasks/firestone/collect.png', 'run_firestone_collect'),
-        'firestone_research': ('images/tasks/firestone/research.png', 'run_firestone_research'),
-        'guild_expeditions': ('images/tasks/guild_expeditions.png', 'run_guild_expeditions'),
-        'map':            ('images/tasks/map.png',            'run_map'),
-        'meteorite':      ('images/tasks/meteorite.png',      'run_meteorite'),
-        'pickaxe':        ('images/tasks/pickaxe.png',        'run_pickaxe'),
-        'quests':         ('images/tasks/quests.png',         'run_quests'),
-        'tavern':         ('images/tasks/tavern.png',         'run_tavern')
-    }
-
     try:
         task_logic.run_check_upgrade()
         Debug.info("[Main] Entering main loop")
         while True:
             # Enforce execution suspension if the core state drops into fallback
-            while not BOT_RUNNING:
-                sleep(5)
+            while not not os.path.exists(LOCKFILE):
+                sleep(1)
             task_logic.run_hero_upgrade()
-            for name, (pattern, task_function_name) in tasks.items():
+            for name, (pattern, task_function_name, timeout) in tasks.items():
                 friendly_name = name.replace('_', ' ').title()
-
+                if timeout and timeout <= time.time():
+                    continue
                 match = main_finished.exists(pattern)
                 if match:
                     Debug.history("[Tasks] %s detected", friendly_name)
                     match.highlight()
                     match.click()
                     match.waitVanish()
+                    sleep(2)
                     capture(name+'.png')
                     if hasattr(task_logic, task_function_name):
                         start = time.time_ns()

@@ -16,16 +16,20 @@ from typing import Any, ClassVar, Dict, List, Optional, Tuple, Union
 
 import cv2
 import mss
+import mss.tools
 import numpy as np
 import pyautogui
 import pytesseract
 
+from pynput import keyboard
 from watchdog.observers import Observer
 
 # Internal variables
 CONFIG_FILE = 'bot_settings.json'
-BOT_RUNNING = True
+LOCKFILE = '.bot_running'
 BOT_STARTED = time.time_ns()
+if os.path.exists(LOCKFILE):
+    os.remove(LOCKFILE)
 
 # Config
 CONFIG = {
@@ -56,32 +60,11 @@ def capture(filename: str) ->bool:
 
     if not os.path.exists(target_path):
         try:
-            # Grab the 3-channel frame array straight from memory and save it
-            raw_mat = grab_screen_to_mat()
-            success = cv2.imwrite(target_path, raw_mat)
-            return success
+            return cv2.imwrite(target_path, grab_screen_to_mat())
         except Exception as e:
             Debug.error("[CORE-CAPTURE-ERROR] Failed to write matrix: " + str(e))
             return False
 
-    return False
-
-def check_activation_hotkey() -> bool:
-    """
-    Check if the user pressed the manual activation key in the console window.
-    
-    Uses pure cross-platform select pooling on stdin to maintain zero latency
-    without requiring OS-level administrator execution privileges.
-    
-    Returns:
-        bool: True if the trigger key was captured, False otherwise.
-    """
-    # Check if there is raw characters waiting in the terminal buffer
-    if sys.stdin in select.select([sys.stdin], [], [], 0)[0]:
-        line = sys.stdin.readline().strip().lower()
-        # Trigger the scraper if the user types 'g' or 'go' and hits enter
-        if line in ('g', 'go'):
-            return True
     return False
 
 def click(location) ->None:
@@ -119,8 +102,9 @@ def click(location) ->None:
         pyautogui.mouseUp()
         time.sleep(0.3)
     except pyautogui.FailSafeException:
-        global BOT_RUNNING
-        BOT_RUNNING = False
+        global LOCKFILE
+        if os.path.exists(LOCKFILE):
+            os.remove(LOCKFILE)
         Debug.info("[CoreClick] Mouse in failsafe corner, pausing bot.")
 
 def color_at(x: int, y: int) -> str:
@@ -300,40 +284,72 @@ def get_file_sha256(filepath: str):
         hasher.update(buf)
     return hasher.hexdigest()
 
-def grab_screen_to_mat(region: Region = None):
+def grab_screen_to_mat(region_obj: Region = None) -> 'np.ndarray | None':
     """
-    Instantly grab the screen monitor or region coordinates into a BGR Mat.
-
-    Utilizes mss for raw OS-level memory buffer extraction in < 2ms.
-
-    Args:
-        region (Region, optional): The specific bounded area to capture.
-            If None, defaults to capturing the primary monitor bounds.
-
-    Returns:
-        numpy.ndarray: A standard 3-channel OpenCV BGR image matrix.
+    Capture the active screen region and extract it as a clean NumPy NDArray.
+    Guarantees structural integer parameters during memory slicing to eliminate
+    NumPy runtime exceptions caused by floating-point or string indices.
     """
-    _mss_client = mss.mss()
+    try:
+        with mss.MSS() as _mss_client:
+            # Define the exact bounding box required by mss
+            if region_obj:
+                monitor = {
+                    "top": int(region_obj.y),
+                    "left": int(region_obj.x),
+                    "width": int(region_obj.w),
+                    "height": int(region_obj.h)
+                }
+            else:
+                monitor = _mss_client.monitors[1]
 
-    if region:
-        monitor = {
-            "top": region.y,
-            "left": region.x,
-            "width": region.w,
-            "height": region.h
-        }
+            # Grab only the targeted pixels directly from the main screen buffer
+            return cv2.cvtColor(np.array(_mss_client.grab(monitor)), cv2.COLOR_BGRA2BGR)
+
+    except Exception as error:  # pylint: disable=broad-exception-caught
+        Debug.error(f"[CORE-CAPTURE-ERROR] Failed to write matrix: {error}")
+        return None
+
+def toggle_br() -> None:
+    global LOCKFILE
+    if os.path.exists(LOCKFILE):
+        os.remove(LOCKFILE)
     else:
-        monitor = _mss_client.monitors
+        open(LOCKFILE, "x")
 
-    sct_img = _mss_client.grab(monitor)
-    frame_np = np.array(sct_img)
-    return cv2.cvtColor(frame_np, cv2.COLOR_BGRA2BGR)
+def on_keypress(key) -> None:
+    """
+    Background thread listener callback for key press.
+    """
+    #Debug.info("Key pressed: %s", key)
+
+def on_keyrelease(key) -> None:
+    """
+    Background thread listener callback for key release.
+    """
+    Debug.info("Key released: %s", key)
+
+    try:
+        # (un)pausing the game using Scroll Lock
+        if key == keyboard.Key.scroll_lock:
+            toggle_br()
+        elif key == keyboard.Key.print_screen:
+            mat = grab_screen_to_mat()
+            filename = pyautogui.prompt('File name', 'Capture Screen')
+            if filename:
+                if os.path.exists('capture/'+filename):
+                    overwrite = pyautogui.confirm(filename+' exists. Overwrite?', 'Capture Screen')
+                    if overwrite == 'Cancel':
+                        return
+                cv2.imwrite('capture/'+filename, mat)
+    except AttributeError:
+        pass
 
 def optimize_alpha_channels(target_dir: str = 'images', threshold: int = 128) ->None:
     """Walk through the images folder and alpha flatten unprocessed images"""
     if not os.path.exists(target_dir):
         return
-    Debug.info("[bot-info] Starting full image workspace alpha channel optimization scan...")
+    Debug.info("Starting full image workspace alpha channel optimization scan...")
     for root, _, files in os.walk(target_dir):
         png_files = [f for f in files if f.lower().endswith('.png')]
         if not png_files:
@@ -346,6 +362,7 @@ def optimize_alpha_channels(target_dir: str = 'images', threshold: int = 128) ->
 
                     # Check if the image loaded successfully and determine channels via shape
                     if src is not None and src.size > 0:
+                        # Safely extract channels matching the shape tuple length
                         channels = src.shape[2] if len(src.shape) == 3 else 1
 
                         if channels >= 4:
@@ -356,7 +373,7 @@ def optimize_alpha_channels(target_dir: str = 'images', threshold: int = 128) ->
                 except Exception as e:
                     Debug.error("[Helper] Alpha Optimizer could not write %s:\n%s", filename, str(e))
                 TRACKER.add(filepath)
-    Debug.info("[bot-info] Alpha optimization scan complete. All indices successfully synchronized.")
+    Debug.info("Alpha optimization scan complete. All indices successfully synchronized.")
 
 def popup(message: str, title: str = "Bot Notification", timeout: float = 0) -> None:
     """
@@ -405,9 +422,52 @@ def press_key(key_name: str) ->None:
     try:
         pyautogui.press(key_name)
     except pyautogui.FailSafeException:
-        global BOT_RUNNING
-        BOT_RUNNING = False
+        global LOCKFILE
+        if os.path.exists(LOCKFILE):
+            os.remove(LOCKFILE)
         Debug.info("[CoreClick] Mouse in failsafe corner, pausing bot.")
+
+def similarity(img1: np.ndarray, img2: np.ndarray) -> float:
+    """
+    Compute the structural similarity score between a live screen and a cached template.
+
+    Extracts the alpha layer of the template (img2) to use as a computational mask,
+    ensuring dynamic UI elements are entirely ignored during evaluation.
+
+    Args:
+        img1 (np.ndarray): The live 3-channel (BGR) screen matrix.
+        img2 (np.ndarray): The cached template matrix (BGR or BGRA).
+
+    Returns:
+        float: Normalized match confidence score between 0.0 and 1.0.
+    """
+    if img1 is None or img2 is None or img1.size == 0 or img2.size == 0:
+        return 0.0
+
+    try:
+        # Check if the cached template has an active alpha layer (4 channels)
+        if len(img2.shape) == 3 and img2.shape[2] == 4:
+            # Slice the matrix: split RGB channels from the alpha mask channel
+            bgra_split = cv2.split(img2)
+            template_rgb = cv2.merge(bgra_split[:3])
+            alpha_mask = bgra_split[3]
+        else:
+            template_rgb = img2
+            alpha_mask = None
+
+        # TM_CCORR_NORMED is mathematically required when applying an alpha mask
+        match_matrix = cv2.matchTemplate(
+            img1,
+            template_rgb,
+            cv2.TM_CCORR_NORMED,
+            mask=alpha_mask
+        )
+        _, max_val, _, _ = cv2.minMaxLoc(match_matrix)
+        return float(max_val)
+
+    except cv2.error as error:
+        Debug.error(f"[CORE-SIMILARITY-ERROR] Template evaluation failed: {error}")
+        return 0.0
 
 def sleep(seconds: float) ->None:
     """Obvious"""
@@ -422,22 +482,22 @@ class Debug:
     @staticmethod
     def info(msg: str, *args) ->None:
         """Log standard system configuration and informational messages."""
-        print(f"[info] [bot-info] {msg}" % args)
+        print(f"[info] {msg}" % args)
 
     @staticmethod
     def warn(msg: str, *args) ->None:
         """Log warning messages."""
-        print(f"[warn] [bot-info] {msg}" % args)
+        print(f"[warn] {msg}" % args)
 
     @staticmethod
     def error(msg: str, *args) ->None:
         """Log runtime exceptions and critical failures."""
-        print(f"[error] [bot-error] {msg}" % args)
+        print(f"[error] {msg}" % args)
 
     @staticmethod
     def history(msg: str, *args) ->None:
         """Log high-priority structural task logic execution history."""
-        print(f"[log] [bot-history] {msg}" % args)
+        print(f"[history] {msg}" % args)
 
 class ImageEventHandler:
     """
@@ -884,8 +944,9 @@ class Region():
         try:
             pyautogui.moveTo(target_x, target_y)
         except pyautogui.FailSafeException:
-            global BOT_RUNNING
-            BOT_RUNNING = False
+            global LOCKFILE
+            if os.path.exists(LOCKFILE):
+                os.remove(LOCKFILE)
 
     def text(self) -> str:
         """
@@ -970,8 +1031,8 @@ class Region():
 class Match(Region):
     """
     Represents a verified visual template match within a specific screen region.
-    
-    Inherits structural spatial properties from Region while appending a 
+
+    Inherits structural spatial properties from Region while appending a
     confidence score metric generated during the OpenCV template matching phase.
     """
 
@@ -1003,3 +1064,5 @@ if os.path.exists(CONFIG_FILE):
 
 TRACKER = ImageTracker()
 optimize_alpha_channels()
+keyboard_listener = keyboard.Listener(on_press=on_keypress, on_release=on_keyrelease)
+keyboard_listener.start()
