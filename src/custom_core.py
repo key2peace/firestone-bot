@@ -6,6 +6,8 @@ Fully multi-platform utilizing mss, pyautogui, cv2, and pytesseract.
 import hashlib
 import json
 import os
+import re
+import requests
 import time
 import threading
 import tkinter as tk
@@ -32,8 +34,20 @@ if os.path.exists(LOCKFILE):
 # Config
 CONFIG = {
     'upgrade_mode': '100',
-    'tracker_file': 'index.json'
+    'tracker_file': 'index.json',
+    'ollama_url': 'http://localhost:11434/api/generate'
+    'ollama_model': 'llama3.2:latest'
 }
+
+def ask_local_ollama(prompt: str) -> str:
+    try:
+        response = requests.post(
+            CONFIG['ollama_url'],
+            json={"model": CONFIG['ollama_model'], "prompt": prompt, "stream": False}
+        )
+        return response.json().get("response", "")
+    except Exception:
+        return ""
 
 def capture(filename: str) ->bool:
     """
@@ -80,6 +94,9 @@ def click(location) ->None:
         RuntimeError: If the execution thread is stopped or the pyautogui
             fail-safe is triggered via a screen corner.
     """
+    if in_safezone():
+        return
+
     try:
         x_coord = location.getX()
         y_coord = location.getY()
@@ -147,28 +164,31 @@ def dragDrop(start_location: Union[Tuple[int, int], 'Region', 'Match'],
         start_location (Union[Tuple[int, int], Region, Match]): Source coordinates.
         end_location (Union[Tuple[int, int], Region, Match]): Destination coordinates.
     """
+    if in_safezone():
+        return
+
     # Extract start coordinates safely
     try:
-        st_x, st_y = start_location.getX(), start_location.getY()
+        x1, y1 = start_location.getX(), start_location.getY()
     except AttributeError:
         try:
-            st_x, st_y = start_location.getCenter().getX(), start_location.getCenter().getY()
+            x1, y1 = start_location.getCenter().getX(), start_location.getCenter().getY()
         except AttributeError:
-            st_x, st_y = start_location
+            x1, y1 = start_location
 
     # Extract end coordinates safely
     try:
-        et_x, et_y = end_location.getX(), end_location.getY()
+        x2, y2 = end_location.getX(), end_location.getY()
     except AttributeError:
         try:
-            et_x, et_y = end_location.getCenter().getX(), end_location.getCenter().getY()
+            x2, y2 = end_location.getCenter().getX(), end_location.getCenter().getY()
         except AttributeError:
-            et_x, et_y = end_location
+            x2, y2 = end_location
 
     # Execute precise drag-and-drop workflow matching Unity engine requirements
-    pyautogui.moveTo(st_x, st_y)
+    pyautogui.moveTo(int(x1), int(y1))
     time.sleep(0.1)
-    pyautogui.dragTo(et_x, et_y, duration=0.2, button='left')
+    pyautogui.dragTo(int(x2), int(y2), duration=0.2, button='left')
     time.sleep(0.1)
 
 def duration_text(start_time_ns: int, stop_time_ns: int = 0):
@@ -306,6 +326,18 @@ def grab_screen_to_mat(region_obj: Region = None) -> 'np.ndarray | None':
     except Exception as error:  # pylint: disable=broad-exception-caught
         Debug.error("[CORE-CAPTURE-ERROR] Failed to write matrix: %s", str(error))
         return None
+
+def in_safezone() -> bool:
+    """
+    Check if the mouse is in the safe-zone (top left corner)
+    """
+    current_x, current_y = _mouse_controller.position
+    if current_x < 5 and current_y < 5:
+        if os.path.exists(LOCKFILE):
+            os.remove(LOCKFILE)
+        Debug.error("Bot aborted via corner safezone movement!")
+        return False
+    return True
 
 def toggle_br() -> None:
     """Toggle LOCKFULE existance"""
@@ -693,23 +725,18 @@ class Region():
         self.w = w
         self.h = h
 
-    def click(self, target=None):
+    def click(self) -> None:
         """
-        Execute a targeted mouse click relative to this region.
-
-        If no target path is supplied, it automatically calculates and fires
-        the click event straight at the geometric center of this region.
-
-        Args:
-            target (tuple|Region|Match, optional): A specific target location
-                within or outside the region bounds. Defaults to None.
+        Execute a zero-latency click on the center of this region.
+        Automatically evaluates the hardware emergency safezone before acting.
         """
-        if target is None:
-            center_x = self.x + int(self.w / 2)
-            center_y = self.y + int(self.h / 2)
-            click((center_x, center_y))
-        else:
-            click(target)
+        if in_safezone():
+            return
+
+        center_x = int(self.x + (self.w / 2))
+        center_y = int(self.y + (self.h / 2))
+
+        click((center_x, center_y))
 
     def exists(self, image_path: str):
         """
@@ -944,7 +971,7 @@ class Region():
             if os.path.exists(LOCKFILE):
                 os.remove(LOCKFILE)
 
-    def text(self) -> str:
+    def text(self, expect: str = None) -> str:
         """
         Extract textual values from the region viewport using custom OCR tuning.
 
@@ -952,6 +979,8 @@ class Region():
         in-game text outlines, then isolates characters for high-precision parsing.
         Dynamically falls back to standard english if kiddosy data is missing.
 
+        Args:
+            expect (str, optional): the characters to expect in the string.
         Returns:
             str: The cleaned, extracted text string from the screen region.
         """
@@ -980,8 +1009,22 @@ class Region():
 
         # 5. Execute inference with Page Segmentation Mode 7 (Treat as a single text line)
         tess_config = f"-l {lang_model}"
-        return str(pytesseract.image_to_string(clean_mat, config=tess_config)).strip()
+        if expect:
+            tess_config += f" -c tessedit_char_whitelist={expect}"
 
+        raw_output = str(pytesseract.image_to_string(clean_mat, config=tess_config)).strip()
+        if expect:
+            trials = 0
+            while trials < 2:
+                if not re.search(r'^['+expect+']+$', raw_output.lower()):
+                    clean_mat = cv2.bitwise_not(clean_mat)
+                    raw_output = str(pytesseract.image_to_string(clean_mat, config=tess_config)).strip()
+                    trials += 1
+                else:
+                    return raw_output
+            return ''
+        return raw_output
+            
     def wait(self, image_path: str, timeout: float = 3):
         """
         Block thread execution until a pattern match registers within this region.
@@ -1062,3 +1105,4 @@ TRACKER = ImageTracker()
 optimize_alpha_channels()
 keyboard_listener = keyboard.Listener(on_press=on_keypress, on_release=on_keyrelease)
 keyboard_listener.start()
+

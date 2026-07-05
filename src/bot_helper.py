@@ -3,6 +3,7 @@ Centralized Helper Utilities for Firestone Bot.
 
 Maintains custom loose helper functions specific to the gameplay layers.
 """
+import datetime
 import re
 import time
 
@@ -38,6 +39,28 @@ tasks = {
     'quests':              ('images/tasks/quests.png',             'run_quests', 0),
     'tavern':              ('images/tasks/tavern.png',             'run_tavern', 0)
 }
+
+def get_next_reset(target_hour: int = 8) -> int:
+    """
+    Calculate the absolute UNIX timestamp of the next upcoming UTC server reset boundary.
+    
+    Guarantees seamless cross-timezone execution by anchoring time-deltas strictly
+    to the timezone-aware UTC clock space.
+    """
+    now_utc = datetime.datetime.now(datetime.timezone.utc)
+    
+    next_reset = now_utc.replace(
+        hour=target_hour, 
+        minute=0, 
+        second=0, 
+        microsecond=0
+    )
+    
+    if now_utc >= next_reset:
+        next_reset += datetime.timedelta(days=1)
+        
+    return int(next_reset.timestamp())
+
 
 def get_suffix_rank(suffix: str) -> int:
     """
