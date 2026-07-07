@@ -21,6 +21,7 @@ import pytesseract
 import requests
 
 from pynput import keyboard
+from watchdog.events import FileSystemEventHandler
 from watchdog.observers import Observer
 
 # Internal variables
@@ -190,7 +191,7 @@ def dragDrop(start_location: Union[Tuple[int, int], 'Region', 'Match'],
             x2, y2 = end_location
 
     # Execute precise drag-and-drop workflow matching Unity engine requirements
-    pyautogui.moveTo(int(x1), int(y1))
+    moveTo((int(x1), int(y1)))
     time.sleep(0.1)
     pyautogui.dragTo(int(x2), int(y2), 2, button='left')
     time.sleep(0.1)
@@ -330,6 +331,25 @@ def grab_screen_to_mat(region_obj: Region = None) -> 'np.ndarray | None':
     except Exception as error:  # pylint: disable=broad-exception-caught
         Debug.error("[grab_screen_to_mat] Failed to write matrix: %s", str(error))
         return None
+
+def moveTo(location: tuple[int, int]) ->None:
+    """
+    Perform a hardware-level mouse move via pyautogui.
+
+    Args:
+        location (tuple): The target coordinates destination.
+            Can be a pure (x, y) tuple, a Region, or a Match node.
+
+    Raises:
+        RuntimeError: If the execution thread is stopped or the pyautogui
+            fail-safe is triggered via a screen corner.
+    """
+    x_coord, y_coord = location
+
+    try:
+        pyautogui.moveTo(x_coord, y_coord)
+    except pyautogui.FailSafeException:
+        toggle_br()
 
 def toggle_br() -> None:
     """Toggle LOCKFULE existance"""
@@ -540,7 +560,7 @@ class Debug:
         else:
             print(f"{color}[{timestamp}][{padded_level}] {msg}\033[0m")
 
-class ImageEventHandler:
+class ImageEventHandler(FileSystemEventHandler):
     """
     Routes and handles active file system events for monitored image assets.
 
@@ -974,11 +994,8 @@ class Region():
         """
         target_x = self.x + self.w + 10
         target_y = self.y + int(self.h / 2)
-        try:
-            pyautogui.moveTo(target_x, target_y)
-        except pyautogui.FailSafeException:
-            if os.path.exists(LOCKFILE):
-                os.remove(LOCKFILE)
+        moveTo((target_x, target_y))
+
 
     def text(self, expect: str = None) -> str:
         """
@@ -999,7 +1016,7 @@ class Region():
 
         # 1. Convert to grayscale and upscale to expand small game font pixels
         gray = cv2.cvtColor(src_mat, cv2.COLOR_BGR2GRAY)
-        resized = cv2.resize(gray, None, fx=2.0, fy=2.0, interpolation=cv2.INTER_CUBIC)
+        resized = cv2.resize(gray, None, fx=4.0, fy=4.0, interpolation=cv2.INTER_CUBIC)
 
         # 2. Dissolve black outlines and invert contrast to black-on-white text
         _, thresh = cv2.threshold(resized, 0, 255, cv2.THRESH_BINARY_INV + cv2.THRESH_OTSU)
@@ -1016,18 +1033,36 @@ class Region():
         tessdata_path = r"C:\Program Files\Tesseract-OCR\tessdata\kiddosy.traineddata"
         lang_model = "kiddosy" if os.path.exists(tessdata_path) else "eng"
 
-        # 5. Execute inference with Page Segmentation Mode 7 (Treat as a single text line)
+        # 5. Execute inference
         tess_config = f"-l {lang_model}"
         if expect:
             tess_config += f" -c tessedit_char_whitelist={expect}"
 
         raw_output = str(pytesseract.image_to_string(clean_mat, config=tess_config)).strip()
-        if not raw_output:
-            raw_output = str(pytesseract.image_to_string(cv2.bitwise_not(clean_mat), config=tess_config)).strip()
 
-        if expect and not re.search("^["+expect+"]+$", raw_output.lower()):
-            return ''
+        # 6. Active Loop: Inverteer als de string leeg is OF niet aan de whitelist voldoet
+        if expect:
+            trials = 0
+            # Strip onzichtbare rommel zoals spaties/enters voor een eerlijke regex-check
+            clean_output = re.sub(r'[\s\n\r]', '', raw_output.lower())
+
+            while trials < 2:
+                # Als de gestripte string matcht met de whitelist, direct eruit springen!
+                if clean_output and re.search(r'^[' + expect + r']+$', clean_output):
+                    return raw_output
+
+                # Zo niet, ram de inversie erin en probeer het nog een keer
+                clean_mat = cv2.bitwise_not(clean_mat)
+                raw_output = str(pytesseract.image_to_string(clean_mat, config=tess_config)).strip()
+                clean_output = re.sub(r'[\s\n\r]', '', raw_output.lower())
+                trials += 1
+
+            # Als na 2 pogingen de string nog steeds corrupt is, weiger de data
+            if not clean_output or not re.search(r'^[' + expect + r']+$', clean_output):
+                return ''
+
         return raw_output
+
 
     def wait(self, image_path: str, timeout: float = 3):
         """

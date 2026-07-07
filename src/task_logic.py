@@ -8,7 +8,6 @@ and lifecycle guards are handled natively through the custom core framework.
 import os
 import time
 import cv2
-import pyautogui
 
 from bot_helper import (
     #dailies,
@@ -26,11 +25,12 @@ from custom_core import (
     dragDrop,
     duration_text,
     grab_screen_to_mat,
+    moveTo,
     Region,
     sleep
 )
 
-def run_arcane_crystal() -> None:
+def run_arcane_crystal() -> int:
     """
     Execute the Arcane Crystal interface routing subroutine.
 
@@ -38,9 +38,10 @@ def run_arcane_crystal() -> None:
     triggers to return the bot execution path back to the main canvas.
     """
     click((1840, 55))
+    return 0
 
 
-def run_arena_of_kings() -> None:
+def run_arena_of_kings() -> int:
     """
     Execute the Arena of Kings navigational cleanup subroutine.
 
@@ -48,17 +49,17 @@ def run_arena_of_kings() -> None:
     at the global exit anchors to restore primary dashboard visibility.
     """
     click((1855, 115))
+    return 0
 
 
-def run_campaign() ->None|int:
+def run_campaign() ->int:
     """Perform Campaign Task"""
-    timestamps = [get_next_reset()]
+    timestamps = []
 
     # Check if we can claim loot
     if color_at(80, 1000) == 'green':
         click((80, 1000))
-    next_loot = Region(230, 830, 200, 40).text('0123456789:')
-    Debug.info("Next Campaign loot in: %s", str(next_loot))
+        timestamps.append(int(time.time()) + 21600)
 
     # Check for daily missions
     if color_at(1870, 990) == 'red':
@@ -100,62 +101,60 @@ def run_campaign() ->None|int:
         click((1820, 70))
     click((1510, 90))
     click((1840, 60))
-    return min(timestamps)
+    if len(timestamps):
+        return min(timestamps)
+    return 0
 
-def run_challenge() -> None:
+def run_challenge() -> int:
     """
     Run monster challenge.
     """
     while color_at(870, 960) == 'green':
         click((950, 960))
-        pyautogui.moveTo(950, 1030)
+        moveTo((950, 1030))
         sleep(3)
 
     click((1840, 55))
+    return 0
 
-def run_check_upgrade() -> None:
+def run_check_upgrade() -> int:
     """
     Validate and enforce the global hero upgrade multiplier mode via OCR.
 
     Scans the primary upgrade interaction canvas text and sequentially clicks
     the selector until the screen state matches the target configuration mode.
     """
-
-    # Establish the precise viewport bounds for the primary upgrade button canvas
     main_upgrade = Region(1661, 910, 259, 170)
     target_mode = str(CONFIG['upgrade_mode']).lower()
 
     # Cycle selector modes inline until text configuration criteria are met
     while target_mode not in main_upgrade.text().lower():
-        Debug.info(main_upgrade.text())
         main_upgrade.click()
         main_upgrade.moveMouseAway()
+    return time.time() * 2
 
-
-def run_engineer() -> None:
+def run_engineer() -> int:
     """
     Execute the Engineer resource allocation routine.
 
     Interacts with the localized production interface before firing
     global exit anchors to restore primary canvas visibility.
     """
-
     click((1620, 730))
     click((1840, 55))
+    return int(time.time()) + 21600
 
-
-def run_firestone_collect() -> None:
+def run_firestone_collect() -> int:
     """
     Execute the Firestone collection interface clearing routing.
 
     Fires a precise exit input to clear the localized inventory
     overlay and return execution context back to the central loop.
     """
-
     click((1840, 55))
+    return 0
 
-
-def run_firestone_research() -> None:
+def run_firestone_research() -> int:
     """
     Manage the Firestone research pipeline lifecycle in two distinct phases.
 
@@ -187,12 +186,13 @@ def run_firestone_research() -> None:
             break
 
         if color_at(970, 660) == 'lightbrown_research_full':
-            Debug.error("[Firestone Research] Research slots full")
+            Debug.warn("[Firestone Research] Research slots full")
             click((1400, 350))
             sleep(1)
             click((1250, 200))
             break
     click((1840, 55))
+    return 0
 
 # Static UI region boundaries for the War Machine Garage interface
 # Modify these coordinates to match your active Chrome browser resolution
@@ -255,20 +255,19 @@ def run_garage_asset_scraper() -> None:
 
     Debug.info(f"Garage scraper cycle finished cleanly. Total unique assets mapped: {len(scanned_machines)}")
 
-def run_guild_expeditions() -> None:
+def run_guild_expeditions() -> int:
     """
     Execute sequentially coordinated inputs inside the Guild Expeditions panel.
 
     Processes an ordered array of screen coordinate nodes to advance active
     expedition pipelines with minimal state tracking.
     """
-
     for coords in [(1290, 330), (1290, 330), (1510, 70)]:
         sleep(0.5)
         click(coords)
+    return 0
 
-
-def run_hero_upgrade() -> None:
+def run_hero_upgrade() -> int:
     """
     Execute sequential hero upgrades based on real-time RAM pixel color scans.
 
@@ -277,17 +276,22 @@ def run_hero_upgrade() -> None:
     """
     while True:
         inactive_slots = 0
+        clicked = False
 
         # Exact horizontal pixel anchors for the hero upgrade triggers
         for x_coord in [115, 640, 810, 1010, 1200, 1380, 1600]:
             if color_at(x_coord, 930) == 'yellow':
-                click((x_coord + 10, 960))
+                click((x_coord, 980))
+                clicked = True
             else:
                 inactive_slots += 1
+        if clicked:
+            moveTo((x_coord, 1080))
 
         # Break the lifecycle loop once all monitored slots report depletion
         if inactive_slots == 7:
-            break
+            return time.time() + 30
+    return 0
 
 def run_map() -> None:
     """
@@ -326,31 +330,30 @@ def run_map() -> None:
                 sleep(0.5)
 
     click((1840, 55))
+    return 0
 
-
-def run_meteorite() -> None:
+def run_meteorite() -> int:
     """
     Execute the Meteorite Research navigational cleanup subroutine.
 
     Clears the active research panel viewport context by firing hardware
     inputs at the global exit anchors to restore primary dashboard visibility.
     """
-
     click((1840, 55))
+    return 0
 
-
-def run_pickaxe() -> None:
+def run_pickaxe() -> int:
     """
     Execute the Pickaxe tool allocation and interaction routine.
 
     Interacts with the localized mining area coordinates before triggering
     global exit anchors to return execution back to the primary canvas.
     """
-
     click((690, 660))
     click((1840, 55))
+    return 0
 
-def run_pirates_price() -> None:
+def run_pirates_price() -> int:
     """
     Execute the Pirates Price tool allocation and interaction routine.
 
@@ -366,8 +369,9 @@ def run_pirates_price() -> None:
         dragDrop((1500, 800), (272, 800))
         sleep(2)
     click((1840, 55))
+    return 0
 
-def run_quests() -> None:
+def run_quests() -> int:
     """
     Execute the quest completion and collection protocol.
 
@@ -378,10 +382,11 @@ def run_quests() -> None:
         click((x, 130))
         sleep(1)
         while color_at(1380, 300) == 'green':
-            click((13900, 300))
-            sleep(1)
+            click((1560, 300))
+            moveTo((1620, 300))
 
     click((1840, 55))
+    return 0
 
 def run_signin() -> int:
     """
@@ -391,7 +396,7 @@ def run_signin() -> int:
     click((1840, 55))
     return get_next_reset()
 
-def run_tavern() -> None:
+def run_tavern() -> int:
     """
     Manage the tavern dispatch queue and resource accumulation.
 
@@ -407,3 +412,4 @@ def run_tavern() -> None:
             break
 
     click((1840, 55))
+    return time.time() + 3600

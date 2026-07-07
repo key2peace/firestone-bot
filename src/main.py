@@ -13,6 +13,7 @@ from custom_core import (
     Debug,
     duration_text,
     LOCKFILE,
+    moveTo, 
     Region,
     sleep
 )
@@ -30,12 +31,13 @@ def main() -> None:
     """
     global tasks
 
-    while not os.path.exists(LOCKFILE):
-        sleep(1)
-    Debug.info("[system] Firestone Bot engine active. Starting main loop.")
-
     _screen = Region(0, 0, 1920, 1080)
     main_finished = Region(0, 200, 130, 290)
+
+    while not os.path.exists(LOCKFILE):
+        sleep(1)
+
+    Debug.info("[system] Firestone Bot engine active.")
 
     # Crazygames dutch gamebar
     img = _screen.exists('images/misc/gamebar_maximize.png')
@@ -52,38 +54,44 @@ def main() -> None:
         img.waitVanish()
 
     try:
-        task_logic.run_check_upgrade()
         Debug.info("[Main] Entering main loop")
         while True:
             # Enforce execution suspension if the core state drops into fallback
             while not os.path.exists(LOCKFILE):
                 sleep(1)
-            task_logic.run_hero_upgrade()
             for name, (pattern, task_function_name, timeout) in tasks.items():
                 friendly_name = name.replace('_', ' ').title()
-                if timeout and timeout <= time.time():
+
+                if timeout and timeout >= time.time():
                     continue
-                match = main_finished.exists(pattern)
-                if match:
+
+                #start_tasks = time.time_ns()
+                if len(pattern):
+                    match = main_finished.exists(pattern)
+                    if not match:
+                        continue
+
                     Debug.history("[Tasks] %s detected", friendly_name)
                     match.highlight()
                     match.click()
-                    match.waitVanish()
+                    moveTo((0,540))
                     sleep(2)
                     capture(name+'.png')
-                    if hasattr(task_logic, task_function_name):
-                        start = time.time_ns()
-                        Debug.history("[Tasks] %s - Launching %s", friendly_name, task_function_name)
-                        actual_function = getattr(task_logic, task_function_name)
-                        if actual_function.__annotations__['return']:
-                            timeout_return = actual_function()
-                            if timeout_return:
-                                tasks[name] = (pattern, task_function_name, timeout_return)
-                        else:
-                            actual_function()
-                        Debug.history("[Tasks] %s - Finished in %s", friendly_name, duration_text(start))
-                    else:
-                        Debug.history("[Tasks] %s\nMissing handler %s", friendly_name, task_function_name)
+
+                if hasattr(task_logic, task_function_name):
+                    start_task = time.time_ns()
+                    actual_function = getattr(task_logic, task_function_name)
+
+                    Debug.history("[Task] %s - Launching %s", friendly_name, task_function_name)
+                    timeout_return = int(actual_function()) # pylint: disable=assignment-from-no-return
+                    if timeout_return:
+                        tasks[name] = (pattern, task_function_name, int(timeout_return))
+                        timeout_return = duration_text(time.time_ns(), timeout_return*1000000000)
+                    Debug.history("[Task] %s - Finished in %s (return: %s)", friendly_name, duration_text(start_task), str(timeout_return))
+                else:
+                    Debug.history("[Task] %s\nMissing handler %s", friendly_name, task_function_name)
+
+                #Debug.history("[Tasks] Finished in %s", duration_text(start_tasks))
 
     except KeyboardInterrupt as e:
         Debug.info("[Main] Received Exception\n%s", str(e))

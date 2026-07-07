@@ -25,6 +25,8 @@ dailies = {
 
 # name: (pattern, callable, timeout)
 tasks = {
+    'check_upgrade':        ('',                                    'run_check_upgrade', 0),
+    'hero_upgrade':         ('',                                    'run_hero_upgrade', 0),
     'arcane_crystal':       ('images/tasks/arcane_crystal.png',     'run_arcane_crystal', 0),
     'arena_of_kings':       ('images/tasks/arena_of_kings.png',     'run_arena_of_kings', 0),
     'campaign':             ('images/tasks/campaign.png',           'run_campaign', 0),
@@ -37,7 +39,7 @@ tasks = {
     'meteorite':            ('images/tasks/meteorite.png',          'run_meteorite', 0),
     'pickaxe':              ('images/tasks/pickaxe.png',            'run_pickaxe', 0),
     'priates_price':        ('images/tasks/pirates_price.png',      'run_pirates_price', 0),
-    #'quests':               ('images/tasks/quests.png',             'run_quests', 0),
+    'quests':               ('images/tasks/quests.png',             'run_quests', 0),
     'sign_in':              ('images/tasks/sign_in.png',            'run_signin', 0),
     'tavern':               ('images/tasks/tavern.png',             'run_tavern', 0)
 }
