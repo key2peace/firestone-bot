@@ -101,7 +101,7 @@ def run_campaign() ->int:
         click((1820, 70))
     click((1510, 90))
     click((1840, 60))
-    if len(timestamps):
+    if timestamps:
         return min(timestamps)
     return 0
 

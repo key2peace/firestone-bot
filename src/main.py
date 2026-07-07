@@ -66,7 +66,7 @@ def main() -> None:
                     continue
 
                 #start_tasks = time.time_ns()
-                if len(pattern):
+                if pattern:
                     match = main_finished.exists(pattern)
                     if not match:
                         continue
