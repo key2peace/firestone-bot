@@ -13,7 +13,7 @@ from custom_core import (
     Debug,
     duration_text,
     LOCKFILE,
-    moveTo, 
+    moveTo,
     Region,
     sleep
 )
