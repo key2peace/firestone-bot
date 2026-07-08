@@ -1,22 +1,14 @@
 {
-    "research_slotsfull.png": {
-        "timestamp": 1782706994.650857,
-        "sha256": "dbf703bdc80f39fc88d7ca72c71964d9eb5c2087f349f343e51af82683c9c938"
-    },
-    "upgrade_vermilion.png": {
-        "sha256": "c4ccc167f21292289432650f15df8a30da792d72c55f618d322bcb6ae454f941",
-        "timestamp": 1782662398.3390243
-    },
     "collect.png": {
-        "timestamp": 1782706994.6488569,
+        "timestamp": 1783541570.2627232,
         "sha256": "895b5c9b607c76a41bec4fce008e87535cffc63194b304cb0edd40153c7bc1b7"
     },
     "research.png": {
-        "timestamp": 1782706994.649858,
+        "timestamp": 1783541570.277738,
         "sha256": "457bc1b541eb71ae6e6c0b72e6269a205bb1db318add84c7f08b9dc8dd23d523"
     },
     "research_bubble.png": {
-        "timestamp": 1782706994.649858,
+        "timestamp": 1783541570.2935612,
         "sha256": "83183a182a4d8be6ac28bc7e83f345be1089d436857f1d48bf52f31cc8ed79bb"
     }
 }

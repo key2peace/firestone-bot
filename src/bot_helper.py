@@ -116,7 +116,7 @@ def parse_ui_timeout(ocr_text: str) -> float | None:
 
     # Onbreekbare regex die flexibel omgaat met eventuele OCR-witruimtes of letters
     # Vangt optioneel de dagen (d) op, gevolgd door hh:mm:ss
-    timer_pattern = r"((\d+)\s*d\s+)?(\d{2})?:(\d{2}):(\d{2})"
+    timer_pattern = r"(\d{2})?:?(\d{2}):(\d{2})"
     match = re.search(timer_pattern, ocr_text.lower())
 
     if not match:
@@ -124,15 +124,14 @@ def parse_ui_timeout(ocr_text: str) -> float | None:
 
     try:
         # Extract groups and safely default the days to 0 if not present in UI
-        days_str, hours_str, minutes_str, seconds_str = match.groups()
+        hours_str, minutes_str, seconds_str = match.groups()
 
-        days = int(days_str) if days_str else 0
         hours = int(hours_str) if hours_str else 0
         minutes = int(minutes_str)
         seconds = int(seconds_str)
 
         # Convert the duration matrix directly into absolute seconds
-        total_cooldown_seconds = (days * 86400) + (hours * 3600) + (minutes * 60) + seconds
+        total_cooldown_seconds = (hours * 3600) + (minutes * 60) + seconds
 
         # Return the absolute execution boundary timestamp
         return time.time() + total_cooldown_seconds

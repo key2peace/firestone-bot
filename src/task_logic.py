@@ -17,7 +17,6 @@ from bot_helper import (
     tasks
 )
 from custom_core import (
-    capture,
     click,
     color_at,
     colormap,
@@ -35,9 +34,6 @@ from custom_core import (
 def run_arcane_crystal() -> int:
     """
     Execute the Arcane Crystal interface routing subroutine.
-
-    Acts as a transient navigational bridge, firing defensive exit
-    triggers to return the bot execution path back to the main canvas.
     """
     for _ in range(1, 5):
         if color_at(1050, 970) == 'green':
@@ -57,9 +53,6 @@ def run_arcane_crystal() -> int:
 def run_arena_of_kings() -> int:
     """
     Execute the Arena of Kings navigational cleanup subroutine.
-
-    Clears the active arena viewport context by firing hardware inputs
-    at the global exit anchors to restore primary dashboard visibility.
     """
     click((1855, 115))
     return 0
@@ -193,7 +186,7 @@ def run_firestone_collect() -> int:
         click((960, 660))
         sleep(0.5)
         click((1100, 720))
-        sleep(10)
+        sleep(5)
         click((950, 740))
     else:
         click((1840, 55))
@@ -310,9 +303,17 @@ def run_guild_expeditions() -> int:
     Processes an ordered array of screen coordinate nodes to advance active
     expedition pipelines with minimal state tracking.
     """
-    for coords in [(1290, 330), (1290, 330), (1510, 70)]:
-        sleep(0.5)
-        click(coords)
+    timestamps = []
+    click((1250,330))
+    ts = Region(720, 320, 220, 50).text('1234567890:', colormap['white'])
+    if ts:
+        timeout = parse_ui_timeout(ts)
+        if timeout:
+            timestamps.append(timeout)
+    click((1290, 330))
+    click((1510, 70))
+    if timestamps:
+        return min(timestamps)
     return 0
 
 def run_hero_upgrade() -> int:
@@ -384,11 +385,9 @@ def run_map() -> None:
                 m.waitVanish()
                 if color_at(1090, 870) == 'green':
                     ts = Region(1000, 790, 200, 36).text('1234567890:', colormap['green'])
-                    print(f"Timeout text: {ts}")
                     if ts:
                         timeout = parse_ui_timeout(ts)
                         if timeout:
-                            print(f"Timeout parsed: {timeout}")
                             timestamps.append(timeout)
                     click((1090, 870))
                     sleep(0.5)
@@ -411,6 +410,9 @@ def run_new_hero() -> int:
     Execute New Hero Screen
     """
     click((1840, 55))
+    # Still an accidential match
+    if color_at(1777, 87) == 'white':
+        click((1777, 87))
     return time.time()+604800
 
 def run_meteorite() -> int:
@@ -529,4 +531,4 @@ def run_tavern() -> int:
             break
 
     click((1840, 55))
-    return time.time() + 3600
+    return 0

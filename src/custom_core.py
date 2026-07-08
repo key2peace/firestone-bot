@@ -58,7 +58,7 @@ CONFIG = {
 }
 CONFIG_FILE = 'bot_settings.json'
 
-def ask_local_ollama(enemy_info: str) -> str:
+def ask_local_ollama(prompt: str) -> str:
     """
     Evaluate an enemy lineup against a cached player baseline via /api/chat.
 
@@ -96,12 +96,12 @@ def ask_local_ollama(enemy_info: str) -> str:
                 _ollama_cache.append(assistant_msg)
         except Exception as error:
             Debug.error("[Ollama] Base handshake failed: %s", error)
-            return "NO"
+            return ""
 
     _ollama_cache = _ollama_cache[:2]
 
     payload_messages = list(_ollama_cache) + [
-        {"role": "user", "content": f"ENEMY TEAM:\n{enemy_info}"}
+        {"role": "user", "content": prompt}
     ]
 
     try:
@@ -113,38 +113,12 @@ def ask_local_ollama(enemy_info: str) -> str:
         response.raise_for_status()
 
         # Strip alle witregels en dwing HOOFDLETTERS ('YES' of 'NO')
-        ai_decision = response.json().get("message", {}).get("content", "").strip().upper()
-        return ai_decision if ai_decision in ("YES", "NO") else "NO"
+        ai_decision = response.json().get("message", {}).get("content", "").strip()
+        return ai_decision
 
     except Exception as error:
         Debug.error("[Ollama] Live matchmaking query failed: %s", error)
         return "NO"
-
-
-    payload = {
-        "model": CONFIG['ollama_model'],
-        "prompt": prompt,
-        "stream": False
-    }
-
-    # Als er al een actieve sessie is, haken we die er direct aan
-    if OLLAMA_SESSION_CONTEXT is not None:
-        payload["context"] = OLLAMA_SESSION_CONTEXT
-
-    try:
-        response = requests.post(CONFIG['ollama_url']+'/api/chat', json=payload, timeout=60)
-        if not response:
-            return ""
-
-        data = response.json()
-
-        # Sla de nieuwe, geüpdatete sessie-tokens direct op voor de volgende klik
-        OLLAMA_SESSION_CONTEXT = data.get("context")
-
-        return data.get("response", "")
-    except Exception as error:
-        Debug.error("Ollama connection failed: %s", error)
-        return ""
 
 def ask_ollama_vision(src_mat, prompt_text: str, model: str = "llama3.2-vision") -> str:
     """
@@ -205,18 +179,18 @@ def capture(filename: str) ->bool:
 
     target_path = os.path.join(target_dir, filename)
 
-    if not os.path.exists(target_path):
-        try:
-            return cv2.imwrite(target_path, grab_screen_to_mat())
-        except Exception as e:
-            Debug.error("[Capture] Failed to write matrix: " + str(e))
-            return False
+    if os.path.exists(target_path):
+        return False
 
-    return False
+    try:
+        return cv2.imwrite(target_path, grab_screen_to_mat())
+    except Exception as e:
+        Debug.error("[Capture] Failed to write matrix: " + str(e))
+        return False
 
 def click(location: tuple[int, int]) ->None:
     """
-    Perform a hardware-level mouse click via pyautogui.
+    Perform a hardware-level mouse click.
 
     Integrates precise hover-settle and post-click animation delays
     to guarantee registration within the Unity game engine.
@@ -232,11 +206,11 @@ def click(location: tuple[int, int]) ->None:
     x_coord, y_coord = location
 
     try:
-        pyautogui.moveTo(x_coord, y_coord)
+        mouse_controller.moveTo(x_coord, y_coord)
         time.sleep(0.3)
-        pyautogui.mouseDown()
+        mouse_controller.mouseDown()
         time.sleep(0.01)
-        pyautogui.mouseUp()
+        mouse_controller.mouseUp()
         time.sleep(0.3)
     except pyautogui.FailSafeException:
         toggle_br()
@@ -267,7 +241,7 @@ def color_at(x: int, y: int) -> str:
 def dragDrop(start_location: Union[Tuple[int, int], 'Region', 'Match'],
              end_location: Union[Tuple[int, int], 'Region', 'Match']) -> None:
     """
-    Perform a hardware-level drag and drop operation via pyautogui.
+    Perform a hardware-level drag and drop operation.
 
     Args:
         start_location (Union[Tuple[int, int], Region, Match]): Source coordinates.
@@ -292,10 +266,11 @@ def dragDrop(start_location: Union[Tuple[int, int], 'Region', 'Match'],
             x2, y2 = end_location
 
     # Execute precise drag-and-drop workflow matching Unity engine requirements
-    moveTo((int(x1), int(y1)))
+    mouse_controller.moveTo(int(x1), int(y1))
+    mouse_controller.mouseDown()
     time.sleep(0.1)
-    pyautogui.dragTo(int(x2), int(y2), 2, button='left')
-    time.sleep(0.1)
+    mouse_controller.moveTo(int(x2), int(y2))
+    mouse_controller.mouseUp()
 
 def duration_text(start_time_ns: int, stop_time_ns: int = 0):
     """
@@ -335,9 +310,6 @@ def duration_text(start_time_ns: int, stop_time_ns: int = 0):
         if amount:
             result += f"{amount}{suffix} "
     return result.strip()
-
-import cv2
-import numpy as np
 
 def extract_color_layer(src_mat: np.ndarray, color_range: tuple[int, int, int, int, int, int]) -> np.ndarray:
     """
@@ -428,9 +400,6 @@ def get_pixel_color(x: int, y: int) -> Tuple[int, int, int]:
     """
     Retrieve the exact RGB color values of a specific screen pixel coordinate.
 
-    Replaces the legacy Java layer with a lightweight multi-platform
-    pyautogui pixel buffer evaluation.
-
     Args:
         x (int): The absolute X-coordinate layout pixel anchor.
         y (int): The absolute Y-coordinate layout pixel anchor.
@@ -439,7 +408,8 @@ def get_pixel_color(x: int, y: int) -> Tuple[int, int, int]:
         tuple[int, int, int]: A tuple containing the (Red, Green, Blue) channels.
     """
     try:
-        return pyautogui.pixel(x, y)
+        pixel = tuple(grab_screen_to_mat(Region(x, y, 1, 1))[0][0])
+        return (int(pixel[2]), int(pixel[1]), int(pixel[0]))
     except Exception as e:
         Debug.error("[get_pixel_color] Failed to extract color map coordinates: %s", str(e))
         return (0, 0, 0)
@@ -480,7 +450,7 @@ def grab_screen_to_mat(region_obj: Region = None) -> 'np.ndarray | None':
 
 def moveTo(location: tuple[int, int]) ->None:
     """
-    Perform a hardware-level mouse move via pyautogui.
+    Perform a hardware-level mouse move.
 
     Args:
         location (tuple[int, int]): The absolute X and Y coordinate layout pixels.
@@ -492,7 +462,7 @@ def moveTo(location: tuple[int, int]) ->None:
     x_coord, y_coord = location
 
     try:
-        pyautogui.moveTo(x_coord, y_coord)
+        mouse_controller.moveTo(x_coord, y_coord)
     except pyautogui.FailSafeException:
         toggle_br()
 
@@ -549,12 +519,12 @@ def optimize_alpha_channels(target_dir: str = 'images', threshold: int = 128) ->
                         channels = src.shape[2] if len(src.shape) == 3 else 1
 
                         if channels >= 4:
-                            Debug.info("[optimize_alpha_channels] Optimizing alpha layers for: %s", str(filename))
+                            Debug.info("[optimize_alpha_channels] Optimizing alpha layers for: %s", str(filepath))
                             optimized_src = filter_mat_alpha(src, threshold)
                             cv2.imwrite(filepath, optimized_src)
 
                 except Exception as e:
-                    Debug.error("[optimize_alpha_channels] Alpha Optimizer could not write %s:\n%s", filename, str(e))
+                    Debug.error("[optimize_alpha_channels] Alpha Optimizer could not write %s:\n%s", filepath, str(e))
                 TRACKER.add(filepath)
     Debug.info("[optimize_alpha_channels] Alpha optimization scan complete. All indices successfully synchronized.")
 
@@ -1130,9 +1100,6 @@ class Region():
 
         Positions the mouse 10 pixels to the right of this region's right edge
         to clear the viewport for subsequent frame scans.
-
-        Raises:
-            RuntimeError: If the pyautogui screen corner fail-safe triggers.
         """
         target_x = self.x + self.w + 10
         target_y = self.y + int(self.h / 2)
@@ -1272,7 +1239,9 @@ TRACKER = ImageTracker()
 optimize_alpha_channels()
 if os.name == 'nt':
     keyboard_controller = pydirectinput
+    mouse_controller = pydirectinput
 else:
     keyboard_controller = keyboard.Controller()
+    mouse_controller = pyautogui
 keyboard_listener = keyboard.Listener(on_release=on_keyrelease)
 keyboard_listener.start()
