@@ -54,5 +54,29 @@
     "challenge.png": {
         "timestamp": 1783373468.0314267,
         "sha256": "592fc356641b791b90ae3103db1411da506bc8819f0cc80c2c2b7f55d9c4efdf"
+    },
+    "garage.png": {
+        "timestamp": 1783447890.917352,
+        "sha256": "4e52cad21cb33fd916f6e9e32edcb4cf9acf434c05931eca2715d9101492c160"
+    },
+    "awakening.png": {
+        "timestamp": 1783455322.476295,
+        "sha256": "60b2ea265233f831a6307e0a3721df16b9f87d82050e5aaf5b3084ec77feddad"
+    },
+    "ledra_supplies.png": {
+        "timestamp": 1783458613.140899,
+        "sha256": "bfe54986f828cbc8a000359e831603224a51f818354e91d40c0e41bd50802976"
+    },
+    "scarab_token.png": {
+        "timestamp": 1783458613.1588979,
+        "sha256": "d63803da9592a2cdf89751efa3dcb984bd01c9f9908d1e0956e65dfc2cbab68a"
+    },
+    "new_hero.png": {
+        "timestamp": 1783531816.0771332,
+        "sha256": "c6802dbecc7aa89afee35e6ee2396314e536c4c343663752bd9a36562929ceac"
+    },
+    "pharaos_vault.png": {
+        "timestamp": 1783534066.9240584,
+        "sha256": "f7f8f525a94bfafabc7450ec43e7db16d87cd9246984388b971dd64ab9c6b473"
     }
 }

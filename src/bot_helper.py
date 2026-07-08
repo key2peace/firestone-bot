@@ -29,17 +29,23 @@ tasks = {
     'hero_upgrade':         ('',                                    'run_hero_upgrade', 0),
     'arcane_crystal':       ('images/tasks/arcane_crystal.png',     'run_arcane_crystal', 0),
     'arena_of_kings':       ('images/tasks/arena_of_kings.png',     'run_arena_of_kings', 0),
+    'awakening':            ('images/tasks/awakening.png',          'run_awakening', 0),
     'campaign':             ('images/tasks/campaign.png',           'run_campaign', 0),
     'challenge':            ('images/tasks/challenge.png',          'run_challenge', 0),
     'engineer':             ('images/tasks/engineer.png',           'run_engineer', 0),
     'firestone_collect':    ('images/tasks/firestone/collect.png',  'run_firestone_collect', 0),
+    'firestone_collect2':   ('',                                    'trigger_firestone_collect', 0),
     'firestone_research':   ('images/tasks/firestone/research.png', 'run_firestone_research', 0),
     'guild_expeditions':    ('images/tasks/guild_expeditions.png',  'run_guild_expeditions', 0),
+    'ledra_supplies':       ('images/tasks/ledra_supplies.png',     'run_ledra_supplies', 0),
     'map':                  ('images/tasks/map.png',                'run_map', 0),
+    'new_hero':             ('images/tasks/new_hero.png',           'run_new_hero', 0),
     'meteorite':            ('images/tasks/meteorite.png',          'run_meteorite', 0),
     'pickaxe':              ('images/tasks/pickaxe.png',            'run_pickaxe', 0),
+    'pharaos_vault':        ('images/tasks/pharaos_vault.png',      'run_scarab_vault', 0),
     'priates_price':        ('images/tasks/pirates_price.png',      'run_pirates_price', 0),
     'quests':               ('images/tasks/quests.png',             'run_quests', 0),
+    'scarab_token':         ('images/tasks/scarab_token.png',       'run_scarab_token', 0),
     'sign_in':              ('images/tasks/sign_in.png',            'run_signin', 0),
     'tavern':               ('images/tasks/tavern.png',             'run_tavern', 0)
 }
@@ -110,7 +116,7 @@ def parse_ui_timeout(ocr_text: str) -> float | None:
 
     # Onbreekbare regex die flexibel omgaat met eventuele OCR-witruimtes of letters
     # Vangt optioneel de dagen (d) op, gevolgd door hh:mm:ss
-    timer_pattern = r"(?:(\d+)\s*d\s+)?(\d{2}):(\d{2}):(\d{2})"
+    timer_pattern = r"((\d+)\s*d\s+)?(\d{2})?:(\d{2}):(\d{2})"
     match = re.search(timer_pattern, ocr_text.lower())
 
     if not match:
@@ -121,7 +127,7 @@ def parse_ui_timeout(ocr_text: str) -> float | None:
         days_str, hours_str, minutes_str, seconds_str = match.groups()
 
         days = int(days_str) if days_str else 0
-        hours = int(hours_str)
+        hours = int(hours_str) if hours_str else 0
         minutes = int(minutes_str)
         seconds = int(seconds_str)
 

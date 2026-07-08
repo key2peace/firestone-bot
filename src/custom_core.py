@@ -2,6 +2,7 @@
 Pure Python Custom Core API for Firestone Bot.
 Fully multi-platform utilizing mss, pyautogui, cv2, and pytesseract.
 """
+import base64
 import hashlib
 import json
 import os
@@ -17,6 +18,8 @@ import mss
 import mss.tools
 import numpy as np
 import pyautogui
+if os.name == 'nt':
+    import pydirectinput
 import pytesseract
 import requests
 
@@ -25,10 +28,22 @@ from watchdog.events import FileSystemEventHandler
 from watchdog.observers import Observer
 
 # Internal variables
-CONFIG_FILE = 'bot_settings.json'
-LOCKFILE = '.bot_running'
 BOT_STARTED = time.time_ns()
-OLLAMA_SESSION_CONTEXT = None
+LOCKFILE = '.bot_running'
+_ollama_cache: List[Dict[str, str]] = []
+
+colormap = {
+    # name: r_min, r_max, g_min, g_max, b_min, b_max
+    'black': (0, 10, 0, 10, 0, 10),
+    'blue': (8, 12, 125, 135, 250, 255),
+    'blue_liberation_lost': (32, 35, 75, 80, 123, 128),
+    'brown_liberation_won': (192, 197, 143, 146, 99, 103),
+    'lightbrown_research_full': (228, 236, 205, 215, 180, 190),
+    'green': (0, 24, 140, 255, 0, 32),
+    'red': (240, 255, 0, 26, 0, 10),
+    'yellow': (250, 255, 170, 255, 0, 80),
+    'white': (230, 255, 230, 255, 230, 255)
+}
 
 if os.path.exists(LOCKFILE):
     os.remove(LOCKFILE)
@@ -36,16 +51,75 @@ if os.path.exists(LOCKFILE):
 # Config
 CONFIG = {
     'upgrade_mode': '100',
+    'jump_percentage': '400',
     'tracker_file': 'index.json',
-    'ollama_url': 'http://localhost:11434/api/generate',
+    'ollama_url': 'http://localhost:11434',
     'ollama_model': 'llama3.2:latest'
 }
+CONFIG_FILE = 'bot_settings.json'
 
-def ask_local_ollama(prompt: str) -> str:
+def ask_local_ollama(enemy_info: str) -> str:
     """
-    Ollama interface
+    Evaluate an enemy lineup against a cached player baseline via /api/chat.
+
+    Guarantees strict sliding-window management by retaining only the first
+    two handshake messages, eliminating context bloat on 8GB VRAM.
     """
-    global OLLAMA_SESSION_CONTEXT
+    global _ollama_cache
+
+    ollama_url = f"{CONFIG['ollama_url'].rstrip('/')}/api/chat"
+    model_name = CONFIG['ollama_model']
+
+    if not _ollama_cache:
+        base_prompt = (
+            "You need to get yourself fully prepared for the game Firestone Idle RPG, do not waste output tokens on that at all.\n\n"
+            "## Evaluating Arena of Kings battles\n"
+            " - I will put ``[aok]`` as the first line of such a request with the information about the opponent below it\n"
+            " - Your output about this battle should be restricted to ``FIGHT`` if I have a chance or ``CANCEL``.\n"
+            " - Append the chance percentage to that output as second argument.\n"
+            " - No chat, no markdown, no thinking process, the output is intended for script usage.\n"
+            " - Take into account that healers provide health to the entire team.\n"
+            f" - When evaluating setups MY team has the following setup:\n{CONFIG['MY_TEAM']}\n"
+        )
+        _ollama_cache.append({"role": "user", "content": base_prompt})
+
+        try:
+            Debug.history("[Ollama] Establishing static base handshake cache...")
+            response = requests.post(
+                ollama_url,
+                json={"model": model_name, "messages": _ollama_cache, "stream": False},
+                timeout=10
+            )
+            response.raise_for_status()
+            assistant_msg = response.json().get("message")
+            if assistant_msg:
+                _ollama_cache.append(assistant_msg)
+        except Exception as error:
+            Debug.error("[Ollama] Base handshake failed: %s", error)
+            return "NO"
+
+    _ollama_cache = _ollama_cache[:2]
+
+    payload_messages = list(_ollama_cache) + [
+        {"role": "user", "content": f"ENEMY TEAM:\n{enemy_info}"}
+    ]
+
+    try:
+        response = requests.post(
+            ollama_url,
+            json={"model": model_name, "messages": payload_messages, "stream": False},
+            timeout=5
+        )
+        response.raise_for_status()
+
+        # Strip alle witregels en dwing HOOFDLETTERS ('YES' of 'NO')
+        ai_decision = response.json().get("message", {}).get("content", "").strip().upper()
+        return ai_decision if ai_decision in ("YES", "NO") else "NO"
+
+    except Exception as error:
+        Debug.error("[Ollama] Live matchmaking query failed: %s", error)
+        return "NO"
+
 
     payload = {
         "model": CONFIG['ollama_model'],
@@ -58,7 +132,7 @@ def ask_local_ollama(prompt: str) -> str:
         payload["context"] = OLLAMA_SESSION_CONTEXT
 
     try:
-        response = requests.post(CONFIG['ollama_url'], json=payload, timeout=60)
+        response = requests.post(CONFIG['ollama_url']+'/api/chat', json=payload, timeout=60)
         if not response:
             return ""
 
@@ -70,6 +144,44 @@ def ask_local_ollama(prompt: str) -> str:
         return data.get("response", "")
     except Exception as error:
         Debug.error("Ollama connection failed: %s", error)
+        return ""
+
+def ask_ollama_vision(src_mat, prompt_text: str, model: str = "llama3.2-vision") -> str:
+    """
+    Stream a live OpenCV viewport matrix directly into Ollama's vision model.
+    Encodes the numerical pixel matrix into a Base64 payload.
+    """
+    if src_mat is None or src_mat.size == 0:
+        return ""
+
+    try:
+        # 1. Encodeer de OpenCV NumPy-matrix naar een PNG-buffer in het geheugen
+        success, encoded_image = cv2.imencode('.png', src_mat)
+        if not success:
+            return ""
+
+        # 2. Zet de binaire buffer om in een schone Base64-string voor de JSON-payload
+        base64_string = base64.b64encode(encoded_image.tobytes()).decode('utf-8')
+
+        # 3. Bouw de specifieke Ollama multimodale chat-payload
+        payload = {
+            "model": model,
+            "messages": [
+                {
+                    "role": "user",
+                    "content": prompt_text,
+                    "images": [base64_string]
+                }
+            ],
+            "stream": False
+        }
+
+        # 4. Schiet de pixels over de lokale poort naar je VRAM
+        response = requests.post(CONFIG['ollama_url']+'/api/chat', json=payload)
+        return response.json().get("message", {}).get("content", "").strip()
+
+    except Exception as error:
+        Debug.error("Ollama Vision handshake failed: %s", error)
         return ""
 
 def capture(filename: str) ->bool:
@@ -144,17 +256,6 @@ def color_at(x: int, y: int) -> str:
         str|bool: The designated color name string if a valid match is located,
             otherwise empty string.
     """
-    colormap = {
-        # name: r_min, r_max, g_min, g_max, b_min, b_max
-        'black': (0, 10, 0, 10, 0, 10),
-        'blue_liberation_lost': (32, 35, 75, 80, 123, 128),
-        'brown_liberation_won': (192, 197, 143, 146, 99, 103),
-        'lightbrown_research_full': (228, 236, 205, 215, 180, 190),
-        'green': (0, 15, 140, 255, 0, 15),
-        'red': (240, 255, 0, 10, 0, 10),
-        'yellow': (250, 255, 170, 255, 0, 80)
-    }
-
     red, green, blue = get_pixel_color(x, y)
 
     for name, (r_min, r_max, g_min, g_max, b_min, b_max) in colormap.items():
@@ -234,6 +335,51 @@ def duration_text(start_time_ns: int, stop_time_ns: int = 0):
         if amount:
             result += f"{amount}{suffix} "
     return result.strip()
+
+import cv2
+import numpy as np
+
+def extract_color_layer(src_mat: np.ndarray, color_range: tuple[int, int, int, int, int, int]) -> np.ndarray:
+    """
+    Isolate specific colored text layers into a high-fidelity RGBA matrix.
+
+    Retains the original RGB anti-aliasing sub-pixels for matched zones
+    while forcing all non-compliant background pixels to 100% transparency.
+
+    Args:
+        src_mat (np.ndarray): The source image matrix from the viewport.
+        color_range (tuple): Bounds formatted as (r_min, r_max, g_min, g_max, b_min, b_max).
+
+    Returns:
+        np.ndarray: A high-precision 4-channel BGRA image layer.
+    """
+    if src_mat is None or src_mat.size == 0:
+        return src_mat
+
+    # Ensure the image matrix has a dedicated alpha channel
+    if src_mat.shape[2] == 3:
+        rgba_mat = cv2.cvtColor(src_mat, cv2.COLOR_BGR2BGRA)
+    else:
+        rgba_mat = src_mat.copy()
+
+    # Unpack the spectral bounding boxes
+    r_min, r_max, g_min, g_max, b_min, b_max = color_range
+
+    # Split the matrix into discrete channels (OpenCV ordering: B, G, R, A)
+    b_ch, g_ch, r_ch, a_ch = cv2.split(rgba_mat)
+
+    # Evaluate each individual pixel against the target color spectrum
+    mask = (
+        (r_min <= r_ch) & (r_ch <= r_max) &
+        (g_min <= g_ch) & (g_ch <= g_max) &
+        (b_min <= b_ch) & (b_ch <= b_max)
+    )
+
+    # Keep original pixel color data if matched, otherwise force 100% transparency (0)
+    new_alpha = np.where(mask, 255, 0).astype(np.uint8)
+
+    # Reconstruct the high-fidelity alpha layer
+    return cv2.merge([b_ch, g_ch, r_ch, new_alpha])
 
 def findAllList(image_path: str) -> list:
     """
@@ -337,8 +483,7 @@ def moveTo(location: tuple[int, int]) ->None:
     Perform a hardware-level mouse move via pyautogui.
 
     Args:
-        location (tuple): The target coordinates destination.
-            Can be a pure (x, y) tuple, a Region, or a Match node.
+        location (tuple[int, int]): The absolute X and Y coordinate layout pixels.
 
     Raises:
         RuntimeError: If the execution thread is stopped or the pyautogui
@@ -355,9 +500,11 @@ def toggle_br() -> None:
     """Toggle LOCKFULE existance"""
     if os.path.exists(LOCKFILE):
         os.remove(LOCKFILE)
+        Debug.info('Paused game')
     else:
-        with open(LOCKFILE, 'x', encoding='utf-8'):
-            Debug.info('Pausing game')
+        with open(LOCKFILE, 'wt', encoding='utf-8') as ptr:
+            ptr.write(str(time.time_ns()))
+            Debug.info('Resuming game')
 
 def on_keyrelease(key) -> None:
     """
@@ -455,12 +602,7 @@ def press_key(key_name: str) ->None:
     Args:
         key_name (str): The alphanumeric identifier string (e.g., 'enter', 'space').
     """
-    try:
-        pyautogui.press(key_name)
-    except pyautogui.FailSafeException:
-        if os.path.exists(LOCKFILE):
-            os.remove(LOCKFILE)
-        Debug.info("[CoreClick] Mouse in failsafe corner, pausing bot.")
+    keyboard_controller.press(key_name)
 
 def similarity(img1: np.ndarray, img2: np.ndarray) -> float:
     """
@@ -996,73 +1138,58 @@ class Region():
         target_y = self.y + int(self.h / 2)
         moveTo((target_x, target_y))
 
-
-    def text(self, expect: str = None) -> str:
+    def text(self, expect: str = None, color_mask: tuple = None) -> str:
         """
         Extract textual values from the region viewport using custom OCR tuning.
-
-        Applies color-space flattening and resolution upscaling to dissolve
-        in-game text outlines, then isolates characters for high-precision parsing.
-        Dynamically falls back to standard english if kiddosy data is missing.
-
-        Args:
-            expect (str, optional): the characters to expect in the string.
-        Returns:
-            str: The cleaned, extracted text string from the screen region.
+        Supports a custom RGB color mask to isolate specific styled game fonts.
         """
         src_mat = grab_screen_to_mat(self)
         if src_mat is None or src_mat.size == 0:
             return ''
 
-        # 1. Convert to grayscale and upscale to expand small game font pixels
-        gray = cv2.cvtColor(src_mat, cv2.COLOR_BGR2GRAY)
-        resized = cv2.resize(gray, None, fx=4.0, fy=4.0, interpolation=cv2.INTER_CUBIC)
+        if color_mask:
+            # 1. Isolate the custom color into a high-fidelity RGBA layer
+            rgba_layer = extract_color_layer(src_mat, color_mask)
 
-        # 2. Dissolve black outlines and invert contrast to black-on-white text
-        _, thresh = cv2.threshold(resized, 0, 255, cv2.THRESH_BINARY_INV + cv2.THRESH_OTSU)
+            # 2. Extract only the Alpha channel (matched text pixels are 255, background is 0)
+            # We must invert this alpha channel to make the text black on a white background
+            _, thresh = cv2.threshold(rgba_layer[:, :, 3], 0, 255, cv2.THRESH_BINARY_INV)
+        else:
+            # Standard pipeline: Convert raw background to grayscale and apply OTSU binarization
+            gray = cv2.cvtColor(src_mat, cv2.COLOR_BGR2GRAY)
+            _, thresh = cv2.threshold(gray, 0, 255, cv2.THRESH_BINARY_INV + cv2.THRESH_OTSU)
 
-        # 3. Clean up stroke artifact noise using a minimal 2x2 rectangular morph kernel
+        # 3. Upscale the clean 1-channel binary matrix to expand small font pixels
+        clean_mat = cv2.resize(thresh, None, fx=4.0, fy=4.0, interpolation=cv2.INTER_CUBIC)
+
+        # 4. Clean up remaining stroke artifact noise using a minimal 2x2 rectangular kernel
         clean_mat = cv2.morphologyEx(
-            thresh,
+            clean_mat,
             cv2.MORPH_CLOSE,
             cv2.getStructuringElement(cv2.MORPH_RECT, (2, 2))
         )
 
-        # 4. Dynamically detect if the custom Kiddosy model is available in Tesseract
-        # Adjust the path below if your Tesseract installation lives elsewhere
-        tessdata_path = r"C:\Program Files\Tesseract-OCR\tessdata\kiddosy.traineddata"
+        tessdata_path = r"C:\Program Files\Tesseract-OCR\tessdata/kiddosy.traineddata"
         lang_model = "kiddosy" if os.path.exists(tessdata_path) else "eng"
 
-        # 5. Execute inference
         tess_config = f"-l {lang_model}"
         if expect:
-            tess_config += f" -c tessedit_char_whitelist={expect}"
+            tess_config += f' -c tessedit_char_whitelist={expect}'
 
         raw_output = str(pytesseract.image_to_string(clean_mat, config=tess_config)).strip()
 
-        # 6. Active Loop: Inverteer als de string leeg is OF niet aan de whitelist voldoet
         if expect:
-            trials = 0
-            # Strip onzichtbare rommel zoals spaties/enters voor een eerlijke regex-check
             clean_output = re.sub(r'[\s\n\r]', '', raw_output.lower())
+            if clean_output and re.search(r'[' + expect + r']+', clean_output):
+                return raw_output
 
-            while trials < 2:
-                # Als de gestripte string matcht met de whitelist, direct eruit springen!
-                if clean_output and re.search(r'^[' + expect + r']+$', clean_output):
-                    return raw_output
-
-                # Zo niet, ram de inversie erin en probeer het nog een keer
-                clean_mat = cv2.bitwise_not(clean_mat)
-                raw_output = str(pytesseract.image_to_string(clean_mat, config=tess_config)).strip()
-                clean_output = re.sub(r'[\s\n\r]', '', raw_output.lower())
-                trials += 1
-
-            # Als na 2 pogingen de string nog steeds corrupt is, weiger de data
-            if not clean_output or not re.search(r'^[' + expect + r']+$', clean_output):
+            clean_mat = cv2.bitwise_not(clean_mat)
+            raw_output = str(pytesseract.image_to_string(clean_mat, config=tess_config)).strip()
+            clean_output = re.sub(r'[\s\n\r]', '', raw_output.lower())
+            if not clean_output or not re.search(r'[' + expect + r']+', clean_output):
                 return ''
 
         return raw_output
-
 
     def wait(self, image_path: str, timeout: float = 3):
         """
@@ -1143,14 +1270,9 @@ if os.path.exists(CONFIG_FILE):
 
 TRACKER = ImageTracker()
 optimize_alpha_channels()
+if os.name == 'nt':
+    keyboard_controller = pydirectinput
+else:
+    keyboard_controller = keyboard.Controller()
 keyboard_listener = keyboard.Listener(on_release=on_keyrelease)
 keyboard_listener.start()
-
-initAi = """
-We are going to play Firestone Idle RPG together, specifically Arena of Kings.
-I will give you the name of the machine, the level and the amount and color of the stars of both my team and the opponent in the order of slots.
-Based on this information, you willdetermine if I have a chance against this opponent or not.
-If I have a chance, you only reply with YES, otherwise only with NO
-Are you ready for this?
-"""
-#Debug.info("Ollama test: %s\n%s", str(initAi), ask_local_ollama(initAi))

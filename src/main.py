@@ -67,12 +67,19 @@ def main() -> None:
 
                 #start_tasks = time.time_ns()
                 if pattern:
-                    match = main_finished.exists(pattern)
-                    if not match:
+                    match_count = 0
+                    for a in range(1, 3):
+                        match = main_finished.exists(pattern)
+                        if not match:
+                            break
+                        else:
+                            match_count += 1
+                        sleep(1)
+                    if not match or not match_count >= 2:
                         continue
 
                     Debug.history("[Tasks] %s detected", friendly_name)
-                    match.highlight()
+                    match.highlight(3)
                     match.click()
                     moveTo((0,540))
                     sleep(2)
