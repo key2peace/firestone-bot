@@ -67,10 +67,13 @@ def main() -> None:
 
                 #start_tasks = time.time_ns()
                 if pattern:
+                    match = None
                     match_count = 0
+                    _thearea = main_finished
                     for _ in range(0, 2):
-                        match = main_finished.exists(pattern)
+                        match = _thearea.exists(pattern)
                         if match:
+                            _thearea = match
                             match_count += 1
                         sleep(1)
                     if not match or match_count < 2:
