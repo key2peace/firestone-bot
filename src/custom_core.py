@@ -17,9 +17,7 @@ import cv2
 import mss
 import mss.tools
 import numpy as np
-import pyautogui
-if os.name == 'nt':
-    import pydirectinput
+import pyautogui  
 import pytesseract
 import requests
 
@@ -88,7 +86,7 @@ def ask_local_ollama(prompt: str) -> str:
             response = requests.post(
                 ollama_url,
                 json={"model": model_name, "messages": _ollama_cache, "stream": False},
-                timeout=10
+                timeout=90
             )
             response.raise_for_status()
             assistant_msg = response.json().get("message")
@@ -108,7 +106,7 @@ def ask_local_ollama(prompt: str) -> str:
         response = requests.post(
             ollama_url,
             json={"model": model_name, "messages": payload_messages, "stream": False},
-            timeout=5
+            timeout=90
         )
         response.raise_for_status()
 
@@ -151,7 +149,7 @@ def ask_ollama_vision(src_mat, prompt_text: str, model: str = "llama3.2-vision")
         }
 
         # 4. Schiet de pixels over de lokale poort naar je VRAM
-        response = requests.post(CONFIG['ollama_url']+'/api/chat', json=payload)
+        response = requests.post(CONFIG['ollama_url']+'/api/chat', json=payload, timeout=60)
         return response.json().get("message", {}).get("content", "").strip()
 
     except Exception as error:
@@ -338,7 +336,7 @@ def extract_color_layer(src_mat: np.ndarray, color_range: tuple[int, int, int, i
     r_min, r_max, g_min, g_max, b_min, b_max = color_range
 
     # Split the matrix into discrete channels (OpenCV ordering: B, G, R, A)
-    b_ch, g_ch, r_ch, a_ch = cv2.split(rgba_mat)
+    b_ch, g_ch, r_ch, _ = cv2.split(rgba_mat)
 
     # Evaluate each individual pixel against the target color spectrum
     mask = (
@@ -1238,6 +1236,7 @@ if os.path.exists(CONFIG_FILE):
 TRACKER = ImageTracker()
 optimize_alpha_channels()
 if os.name == 'nt':
+    import pydirectinput
     keyboard_controller = pydirectinput
     mouse_controller = pydirectinput
 else:

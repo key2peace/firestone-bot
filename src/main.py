@@ -80,7 +80,7 @@ def main() -> None:
                         continue
 
                     Debug.history("[Tasks] %s detected", friendly_name)
-                    match.highlight(3)
+                    #match.highlight(3)
                     match.click()
                     moveTo((0,540))
                     sleep(2)

@@ -39,7 +39,7 @@ tasks = {
     'guild_expeditions':    ('images/tasks/guild_expeditions.png',  'run_guild_expeditions', 0),
     'ledra_supplies':       ('images/tasks/ledra_supplies.png',     'run_ledra_supplies', 0),
     'map':                  ('images/tasks/map.png',                'run_map', 0),
-    'new_hero':             ('images/tasks/new_hero.png',           'run_new_hero', 0),
+    #'new_hero':             ('images/tasks/new_hero.png',           'run_new_hero', 0),
     'meteorite':            ('images/tasks/meteorite.png',          'run_meteorite', 0),
     'pickaxe':              ('images/tasks/pickaxe.png',            'run_pickaxe', 0),
     'pharaos_vault':        ('images/tasks/pharaos_vault.png',      'run_scarab_vault', 0),
