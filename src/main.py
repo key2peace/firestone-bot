@@ -41,7 +41,7 @@ def crazygames_check() -> None:
     if img:
         Debug.info("[Crazygames] Disabling bottom gamebar")
         img.click()
-        img.waitVanish()    
+        img.waitVanish()
 
 def main() -> None:
     """
