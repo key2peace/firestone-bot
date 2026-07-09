@@ -17,7 +17,7 @@ import cv2
 import mss
 import mss.tools
 import numpy as np
-import pyautogui  
+import pyautogui
 import pytesseract
 import requests
 

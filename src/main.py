@@ -22,23 +22,13 @@ from bot_helper import (
     tasks
 )
 
-def main() -> None:
+_screen = Region(0, 0, 1920, 1080)
+main_finished = Region(0, 200, 130, 290)
+
+def crazygames_check() -> None:
     """
-    Execute the primary automation lifecycle loop in local scope.
-
-    Coordinates sequential execution of task routines and ensures safe
-    termination handling when lifecycle interrupt thresholds are breached.
+    Check for crazygames specific elements
     """
-    global tasks
-
-    _screen = Region(0, 0, 1920, 1080)
-    main_finished = Region(0, 200, 130, 290)
-
-    while not os.path.exists(LOCKFILE):
-        sleep(1)
-
-    Debug.info("[system] Firestone Bot engine active.")
-
     # Crazygames dutch gamebar
     img = _screen.exists('images/misc/gamebar_maximize.png')
     if img:
@@ -51,7 +41,22 @@ def main() -> None:
     if img:
         Debug.info("[Crazygames] Disabling bottom gamebar")
         img.click()
-        img.waitVanish()
+        img.waitVanish()    
+
+def main() -> None:
+    """
+    Execute the primary automation lifecycle loop in local scope.
+
+    Coordinates sequential execution of task routines and ensures safe
+    termination handling when lifecycle interrupt thresholds are breached.
+    """
+    global tasks
+
+    while not os.path.exists(LOCKFILE):
+        sleep(1)
+
+    Debug.info("[system] Firestone Bot engine active.")
+    crazygames_check()
 
     try:
         Debug.info("[Main] Entering main loop")
