@@ -37,9 +37,11 @@ colormap = {
     'blue_liberation_lost': (32, 35, 75, 80, 123, 128),
     'brown_liberation_won': (192, 197, 143, 146, 99, 103),
     'lightbrown_research_full': (228, 236, 205, 215, 180, 190),
+    'brown': (80, 88, 37, 41, 14, 18),
     'green': (0, 24, 140, 255, 0, 32),
+    'green_talents': (100, 135, 150, 255, 0, 25),
     'red': (240, 255, 0, 26, 0, 10),
-    'yellow': (250, 255, 170, 255, 0, 80),
+    'yellow': (250, 255, 170, 255, 0, 100),
     'white': (230, 255, 230, 255, 230, 255)
 }
 
@@ -210,7 +212,7 @@ def click(location: tuple[int, int]) ->None:
         time.sleep(0.01)
         mouse_controller.mouseUp()
         time.sleep(0.3)
-    except pyautogui.FailSafeException:
+    except mouse_controller.FailSafeException:
         toggle_br()
 
 def color_at(x: int, y: int) -> str:
@@ -264,11 +266,11 @@ def dragDrop(start_location: Union[Tuple[int, int], 'Region', 'Match'],
             x2, y2 = end_location
 
     # Execute precise drag-and-drop workflow matching Unity engine requirements
-    mouse_controller.moveTo(int(x1), int(y1))
-    mouse_controller.mouseDown()
-    time.sleep(0.1)
-    mouse_controller.moveTo(int(x2), int(y2))
-    mouse_controller.mouseUp()
+    try:
+        mouse_controller.moveTo(int(x1), int(y1))
+        pyautogui.dragTo(int(x2), int(y2), 2, button='left')
+    except mouse_controller.FailSafeException:
+        toggle_br()
 
 def duration_text(start_time_ns: int, stop_time_ns: int = 0):
     """
@@ -429,22 +431,41 @@ def grab_screen_to_mat(region_obj: Region = None) -> 'np.ndarray | None':
     try:
         with mss.MSS() as _mss_client:
             # Define the exact bounding box required by mss
+            monitor = _mss_client.monitors[1]
             if region_obj:
                 monitor = {
-                    'top': int(region_obj.y),
-                    'left': int(region_obj.x),
+                    'top': monitor['top'] + int(region_obj.y),
+                    'left': monitor['left'] + int(region_obj.x),
                     'width': int(region_obj.w),
                     'height': int(region_obj.h)
                 }
-            else:
-                monitor = _mss_client.monitors[1]
-
-            # Grab only the targeted pixels directly from the main screen buffer
+            # Grab the targeted pixels directly from the main screen buffer
             return cv2.cvtColor(np.array(_mss_client.grab(monitor)), cv2.COLOR_BGRA2BGR)
 
     except Exception as error:  # pylint: disable=broad-exception-caught
         Debug.error("[grab_screen_to_mat] Failed to write matrix: %s", str(error))
         return None
+
+def mouseDown(timeout: float=0) -> None:
+    """
+    Push left button and do not release unless timeout specified
+
+    Args:
+        'timeout (float, optional)
+    """
+    try:
+        mouse_controller.mouseDown()
+        if timeout:
+            sleep(timeout)
+            mouse_controller.mouseUp()
+    except mouse_controller.FailSafeException:
+        toggle_br()
+
+def mouseUp() -> None:
+    """
+    Release mousebutton after mouseDown()
+    """
+    mouse_controller.mouseUp()
 
 def moveTo(location: tuple[int, int]) ->None:
     """
@@ -461,7 +482,7 @@ def moveTo(location: tuple[int, int]) ->None:
 
     try:
         mouse_controller.moveTo(x_coord, y_coord)
-    except pyautogui.FailSafeException:
+    except mouse_controller.FailSafeException:
         toggle_br()
 
 def toggle_br() -> None:
@@ -866,6 +887,7 @@ class Region():
         self.y = y
         self.w = w
         self.h = h
+        self.cache = []
 
     def click(self) -> None:
         """
@@ -891,26 +913,18 @@ class Region():
             Match|bool: A specialized Match object if the pattern is located,
                 otherwise False.
         """
-        screen_mat = grab_screen_to_mat(self)
+        res, h_size, w_size = self.match(image_path)
 
         template_rgba = cv2.imread(image_path, cv2.IMREAD_UNCHANGED)
         if template_rgba is None:
             return False
+        min_val, max_val, min_loc, max_loc = cv2.minMaxLoc(res)
+        #Debug.info(f"MinVal:{min_val} MaxVal:{max_val}")
 
         if len(template_rgba.shape) == 3 and template_rgba.shape[2] == 4:
-            alpha_channel = template_rgba[:, :, 3]
-            _, mask = cv2.threshold(alpha_channel, 254, 255, cv2.THRESH_BINARY)
-            template_bgr = cv2.cvtColor(template_rgba, cv2.COLOR_BGRA2BGR)
-
-            res = cv2.matchTemplate(screen_mat, template_bgr, cv2.TM_SQDIFF_NORMED, mask=mask)
-            min_val, _, min_loc, _ = cv2.minMaxLoc(res)
-
             is_matched = min_val <= 0.1
             top_left = min_loc
         else:
-            res = cv2.matchTemplate(screen_mat, template_rgba, cv2.TM_CCOEFF_NORMED)
-            _, max_val, _, max_loc = cv2.minMaxLoc(res)
-
             is_matched = max_val >= 0.9
             top_left = max_loc
 
@@ -918,9 +932,44 @@ class Region():
             abs_x = self.x + top_left[0]
             abs_y = self.y + top_left[1]
             h_size, w_size = template_rgba.shape[:2]
-            return Match(abs_x, abs_y, w_size, h_size, 1.0)
+            return Match(abs_x, abs_y, w_size, h_size, max_val)
 
         return False
+
+    def match(self, image_path: str) -> tuple[Match, int, int]|None:
+        """
+        Find pattern on screen
+
+        Args:
+            image_path (str): The local file path to the target pattern image (.png).
+        """
+
+        # Load the target pattern image from disk keeping channels unchanged
+        template_rgba = cv2.imread(image_path, cv2.IMREAD_UNCHANGED)
+        if template_rgba is None:
+            return None
+
+        try:
+            #Grab the live frame buffer directly into a numpy BGR matrix
+            screen_mat = grab_screen_to_mat(self)
+
+            if len(template_rgba.shape) == 3 and template_rgba.shape[2] == 4:
+                # Handle alpha masking if the pattern contains a transparent layer
+                alpha_channel = template_rgba[:, :, 3]
+                _, mask = cv2.threshold(alpha_channel, 254, 255, cv2.THRESH_BINARY)
+                template_bgr = cv2.cvtColor(template_rgba, cv2.COLOR_BGRA2BGR)
+
+                # Execute base masking template matching
+                res = cv2.matchTemplate(screen_mat, template_bgr, cv2.TM_SQDIFF_NORMED, mask=mask)
+            else:
+                # Traditional fallback multi-matching for standard 3-channel BGR images
+                res = cv2.matchTemplate(screen_mat, template_rgba, cv2.TM_CCOEFF_NORMED)
+
+            h_size, w_size = template_rgba.shape[:2]
+            return (res, h_size, w_size)
+        except Exception as e:
+            Debug.error(f'[match] {e}')
+            return None
 
     def findAllList(self, image_path: str) ->List[Match]:
         """
@@ -938,71 +987,29 @@ class Region():
                 discovered, or an empty list if no matches exist.
         """
         found_matches = []
+        res, h_size, w_size = self.match(image_path)
 
-        # 1. Grab the live frame buffer directly into a numpy BGR matrix
-        screen_mat = grab_screen_to_mat(self)
+        # Multi-match loop utilizing zero-masking for SQDIFF (0.0 is perfect, 1.0 is background)
+        while True:
+            min_val, _, min_loc, _ = cv2.minMaxLoc(res)
 
-        # 2. Load the target pattern image from disk keeping channels unchanged
-        template_rgba = cv2.imread(image_path, cv2.IMREAD_UNCHANGED)
-        if template_rgba is None:
-            return found_matches
+            # Halt the loop if the match confidence drops below 90% (threshold > 0.1)
+            if min_val > 0.1:
+                break
 
-        h_size, w_size = template_rgba.shape[:2]
+            abs_x = self.x + min_loc[0]
+            abs_y = self.y + min_loc[1]
+            found_matches.append(Match(abs_x, abs_y, w_size, h_size, 1.0 - min_val))
 
-        # 3. Handle alpha masking if the pattern contains a transparent layer
-        if len(template_rgba.shape) == 3 and template_rgba.shape[2] == 4:
-            alpha_channel = template_rgba[:, :, 3]
-            _, mask = cv2.threshold(alpha_channel, 254, 255, cv2.THRESH_BINARY)
-            template_bgr = cv2.cvtColor(template_rgba, cv2.COLOR_BGRA2BGR)
-
-            # Execute base masking template matching
-            res = cv2.matchTemplate(screen_mat, template_bgr, cv2.TM_SQDIFF_NORMED, mask=mask)
-
-            # Multi-match loop utilizing zero-masking for SQDIFF (0.0 is perfect, 1.0 is background)
-            while True:
-                min_val, _, min_loc, _ = cv2.minMaxLoc(res)
-
-                # Halt the loop if the match confidence drops below 90% (threshold > 0.1)
-                if min_val > 0.1:
-                    break
-
-                abs_x = self.x + min_loc[0]
-                abs_y = self.y + min_loc[1]
-                found_matches.append(Match(abs_x, abs_y, w_size, h_size, 1.0 - min_val))
-
-                # Zero-masking for SQDIFF: Fill the found region with 1.0 (worst match possible)
-                # to completely hide it from subsequent minMaxLoc evaluations
-                cv2.rectangle(
-                    res,
-                    min_loc,
-                    (min_loc[0] + w_size, min_loc[1] + h_size),
-                    1.0,
-                    -1
-                )
-        else:
-            # Traditional fallback multi-matching for standard 3-channel BGR images
-            res = cv2.matchTemplate(screen_mat, template_rgba, cv2.TM_CCOEFF_NORMED)
-
-            while True:
-                _, max_val, _, max_loc = cv2.minMaxLoc(res)
-
-                # Halt the loop if the match confidence drops below 90% (threshold < 0.9)
-                if max_val < 0.9:
-                    break
-
-                abs_x = self.x + max_loc[0]
-                abs_y = self.y + max_loc[1]
-                found_matches.append(Match(abs_x, abs_y, w_size, h_size, max_val))
-
-                # Zero-masking for CCOEFF: Fill the found region with 0.0 (no match)
-                # to hide it from subsequent max evaluations
-                cv2.rectangle(
-                    res,
-                    max_loc,
-                    (max_loc[0] + w_size, max_loc[1] + h_size),
-                    0.0,
-                    -1
-                )
+            # Zero-masking for SQDIFF: Fill the found region with 1.0 (worst match possible)
+            # to completely hide it from subsequent minMaxLoc evaluations
+            cv2.rectangle(
+                res,
+                min_loc,
+                (min_loc[0] + w_size, min_loc[1] + h_size),
+                1.0,
+                -1
+            )
 
         return found_matches
 
@@ -1025,6 +1032,21 @@ class Region():
             int: Bounded height in pixels.
         """
         return self.h
+
+    def getNumber(self, color_map: str = 'white') -> float:
+        """
+        Extract the number from a region
+
+        Args:
+            colormap (str, optional): The colormap to use.
+
+        Return:
+            floatt: the extracted value
+        """
+        number = self.text('1234567890.,', colormap[color_map]).replace('.','').replace(',','.')
+        if number:
+            return float(number)
+        return 0
 
     def getW(self) ->int:
         """

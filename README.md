@@ -10,10 +10,67 @@ With my history into botting for various reasons (eggdrop/sikuli/greasemonkey/id
 But sadly, new OculiX IDE looking shiny on my desktop, getting frustrated by the IDE itself (I mean c'mon, 2 ways to close a tab??), I noticed that old time bugs still didn't disappear. So I turned to Gemini AI. What came out of this extensive collaboration is what you are soon will be seeing here.
 
 ## Highlights
-- SikuliX/OculiX turned out to have some nasty bugs we couldn't work around, so we decided to implement a shiny new mini core addressing OpenCV directly, emulating the parts of sikulix we need to maintain compatibility for the existing code. The mini core turned out to become bloody fast.
-- Pattern image files are being optimized for better matching performance
-- We utilize RAM for image processing, disk i/o is being minimized
+- Pure python using cv2, pyautogui, mss, pydirectinput amongst other imports.
+- Requires the game running fullscreen on the primary monitor at 1920x1080 resolution.
+- Internal timeout mechanisms to reduce cpu load by skipping tasks that are surely not going to appear for a while.
+- Verification of task images before clicking.
+- Ollama support (llama3.2(-vision)) preffered as it already knows the game and is fast and small.
+
+## Features
+- Auto maximize and disable gamebar on crazygames
+- Tasks supported:
+  - Arcane Crystal:
+	- Spending a maximum of 5 pixels per run
+	- Awakening
+  - Campaign Battles:
+	- Pick up the loot
+	- Run daily liberation missions
+  - Chaos Rift:
+    - Fight monster
+  - Daily sign-in
+  - Engineer:
+    - Pick up tools
+  - Guardians:
+	- Train guardians
+	- Enlighten guardians
+	- Evolving guardians
+	- Chaos of Rift upgrades
+  - Guild expeditions
+  - Map:
+    - Claim finished tasks
+	- Pick new tasks in the order scout, adventure, war, monster
+  - Pirates price pickup
+  - Scarab Game:
+    - Play the game
+	- Pickup scarab token
+	- Pickup pharao's vault
+  - Tavern:
+	- Play the game (spending a max of 10 tokens per run)
+	- Convert beer to tokens
+
+
+- Tasks not yet supported (work in progress):
+  - Alchemist
+  - Arena of kings
+  - Engineer:
+    - Read selected crew setup
+  - Garage:
+	- Upgrades
+	- Blueprints
+	- Rarity
+  - Meteorite Research
+
+
+- Tasks not yet supported (TODO):
+  - Alchemist
+  - Engineer:
+    - Read selected crew setup
+  - Garage:
+	- Workshop
+	- Upgrades
+	- Rarity
+  - Ledra supplies
 
 ## License
-This code is released under the MIT License
-for more details, see [License](https://github.com/key2peace/firestone-bot/blob/main/LICENSE)
+This code is released under the MIT License, for more details, see [License](https://github.com/key2peace/firestone-bot/blob/main/LICENSE)
+All trademarks are property/copyright of their respected owners.

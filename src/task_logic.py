@@ -6,6 +6,7 @@ via the main automation loop. All visual state checks, hardware inputs,
 and lifecycle guards are handled natively through the custom core framework.
 """
 import os
+import random
 import time
 import cv2
 
@@ -13,6 +14,7 @@ from bot_helper import (
     #dailies,
     get_next_reset,
     #get_suffix_rank,
+    get_timeout,
     parse_ui_timeout,
     tasks
 )
@@ -25,6 +27,8 @@ from custom_core import (
     dragDrop,
     duration_text,
     grab_screen_to_mat,
+    mouseDown,
+    mouseUp,
     moveTo,
     press_key,
     Region,
@@ -39,9 +43,11 @@ def run_arcane_crystal() -> int:
         if color_at(1050, 970) == 'green':
             click((1670, 1020))
             moveTo((1120, 1020))
-            sleep(3)
+            start_loop = time.time()
+            while time.time() - start_loop < 5 and not color_at(1050, 970) == 'green':
+                sleep(1)
 
-    score = Region(1590, 20, 110, 30).text('1234567890', colormap['white'])
+    score = Region(1590, 20, 110, 30).getNumber()
     print(score)
     if score and int(score) > 500:
         click((1800, 370))
@@ -61,10 +67,11 @@ def run_awakening() -> int:
     """
     Process awakening screen
     """
-    click((1770, 1030))
-    moveTo((1770, 1080))
     while color_at(1670, 1030) == 'green':
-        sleep(1)
+        click((1050, 970))
+        moveTo((1320, 970))
+        while not color_at(1670, 1030) == 'green':
+           sleep(0.5)
     click((1840, 55))
     return 0
 
@@ -111,8 +118,11 @@ def run_campaign() ->int:
             else:
                 attempts += 1
             if winning:
-                # drag the screen 420 pixels to the left
-                dragDrop((1000,430), (580,430))
+                #drag the screen 400 pixels to the left
+                dragDrop((1000,430), (600,430))
+        #drag the screen back to the beginning
+        for _ in range(0, 3):
+            dragDrop((100,430), (1000,430))
         click((1820, 70))
     click((1510, 90))
     click((1840, 60))
@@ -120,14 +130,16 @@ def run_campaign() ->int:
         return min(timestamps)
     return 0
 
-def run_challenge() -> int:
+def run_chaos_rift() -> int:
     """
-    Run monster challenge.
+    Run chaos rift challenge.
     """
-    while color_at(870, 960) == 'green':
-        click((950, 960))
-        moveTo((950, 1030))
-        sleep(3)
+    while color_at(1050, 970) == 'green':
+        click((1050, 970))
+        moveTo((1200, 970))
+        start_loop = time.time()
+        while time.time() - start_loop < 10 and not color_at(1050, 970) == 'green':
+            sleep(1)
 
     click((1840, 55))
     return 0
@@ -157,7 +169,7 @@ def run_engineer() -> int:
     """
     click((1620, 730))
     click((1840, 55))
-    return int(time.time()) + 21600
+    return get_timeout(21600)
 
 def trigger_firestone_collect() -> bool:
     """
@@ -176,9 +188,9 @@ def run_firestone_collect() -> int:
     """
     global tasks
 
-    percentage = Region(1300, 417, 400, 40).text('1234567890.,+', colormap['green']).replace('+','').replace('.','').replace(',','.')
+    percentage = Region(1300, 417, 400, 40).getNumber('green')
     jump_require = int(CONFIG['jump_percentage'])
-    if percentage and int(float(percentage)) >= jump_require:
+    if percentage >= jump_require:
         Debug.info(f"[Firestone Collect] Time to jump! {percentage}%/{jump_require}%")
         tasks['check_upgrade'] = ('', 'run_check_upgrade', 0)
         click((1360 ,510))
@@ -190,7 +202,7 @@ def run_firestone_collect() -> int:
         click((950, 740))
     else:
         click((1840, 55))
-    return time.time()+1800
+    return get_timeout(1800)
 
 def run_firestone_research() -> int:
     """
@@ -227,6 +239,10 @@ def run_firestone_research() -> int:
             click((1400, 350))
             click((1250, 200))
             break
+
+    for _ in range(0,2):
+        dragDrop((530, 430), (1130, 430))
+
     click((1840, 55))
     return 0
 
@@ -234,6 +250,8 @@ def run_garage() -> int:
     """
     Process the garage page
     """
+    click((1840, 55))
+    return get_next_reset()
 
 # Static UI region boundaries for the War Machine Garage interface
 # Modify these coordinates to match your active Chrome browser resolution
@@ -326,11 +344,19 @@ def run_hero_upgrade() -> int:
     while True:
         inactive_slots = 0
         clicked = False
+        stage = Region(736, 24, 75, 40).getNumber()
 
         # Exact horizontal pixel anchors for the hero upgrade triggers
         for x_coord in [115, 640, 810, 1010, 1200, 1380, 1600]:
             if color_at(x_coord, 930) == 'yellow':
-                click((x_coord, 980))
+                if stage and stage < 50 and stage >= 2:
+                    moveTo((x_coord, 980))
+                    mouseDown()
+                    while color_at(x_coord, 930) == 'yellow':
+                        sleep(1)
+                    mouseUp()
+                else:
+                    click((x_coord, 980))
                 clicked = True
             else:
                 inactive_slots += 1
@@ -339,7 +365,7 @@ def run_hero_upgrade() -> int:
 
         # Break the lifecycle loop once all monitored slots report depletion
         if inactive_slots == 7:
-            return time.time() + 5
+            return get_timeout(5)
     return 0
 
 def run_ledra_supplies() -> int:
@@ -366,11 +392,20 @@ def run_map() -> None:
     task_map_zoom = 'images/tasks/map/zoom.png'
     timestamps = []
 
-    while color_at(110, 320) == 'green':
-        click((110, 320))
-        sleep(0.5)
-        click((950, 650))
-        sleep(0.5)
+    base_y = 320
+    while base_y < 1080:
+        if color_at(110, base_y) == 'green':
+            click((110, base_y))
+            sleep(0.5)
+            click((950, 650))
+            sleep(0.5)
+        else:
+            ts = Region(100, 300, 60, 32).text('1234567890:', colormap['white'])
+            if ts:
+                timeout = parse_ui_timeout(ts)
+                if timeout:
+                    timestamps.append(timeout)
+            base_y += 150
 
     zoom_match = _screen.exists(task_map_zoom)
     if zoom_match:
@@ -401,8 +436,8 @@ def run_map() -> None:
             break
 
     click((1840, 55))
-    if timestamps:
-        return min(timestamps)
+    #if timestamps:
+    #    return min(timestamps)
     return 0
 
 def run_new_hero() -> int:
@@ -413,7 +448,7 @@ def run_new_hero() -> int:
     # Still an accidential match
     if color_at(1777, 87) == 'white':
         click((1777, 87))
-    return time.time()+604800
+    return get_timeout(604800)
 
 def run_meteorite() -> int:
     """
@@ -473,17 +508,21 @@ def run_quests() -> int:
 
 def run_scarab_game() -> int:
     """
-    Get daily scarab token
+    Play scarab game
     """
-    click((1670, 1020))
-    moveTo((1580, 1020))
-    while color_at(1670, 1020) == 'blue':
-        sleep(1)
-    score = Region(177, 33, 125, 38).text('1234567890', colormap['white'])
-    if score and int(score) > 5000:
+    while color_at(1024, 1000) == 'green':
+        click((1024,1000))
+        moveTo((800, 1000))
+        start_loop = time.time()
+        while time.time() - start_loop < 10 and not color_at(1024, 1000) == 'green':
+            sleep(1)
+
+    score = Region(177, 33, 125, 38).getNumber()
+    if score > 5000:
         click((1800, 220))
         sleep(1)
         return run_scarab_vault()
+
     click((1840, 55))
     return 0
 
@@ -494,10 +533,13 @@ def run_scarab_vault() -> int:
     while color_at(1010, 1010) == 'green':
         click((1010,1010))
         moveTo((940, 1010))
-    while not color_at(1010, 1010) == 'white':
-        sleep(1)
+        start_loop = time.time()
+        while time.time() - start_loop < 10 and not color_at(1010, 1010) == 'green':
+            sleep(1)
+
     click((1840, 55))
-    return 0
+    sleep(1)
+    return run_scarab_game()
 
 def run_scarab_token() -> int:
     """
@@ -505,13 +547,17 @@ def run_scarab_token() -> int:
     """
     click((610,800))
     click((1840, 55))
+    sleep(1)
     return run_scarab_game()
 
 def run_signin() -> int:
     """
     Collect Sign-In Bonus
     """
-    click((1360, 930))
+    # Loop through possible positions
+    for y_coords in [870, 920]:
+        click((1360, y_coords))
+
     click((1840, 55))
     return get_next_reset()
 
@@ -531,4 +577,120 @@ def run_tavern() -> int:
             break
 
     click((1840, 55))
+    sleep(1)
+    return run_tavern_game()
+
+def run_talents() -> int:
+    """
+    Upgrade talents
+    """
+    bubble = 'images/tasks/talents/bubble.png'
+    _area = Region(470, 170, 1340, 860)
+    counter = 0
+    clicked = False
+    while True:
+        match = _area.exists(bubble)
+        if match:
+            match.click()
+            sleep(1)
+            while color_at(1032, 853) == 'green_talents':
+                click((1020, 866))
+                moveTo((1100, 866))
+                clicked = True
+            click((1250, 320))
+            break
+        else:
+            dragDrop((950, 990), (950, 188))
+            counter += 1
+            if counter > 10:
+                for _ in range(1, counter):
+                    dragDrop((950, 188), (950, 990))
+                break
+
+    if clicked:
+        click((1650, 980))
+
+    click((1850, 80))
     return 0
+
+def run_tavern_game() -> int:
+    """
+    Run the tavern game
+    """
+    amount = Region(1585, 30, 110, 35).getNumber()
+    if not amount:
+        click((1840, 55))
+        return 0
+    elif amount > 10:
+        amount = 10
+
+    for _ in range(1, int(amount)):
+        click((960, 1020))
+        sleep(1)
+        click((random.choice([660, 960, 1260]) , random.choice([330, 760])))
+        sleep(5)
+
+    click((1840, 55))
+    return 0
+
+def run_upgrade_guardian() -> int:
+    """
+    Guardian Upgrade
+    """
+    pos = {
+        'vermilion': (740, 1000),
+        'grace': (890, 1000),
+        'ankaa': (1040, 1000),
+        'azhar': (1200, 1000)
+    }
+    dust = Region(1590, 20, 110, 32).getNumber()
+
+    while True:
+        current = Region(250, 830, 300, 60).text('abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ', colormap['brown']).lower()
+        if current and current in pos:
+            del(pos[current])
+
+            click((1050, 150)) # General
+            sleep(1)
+            if color_at(1090, 800) == 'green':
+                click((1090,800))
+            amount, _ = divmod(dust, 20)
+            if amount:
+                for _ in range(1, int(amount)):
+                    if color_at(1590, 800) == 'green':
+                        click((1590, 800))
+                        moveTo((1590, 880))
+                        dust -= 20
+                    else:
+                        break
+
+            click((1210, 150)) #Evolution
+            sleep(1)
+            cost = Region(1100, 767, 150, 40).getNumber('brown')
+            if cost >= dust and color_at(1220, 780) == 'green':
+                click((1220, 780))
+                dust -= int(cost)
+                sleep(3)
+
+            click((1400, 150)) #Chaos Rift
+            sleep(1)
+            amount = Region(1564, 20, 160, 30).getNumber()
+            while True:
+                cost = Region(1460, 630, 130, 40).getNumber()
+                if cost and cost >= amount:
+                    click((1720, 760))
+                    amount -= cost
+                else:
+                    break
+
+            click((1560, 150)) #Guardian rarity
+            sleep(1)
+            if color_at(1365, 630) == 'green':
+                click((1365, 630))
+
+            if not len(pos):
+                break
+            click(pos[0])
+
+    click((1840, 55))
+    return 120

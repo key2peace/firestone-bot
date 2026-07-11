@@ -11,6 +11,7 @@ import task_logic
 from custom_core import (
     capture,
     Debug,
+    dragDrop,
     duration_text,
     LOCKFILE,
     moveTo,
@@ -29,7 +30,7 @@ def crazygames_check() -> None:
     """
     Check for crazygames specific elements
     """
-    # Crazygames dutch gamebar
+    # Crazygames maximize game screen button
     img = _screen.exists('images/misc/gamebar_maximize.png')
     if img:
         Debug.info("[Crazygames] Going fullscreen")
@@ -60,35 +61,49 @@ def main() -> None:
 
     try:
         Debug.info("[Main] Entering main loop")
+        flipper = True
         while True:
-            # Enforce execution suspension if the core state drops into fallback
+            # enforce execution suspension if paused
             while not os.path.exists(LOCKFILE):
                 sleep(1)
+
+            # drag around the area to reveal task images
+            flipper = not flipper
+            x = main_finished.getX()+50
+            y1 = main_finished.getY()+50
+            y2 = y1 + main_finished.getH()
+            for _ in range(0,2):
+                if flipper:
+                    dragDrop((x, y1), (x, y2))
+                else:
+                    dragDrop((x, y2), (x, y1))
+            moveTo((x - 60, y1 - 60))
+
+            # loop through tasks
+            #start_tasks = time.time_ns()
             for name, (pattern, task_function_name, timeout) in tasks.items():
                 friendly_name = name.replace('_', ' ').title()
 
                 if timeout and timeout >= time.time():
                     continue
 
-                #start_tasks = time.time_ns()
                 if pattern:
                     match = None
                     match_count = 0
-                    _thearea = main_finished
-                    for _ in range(0, 2):
-                        match = _thearea.exists(pattern)
+                    thearea = main_finished
+                    for _ in range(1, 5):
+                        match = thearea.exists(pattern)
                         if match:
-                            _thearea = match
+                            thearea = match
                             match_count += 1
-                        sleep(1)
                     if not match or match_count < 2:
                         continue
 
                     Debug.history("[Tasks] %s detected", friendly_name)
-                    #match.highlight(3)
+                    match.highlight(1)
                     match.click()
-                    moveTo((0,540))
-                    sleep(2)
+                    match.moveMouseAway()
+                    sleep(3)
                     capture(name+'.png')
 
                 if hasattr(task_logic, task_function_name):
@@ -102,9 +117,9 @@ def main() -> None:
                         timeout_return = duration_text(time.time_ns(), timeout_return*1000000000)
                     Debug.history("[Task] %s - Finished in %s (return: %s)", friendly_name, duration_text(start_task), str(timeout_return))
                 else:
-                    Debug.history("[Task] %s\nMissing handler %s", friendly_name, task_function_name)
+                    Debug.history("[Task] %s - Missing handler %s", friendly_name, task_function_name)
 
-                #Debug.history("[Tasks] Finished in %s", duration_text(start_tasks))
+            #Debug.history("[Tasks] Finished in %s", duration_text(start_tasks))
 
     except KeyboardInterrupt as e:
         Debug.info("[Main] Received Exception\n%s", str(e))
