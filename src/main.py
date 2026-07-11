@@ -10,11 +10,13 @@ import task_logic
 
 from custom_core import (
     capture,
+    colormap,
     Debug,
     dragDrop,
     duration_text,
     LOCKFILE,
     moveTo,
+    pause_check,
     Region,
     sleep
 )
@@ -24,7 +26,7 @@ from bot_helper import (
 )
 
 _screen = Region(0, 0, 1920, 1080)
-main_finished = Region(0, 200, 130, 290)
+main_finished = Region(0, 0, 160, 750)
 
 def crazygames_check() -> None:
     """
@@ -53,8 +55,7 @@ def main() -> None:
     """
     global tasks
 
-    while not os.path.exists(LOCKFILE):
-        sleep(1)
+    pause_check()
 
     Debug.info("[system] Firestone Bot engine active.")
     crazygames_check()
@@ -63,21 +64,7 @@ def main() -> None:
         Debug.info("[Main] Entering main loop")
         flipper = True
         while True:
-            # enforce execution suspension if paused
-            while not os.path.exists(LOCKFILE):
-                sleep(1)
-
-            # drag around the area to reveal task images
-            flipper = not flipper
-            x = main_finished.getX()+50
-            y1 = main_finished.getY()+50
-            y2 = y1 + main_finished.getH()
-            for _ in range(0,2):
-                if flipper:
-                    dragDrop((x, y1), (x, y2))
-                else:
-                    dragDrop((x, y2), (x, y1))
-            moveTo((x - 60, y1 - 60))
+            pause_check()
 
             # loop through tasks
             #start_tasks = time.time_ns()
@@ -86,6 +73,8 @@ def main() -> None:
 
                 if timeout and timeout >= time.time():
                     continue
+
+                pause_check()
 
                 if pattern:
                     match = None
@@ -120,6 +109,20 @@ def main() -> None:
                     Debug.history("[Task] %s - Missing handler %s", friendly_name, task_function_name)
 
             #Debug.history("[Tasks] Finished in %s", duration_text(start_tasks))
+
+            task_count = Region(90, 160, 50, 38).getNumber()
+            if int(task_count) > 3:
+                # drag around the area to reveal task images
+                flipper = not flipper
+                x = main_finished.getX()+50
+                y1 = main_finished.getY()+250
+                y2 = y1 + main_finished.getH()
+                for _ in range(0, 2):
+                    if flipper:
+                        dragDrop((x, y1), (x, y2))
+                    else:
+                        dragDrop((x, y2), (x, y1))
+                moveTo((x - 60, y1 - 60))
 
     except KeyboardInterrupt as e:
         Debug.info("[Main] Received Exception\n%s", str(e))

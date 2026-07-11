@@ -35,6 +35,8 @@ from custom_core import (
     sleep
 )
 
+_screen = Region(0, 0, 1920, 1080)
+
 def run_arcane_crystal() -> int:
     """
     Execute the Arcane Crystal interface routing subroutine.
@@ -97,6 +99,7 @@ def run_campaign() ->int:
         # Loop through available liberations
         winning = True
         attempts = 0
+        drag_count = 0
         while winning and attempts < 5:
             if  color_at(200, 800) == 'green':
                 Debug.history("[Campaign] Select Liberation")
@@ -120,11 +123,13 @@ def run_campaign() ->int:
             if winning:
                 #drag the screen 400 pixels to the left
                 dragDrop((1000,430), (600,430))
-        #drag the screen back to the beginning
-        for _ in range(0, 3):
-            dragDrop((100,430), (1000,430))
+                drag_count += 1
+
+        if drag_count:
+            #drag the screen back to the beginning
+            for _ in range(1, drag_count):
+                dragDrop((100,430), (1000,430))
         click((1820, 70))
-    click((1510, 90))
     click((1840, 60))
     if timestamps:
         return min(timestamps)
@@ -212,39 +217,116 @@ def run_firestone_research() -> int:
     pixel color scans. Phase 2 processes active template research bubbles and
     executes screen drag operations to initialize new available projects.
     """
-    _screen = Region(0, 0, 1920, 1080)
     task_firestone_research_bubble = 'images/tasks/firestone/research_bubble.png'
 
     for x_coords in [1220, 520]:
         if color_at(x_coords, 980) == 'green':
             click((x_coords, 980))
 
-    while True:
-        no_bubbles = 0
+    drag_count = 0
+    while drag_count <= 10:
         img = _screen.exists(task_firestone_research_bubble)
         if img:
             Debug.history("[Firestone Research] Selecting Research")
             img.click()
             sleep(1)
             click((790, 720))
+            if color_at(970, 660) == 'lightbrown_research_full':
+                Debug.warn("[Firestone Research] Research slots full")
+                click((1400, 350))
+                click((1250, 200))
+                break
         else:
             dragDrop((1130, 430), (730, 430))
-            no_bubbles += 1
+            drag_count += 1
 
-        if no_bubbles == 10:
-            break
-
-        if color_at(970, 660) == 'lightbrown_research_full':
-            Debug.warn("[Firestone Research] Research slots full")
-            click((1400, 350))
-            click((1250, 200))
-            break
-
-    for _ in range(0,2):
-        dragDrop((530, 430), (1130, 430))
+    if drag_count:
+        for _ in range(1, drag_count):
+            dragDrop((530, 430), (1130, 430))
 
     click((1840, 55))
     return 0
+
+def run_forbidden_knowledge() -> int:
+    """
+    Run forbidden knowledge circle
+    """
+    for y_coords, name in [(350, 'Ledra'), (540, 'Yanamoth'), (700, 'Kramatak')]:
+        click((1800, y_coords))
+        amount = Region(1600, 20, 100, 36).getNumber()
+        Debug.info(f"Amount for {name}: {amount}")
+        if not amount:
+            continue
+        if name == 'Ledra': # Circle setup
+            coords = [
+                (1090, 75, 'Firestone finder'),
+                (1320, 240, 'Guardian power'),
+                (1090, 920, 'Attribute damage'),
+                (600, 760, 'Team bonus'),
+                (820, 920, 'Leadership'),
+                (1320, 760, 'Attribute armor'),
+                (1400, 500, 'Attribute health'),
+                (540, 500, 'Rage heroes'),
+                (600, 240, 'Mana heroes'),
+                (820, 75, 'Energy heroes')
+            ]
+            color = 'blue'
+        elif name == 'Yanamoth': # Triangle setup
+            coords = [
+                (960, 30, 'Raining gold'),
+                (1120, 295, 'Guardian power'),
+                (1200, 900, 'Attribute damage'),
+                (710, 900, 'Team bonus'),
+                (960, 900, 'Leadership'),
+                (617, 566, 'Precision'),
+                (1450, 900, 'Attribute armor'),
+                (1300, 566, 'Attribute health'),
+                (780, 295, 'Magic spells'),
+                (460, 900, 'Fist fight')
+            ]
+            color = 'brown'
+        elif name == 'Kramatak': # Square setup
+            coords = [
+                (710, 130, 'All main attribute'),
+                (960, 130, 'Guardian power'),
+                (1390, 605, 'Attribute damage'),
+                (960, 835, 'Team bonus'),
+                (1210, 835, 'Leadership'),
+                (1390, 370, 'Attribute armor'),
+                (1210, 130, 'Attribute health'),
+                (520, 370, 'Tank specialization'),
+                (520, 605, 'Healer specialization'),
+                (710, 835, 'Damage specialization')
+            ]
+            color = 'blue'
+        else:
+            # for niceness of code
+            continue
+
+        for x, y, stat in coords:
+            Region(x - 5, y - 5, 10, 10).highlight(3)
+            if not amount:
+                continue
+            if color_at(x, y) == color:
+                click((x, y))
+                cost = Region(970, 730, 120, 50).getNumber()
+                while cost and cost <= amount and color_at(1046, 750) == 'green':
+                    Debug.info(f"Upgrading {stat}")
+                    click((1046, 750))
+                    moveTo((1120, 750))
+                    amount -= cost
+                click((1260, 270))
+        click((220, 900))
+        if color_at(960, 890) == 'green':
+            cost = Region(960, 900, 130, 50).getNumber()
+            if cost and amount >= cost:
+                Debug.info(f"Recruiting {name}")
+                click((960, 890))
+                amount -= cost
+
+    click((1840, 55))
+    return 0
+
 
 def run_garage() -> int:
     """
@@ -344,19 +426,15 @@ def run_hero_upgrade() -> int:
     while True:
         inactive_slots = 0
         clicked = False
-        stage = Region(736, 24, 75, 40).getNumber()
 
         # Exact horizontal pixel anchors for the hero upgrade triggers
-        for x_coord in [115, 640, 810, 1010, 1200, 1380, 1600]:
+        for x_coord in [120, 620, 820, 1020, 1220, 1420, 1620]:
             if color_at(x_coord, 930) == 'yellow':
-                if 2 <= stage <= 50:
-                    moveTo((x_coord, 980))
-                    mouseDown()
-                    while color_at(x_coord, 930) == 'yellow':
-                        sleep(1)
-                    mouseUp()
-                else:
-                    click((x_coord, 980))
+                moveTo((x_coord, 980))
+                mouseDown()
+                while color_at(x_coord, 930) == 'yellow':
+                    sleep(1)
+                mouseUp()
                 clicked = True
             else:
                 inactive_slots += 1
@@ -365,7 +443,7 @@ def run_hero_upgrade() -> int:
 
         # Break the lifecycle loop once all monitored slots report depletion
         if inactive_slots == 7:
-            return get_timeout(5)
+            return get_timeout(20)
     return 0
 
 def run_ledra_supplies() -> int:
@@ -379,6 +457,20 @@ def run_ledra_supplies() -> int:
     click((1840, 55))
     return 0
 
+def run_mailbox() -> int:
+    """
+    Check mailbox
+    """
+    while not Region(720, 240, 470, 70).text('Themailboxspty.'):
+        if color_at(1130, 840) == 'green':
+            click((1130, 840))
+            click((1600, 980))
+            sleep(0.5)
+        click((1600, 980))
+
+    click((1650, 40))
+    return get_timeout(3600)
+
 def run_map() -> None:
     """
     Manage world map operations including reward claiming and dynamic deployment.
@@ -387,7 +479,6 @@ def run_map() -> None:
     normalizes the map viewport scale via drag-and-drop zoom controls to align
     icon dimensions. Phase 3 scans and dispatches type-specific campaigns.
     """
-    _screen = Region(0, 0, 1920, 1080)
     _area = Region(140, 60, 1630, 950)
     task_map_zoom = 'images/tasks/map/zoom.png'
     timestamps = []
@@ -412,7 +503,7 @@ def run_map() -> None:
         dragDrop(zoom_match, (1290, zoom_match.getY()))
 
     slots_full = False
-    for mission_type in ['scout', 'adventure', 'war', 'monster']:
+    for mission_type in ['mystery', 'scout', 'adventure', 'war', 'monster', 'dragon']:
         missions = _area.findAllList('images/tasks/map/mission/' + mission_type + '.png')
         if missions:
             for m in missions:
@@ -440,6 +531,13 @@ def run_map() -> None:
     #    return min(timestamps)
     return 0
 
+def run_meteorite() -> int:
+    """
+    Execute the Meteorite Research.
+    """
+    click((1840, 55))
+    return 0
+
 def run_new_hero() -> int:
     """
     Execute New Hero Screen
@@ -449,13 +547,6 @@ def run_new_hero() -> int:
     if color_at(1777, 87) == 'white':
         click((1777, 87))
     return get_timeout(604800)
-
-def run_meteorite() -> int:
-    """
-    Execute the Meteorite Research.
-    """
-    click((1840, 55))
-    return 0
 
 def run_pickaxe() -> int:
     """
@@ -476,13 +567,17 @@ def run_pirates_price() -> int:
     global exit anchors to return execution back to the primary canvas.
     """
     claimed = False
-    while not claimed:
+    trials = 0
+    while not claimed and trials < 6:
         for x in [483, 790, 1097, 1404]:
             if color_at(x, 910) == 'green':
                 click((x, 910))
                 claimed = True
+
         dragDrop((1500, 800), (272, 800))
         sleep(2)
+        trials += 1
+
     click((1840, 55))
     return 0
 
@@ -688,7 +783,8 @@ def run_upgrade_guardian() -> int:
 
             if not pos:
                 break
-            click(pos[0])
+            x, y = next(iter(pos))
+            click((x, y))
 
     click((1840, 55))
     return 120

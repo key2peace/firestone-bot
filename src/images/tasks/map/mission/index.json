@@ -14,5 +14,13 @@
     "war.png": {
         "timestamp": 1783541570.347608,
         "sha256": "f7842a43f817af4d1af39b5724f73ae43b5f8215231bcaef013633f1210a1fd6"
+    },
+    "dragon.png": {
+        "timestamp": 1783775431.8850715,
+        "sha256": "397028144424592b955b1cb163e2db7c45ed0152d009d0fa3cbbf0d47ceeddd3"
+    },
+    "mystery.png": {
+        "timestamp": 1783775431.9020908,
+        "sha256": "dac3b7d003f224a51b95c05d25ecef14e46c2d4ae4ce7e3edf9f357464fe207e"
     }
 }

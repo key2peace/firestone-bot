@@ -5,6 +5,7 @@ Fully multi-platform utilizing mss, pyautogui, cv2, and pytesseract.
 import base64
 import hashlib
 import json
+import math
 import os
 import re
 import time
@@ -158,7 +159,7 @@ def ask_ollama_vision(src_mat, prompt_text: str, model: str = "llama3.2-vision")
         Debug.error("Ollama Vision handshake failed: %s", error)
         return ""
 
-def capture(filename: str) ->bool:
+def capture(filename: str) -> bool:
     """
     Capture the current live screen layout and save it to the capture directory.
 
@@ -188,7 +189,7 @@ def capture(filename: str) ->bool:
         Debug.error("[Capture] Failed to write matrix: " + str(e))
         return False
 
-def click(location: tuple[int, int]) ->None:
+def click(location: Union[Tuple[int, int], 'Region', 'Match']) -> None:
     """
     Perform a hardware-level mouse click.
 
@@ -203,9 +204,10 @@ def click(location: tuple[int, int]) ->None:
         RuntimeError: If the execution thread is stopped or the pyautogui
             fail-safe is triggered via a screen corner.
     """
-    x_coord, y_coord = location
+    x_coord, y_coord = get_coords(location)
 
     try:
+        pause_check()
         mouse_controller.moveTo(x_coord, y_coord)
         time.sleep(0.3)
         mouse_controller.mouseDown()
@@ -238,6 +240,23 @@ def color_at(x: int, y: int) -> str:
 
     return ''
 
+def get_coords(location: Union[Tuple[int, int], 'Region', 'Match']) -> Tuple[int, int]:
+    """
+    Convert tuple, region or match into tuple
+    """
+    # Extract coordinates safely
+    try:
+        x, y = location.getX(), location.getY()
+    except AttributeError:
+        try:
+            x, y = location.getCenter().getX(), location.getCenter().getY()
+        except AttributeError:
+            try:
+                x, y = location
+            except AttributeError:
+                return (-1, -1)
+    return (x, y)
+
 def dragDrop(start_location: Union[Tuple[int, int], 'Region', 'Match'],
              end_location: Union[Tuple[int, int], 'Region', 'Match']) -> None:
     """
@@ -247,28 +266,15 @@ def dragDrop(start_location: Union[Tuple[int, int], 'Region', 'Match'],
         start_location (Union[Tuple[int, int], Region, Match]): Source coordinates.
         end_location (Union[Tuple[int, int], Region, Match]): Destination coordinates.
     """
-    # Extract start coordinates safely
-    try:
-        x1, y1 = start_location.getX(), start_location.getY()
-    except AttributeError:
-        try:
-            x1, y1 = start_location.getCenter().getX(), start_location.getCenter().getY()
-        except AttributeError:
-            x1, y1 = start_location
-
-    # Extract end coordinates safely
-    try:
-        x2, y2 = end_location.getX(), end_location.getY()
-    except AttributeError:
-        try:
-            x2, y2 = end_location.getCenter().getX(), end_location.getCenter().getY()
-        except AttributeError:
-            x2, y2 = end_location
+    x1, y1 = get_coords(start_location)
+    x2, y2 = get_coords(end_location)
 
     # Execute precise drag-and-drop workflow matching Unity engine requirements
     try:
+        pause_check()
         mouse_controller.moveTo(int(x1), int(y1))
-        pyautogui.dragTo(int(x2), int(y2), 2, button='left')
+        delay = get_distance(start_location, end_location) / 150
+        pyautogui.dragTo(int(x2), int(y2), delay, button='left')
     except mouse_controller.FailSafeException:
         toggle_br()
 
@@ -396,6 +402,16 @@ def filter_mat_alpha(src_mat: np.ndarray, threshold: int = 128) -> np.ndarray:
     # Merge channels back efficiently via OpenCV
     return cv2.merge([b_ch, g_ch, r_ch, alpha_thresh])
 
+def get_distance(start_location: Union[Tuple[int, int], 'Region', 'Match'], end_location: Union[Tuple[int, int], 'Region', 'Match']) -> float:
+    """
+    Calculate distance betwee two coordinates
+    """
+    # Extract start coordinates safely
+    x1, y1 = get_coords(start_location)
+    x2, y2 = get_coords(end_location)
+
+    return math.sqrt(math.pow(x1 - x2, 2) + math.pow(y1 - y2, 2))
+
 def get_pixel_color(x: int, y: int) -> Tuple[int, int, int]:
     """
     Retrieve the exact RGB color values of a specific screen pixel coordinate.
@@ -454,6 +470,7 @@ def mouseDown(timeout: float=0) -> None:
         'timeout (float, optional)
     """
     try:
+        pause_check()
         mouse_controller.mouseDown()
         if timeout:
             sleep(timeout)
@@ -465,9 +482,10 @@ def mouseUp() -> None:
     """
     Release mousebutton after mouseDown()
     """
+    pause_check()
     mouse_controller.mouseUp()
 
-def moveTo(location: tuple[int, int]) ->None:
+def moveTo(location: Union[Tuple[int, int], 'Region', 'Match']) -> None:
     """
     Perform a hardware-level mouse move.
 
@@ -478,22 +496,13 @@ def moveTo(location: tuple[int, int]) ->None:
         RuntimeError: If the execution thread is stopped or the pyautogui
             fail-safe is triggered via a screen corner.
     """
-    x_coord, y_coord = location
+    x_coord, y_coord = get_coords(location)
 
     try:
+        pause_check()
         mouse_controller.moveTo(x_coord, y_coord)
     except mouse_controller.FailSafeException:
         toggle_br()
-
-def toggle_br() -> None:
-    """Toggle LOCKFULE existance"""
-    if os.path.exists(LOCKFILE):
-        os.remove(LOCKFILE)
-        Debug.info('Paused game')
-    else:
-        with open(LOCKFILE, 'wt', encoding='utf-8') as ptr:
-            ptr.write(str(time.time_ns()))
-            Debug.info('Resuming game')
 
 def on_keyrelease(key) -> None:
     """
@@ -547,6 +556,16 @@ def optimize_alpha_channels(target_dir: str = 'images', threshold: int = 128) ->
                 TRACKER.add(filepath)
     Debug.info("[optimize_alpha_channels] Alpha optimization scan complete. All indices successfully synchronized.")
 
+def pause_check() -> None:
+    """
+    System breaks
+    """
+    if not os.path.exists(LOCKFILE):
+        Debug.info("Systems paused, toggle Scroll-Lock to continue.")
+        while not os.path.exists(LOCKFILE):
+            sleep(1)
+        Debug.info("Moving on...")
+
 def popup(message: str, title: str = 'Bot Notification', timeout: float = 0) -> None:
     """
     Display a cross-platform alert dialog with an optional auto-vanish timeout.
@@ -584,13 +603,14 @@ def popup(message: str, title: str = 'Bot Notification', timeout: float = 0) -> 
     except Exception as error:
         Debug.error("[CorePopup] Render failed:\n%s", str(error))
 
-def press_key(key_name: str) ->None:
+def press_key(key_name: str) -> None:
     """
     Simulate a native hardware keypress and release sequence.
 
     Args:
         key_name (str): The alphanumeric identifier string (e.g., 'enter', 'space').
     """
+    pause_check()
     keyboard_controller.press(key_name)
 
 def similarity(img1: np.ndarray, img2: np.ndarray) -> float:
@@ -635,9 +655,19 @@ def similarity(img1: np.ndarray, img2: np.ndarray) -> float:
         Debug.error("[CoreSimilarity] Template evaluation failed:\n%s", str(error))
         return 0.0
 
-def sleep(seconds: float) ->None:
+def sleep(seconds: float) -> None:
     """Obvious"""
     time.sleep(seconds)
+
+def toggle_br() -> None:
+    """Toggle LOCKFILE existance"""
+    if os.path.exists(LOCKFILE):
+        os.remove(LOCKFILE)
+        Debug.info('Initianted pause')
+    else:
+        with open(LOCKFILE, 'wt', encoding='utf-8') as ptr:
+            ptr.write(str(time.time_ns()))
+            Debug.info('Initiated resume')
 
 class Debug:
     """
@@ -1147,7 +1177,7 @@ class Region():
             _, thresh = cv2.threshold(gray, 0, 255, cv2.THRESH_BINARY_INV + cv2.THRESH_OTSU)
 
         # 3. Upscale the clean 1-channel binary matrix to expand small font pixels
-        clean_mat = cv2.resize(thresh, None, fx=4.0, fy=4.0, interpolation=cv2.INTER_CUBIC)
+        clean_mat = cv2.resize(thresh, None, fx=5.0, fy=5.0, interpolation=cv2.INTER_CUBIC)
 
         # 4. Clean up remaining stroke artifact noise using a minimal 2x2 rectangular kernel
         clean_mat = cv2.morphologyEx(

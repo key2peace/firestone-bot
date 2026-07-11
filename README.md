@@ -30,6 +30,8 @@ But sadly, new OculiX IDE looking shiny on my desktop, getting frustrated by the
   - Daily sign-in
   - Engineer:
     - Pick up tools
+  - Forbidden Knowledge:
+	- Perform upgrades and recruiting
   - Guardians:
 	- Train guardians
 	- Enlighten guardians
@@ -38,7 +40,7 @@ But sadly, new OculiX IDE looking shiny on my desktop, getting frustrated by the
   - Guild expeditions
   - Map:
     - Claim finished tasks
-	- Pick new tasks in the order scout, adventure, war, monster
+	- Pick new tasks in the order mystery, scout, adventure, war, monster, dragon
   - Pirates price pickup
   - Scarab Game:
     - Play the game

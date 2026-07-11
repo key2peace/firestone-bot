@@ -94,5 +94,17 @@
     "alchemist.png": {
         "timestamp": 1783753765.5076075,
         "sha256": "8d135b498a210c3c9f3ec2494b6e05160befb1b6863e990e0fc4c1ec6efee976"
+    },
+    "garage_chaos_rift.png": {
+        "timestamp": 1783765441.769001,
+        "sha256": "09c90dd8f134c7a3338c472896119b2eb56c4d984076bdb15e2e4e7d264d4ccc"
+    },
+    "mailbox.png": {
+        "timestamp": 1783784557.8586493,
+        "sha256": "4e758c882ecb1d9b968c492893ec56a8329b2dba911c4164118a56004dd2a019"
+    },
+    "forbidden_knowledge.png": {
+        "timestamp": 1783790107.7931585,
+        "sha256": "a18a811e473d0205cacef72ac4af192459678ef13670798029e94a8863b65fa9"
     }
 }
