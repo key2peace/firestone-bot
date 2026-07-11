@@ -8,17 +8,13 @@ import time
 import task_logic
 
 from custom_core import (
-    capture,
     Debug,
     dragDrop,
     duration_text,
     moveTo,
     pause_check,
     Region,
-    sleep
-)
-
-from bot_helper import (
+    sleep,
     tasks
 )
 
@@ -89,8 +85,7 @@ def main() -> None:
                     match.highlight(1)
                     match.click()
                     match.moveMouseAway()
-                    sleep(3)
-                    capture(name+'.png')
+                    sleep(1)
 
                 if hasattr(task_logic, task_function_name):
                     start_task = time.time_ns()

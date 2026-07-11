@@ -3,7 +3,16 @@ generated-members=cv2.*,pytesseract.*
 extension-pkg-whitelist=cv2,numpy,mss,pytesseract
 
 [MESSAGES CONTROL]
-disable= C0301, C0103, R0903, C0302, W0603, W0718, R0912, R1702, R0801
+disable= C0301, # line-too-long
+		 C0103, # invalid-name
+		 R0903, # too-few-public-methods
+		 C0302, # too-many-lines
+		 W0603, # global-statement
+		 W0718, # broad-exception-caught
+		 R0912, # too-many-branches
+		 R1702, # too-many-nested-blocks
+		 R0801, # duplicate-code
+		 R0915  # too-many-statements
 
 [REPORTS]
 output-format=colorized

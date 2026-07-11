@@ -10,15 +10,13 @@ import random
 import time
 import cv2
 
-from bot_helper import (
+from custom_core import (
     #dailies,
     get_next_reset,
     #get_suffix_rank,
     get_timeout,
     parse_ui_timeout,
-    tasks
-)
-from custom_core import (
+    tasks,
     click,
     color_at,
     colormap,
@@ -164,6 +162,12 @@ def run_check_upgrade() -> int:
         main_upgrade.click()
         main_upgrade.moveMouseAway()
     return time.time() * 2
+
+def run_daylies() -> int:
+    """
+    Run daylie tasks
+    """
+    return get_next_reset()
 
 def run_engineer() -> int:
     """
@@ -443,7 +447,7 @@ def run_hero_upgrade() -> int:
 
         # Break the lifecycle loop once all monitored slots report depletion
         if inactive_slots == 7:
-            return get_timeout(20)
+            return get_timeout(10)
     return 0
 
 def run_ledra_supplies() -> int:
@@ -746,9 +750,11 @@ def run_upgrade_guardian() -> int:
             click((1050, 150)) # General
             sleep(1)
             if color_at(1090, 800) == 'green':
+                Debug.history(f"Training {current}")
                 click((1090,800))
             amount, _ = divmod(dust, 20)
             if amount:
+                Debug.history(f"Enlightening {current} {amount} times")
                 for _ in range(1, int(amount)):
                     if color_at(1590, 800) == 'green':
                         click((1590, 800))
@@ -760,7 +766,9 @@ def run_upgrade_guardian() -> int:
             click((1210, 150)) #Evolution
             sleep(1)
             cost = Region(1100, 767, 150, 40).getNumber('brown')
+            Debug.info(f"Evolution costs: {cost}")
             if cost >= dust and color_at(1220, 780) == 'green':
+                Debug.history(f"Evolving {current}")
                 click((1220, 780))
                 dust -= int(cost)
                 sleep(3)
@@ -768,13 +776,15 @@ def run_upgrade_guardian() -> int:
             click((1400, 150)) #Chaos Rift
             sleep(1)
             amount = Region(1564, 20, 160, 30).getNumber()
+            Debug.info(f"Chaos rift amount: {amount}")
             while True:
                 cost = Region(1460, 630, 130, 40).getNumber()
-                if cost and cost >= amount:
+                Debug.info(f"Chaos rift costs: {cost}")
+                if cost and cost >= dust:
+                    Debug.history(f"Increase {current}'s holy damage")
                     click((1720, 760))
+                    sleep(1)
                     amount -= cost
-                else:
-                    break
 
             click((1560, 150)) #Guardian rarity
             sleep(1)
@@ -783,8 +793,11 @@ def run_upgrade_guardian() -> int:
 
             if not pos:
                 break
-            x, y = next(iter(pos))
-            click((x, y))
+
+            for name, (x, y) in pos.items():
+                x, y = next(iter(pos))
+                click((x, y))
+                break
 
     click((1840, 55))
     return 120
