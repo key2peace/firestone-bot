@@ -4,17 +4,14 @@ Main Entry Point and Workflow Runner for Firestone Bot.
 Acts as the central orchestrator, executing modular gameplay subroutines
 while monitoring the application lifecycle and emergency shutdown signals.
 """
-import os
 import time
 import task_logic
 
 from custom_core import (
     capture,
-    colormap,
     Debug,
     dragDrop,
     duration_text,
-    LOCKFILE,
     moveTo,
     pause_check,
     Region,
