@@ -561,25 +561,6 @@ def run_signin() -> int:
     click((1840, 55))
     return get_next_reset()
 
-def run_tavern() -> int:
-    """
-    Manage the tavern dispatch queue and resource accumulation.
-
-    Phase 1 checks for active ready indicators using pixel color validation
-    and deploys available assets. Phase 2 exits the subsystem once depletion holds.
-    """
-    while True:
-        if color_at(400, 640) == 'yellow':
-            click((400, 640))
-            sleep(0.5)
-        else:
-            click((1670, 270))
-            break
-
-    click((1840, 55))
-    sleep(1)
-    return run_tavern_game()
-
 def run_talents() -> int:
     """
     Upgrade talents
@@ -612,6 +593,25 @@ def run_talents() -> int:
     click((1850, 80))
     return 0
 
+def run_tavern() -> int:
+    """
+    Manage the tavern dispatch queue and resource accumulation.
+
+    Phase 1 checks for active ready indicators using pixel color validation
+    and deploys available assets. Phase 2 exits the subsystem once depletion holds.
+    """
+    while True:
+        if color_at(400, 640) == 'yellow':
+            click((400, 640))
+            sleep(0.5)
+        else:
+            click((1670, 270))
+            break
+
+    click((1840, 55))
+    sleep(1)
+    return run_tavern_game()
+
 def run_tavern_game() -> int:
     """
     Run the tavern game
@@ -620,8 +620,7 @@ def run_tavern_game() -> int:
     if not amount:
         click((1840, 55))
         return 0
-    if amount > 10:
-        amount = 10
+    amount = min(amount, 10)
 
     for _ in range(1, int(amount)):
         click((960, 1020))
