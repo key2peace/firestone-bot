@@ -71,7 +71,7 @@ def run_awakening() -> int:
         click((1050, 970))
         moveTo((1320, 970))
         while not color_at(1670, 1030) == 'green':
-           sleep(0.5)
+            sleep(0.5)
     click((1840, 55))
     return 0
 
@@ -349,7 +349,7 @@ def run_hero_upgrade() -> int:
         # Exact horizontal pixel anchors for the hero upgrade triggers
         for x_coord in [115, 640, 810, 1010, 1200, 1380, 1600]:
             if color_at(x_coord, 930) == 'yellow':
-                if stage and stage < 50 and stage >= 2:
+                if 2 <= stage <= 50:
                     moveTo((x_coord, 980))
                     mouseDown()
                     while color_at(x_coord, 930) == 'yellow':
@@ -599,13 +599,12 @@ def run_talents() -> int:
                 clicked = True
             click((1250, 320))
             break
-        else:
-            dragDrop((950, 990), (950, 188))
-            counter += 1
-            if counter > 10:
-                for _ in range(1, counter):
-                    dragDrop((950, 188), (950, 990))
-                break
+        dragDrop((950, 990), (950, 188))
+        counter += 1
+        if counter > 10:
+            for _ in range(1, counter):
+                dragDrop((950, 188), (950, 990))
+            break
 
     if clicked:
         click((1650, 980))
@@ -621,7 +620,7 @@ def run_tavern_game() -> int:
     if not amount:
         click((1840, 55))
         return 0
-    elif amount > 10:
+    if amount > 10:
         amount = 10
 
     for _ in range(1, int(amount)):
@@ -648,7 +647,7 @@ def run_upgrade_guardian() -> int:
     while True:
         current = Region(250, 830, 300, 60).text('abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ', colormap['brown']).lower()
         if current and current in pos:
-            del(pos[current])
+            del pos[current]
 
             click((1050, 150)) # General
             sleep(1)
@@ -688,7 +687,7 @@ def run_upgrade_guardian() -> int:
             if color_at(1365, 630) == 'green':
                 click((1365, 630))
 
-            if not len(pos):
+            if not pos:
                 break
             click(pos[0])
 
