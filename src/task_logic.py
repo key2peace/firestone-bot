@@ -20,17 +20,16 @@ from custom_core import (
     click,
     color_at,
     colormap,
-    CONFIG,
+    config,
     Debug,
-    dragDrop,
+    drag_drop,
     duration_text,
     grab_screen_to_mat,
-    mouseDown,
-    mouseUp,
-    moveTo,
+    mouse_down,
+    mouse_up,
+    move_to,
     press_key,
-    Region,
-    sleep
+    Region
 )
 
 _screen = Region(0, 0, 1920, 1080)
@@ -42,16 +41,16 @@ def run_arcane_crystal() -> int:
     for _ in range(1, 5):
         if color_at(1050, 970) == 'green':
             click((1670, 1020))
-            moveTo((1120, 1020))
+            move_to((1120, 1020))
             start_loop = time.time()
             while time.time() - start_loop < 5 and not color_at(1050, 970) == 'green':
-                sleep(1)
+                time.sleep(1)
 
-    score = Region(1590, 20, 110, 30).getNumber()
+    score = Region(1590, 20, 110, 30).get_number()
     print(score)
     if score and int(score) > 500:
         click((1800, 370))
-        sleep(1)
+        time.sleep(1)
         return run_awakening()
     click((1840, 55))
     return 0
@@ -69,9 +68,9 @@ def run_awakening() -> int:
     """
     while color_at(1670, 1030) == 'green':
         click((1050, 970))
-        moveTo((1320, 970))
+        move_to((1320, 970))
         while not color_at(1670, 1030) == 'green':
-            sleep(0.5)
+            time.sleep(0.5)
     click((1840, 55))
     return 0
 
@@ -88,11 +87,11 @@ def run_campaign() ->int:
     if color_at(1870, 990) == 'red':
         Debug.history("[Campaign] Heading for daily missions")
         click((1770, 1000))
-        sleep(1)
+        time.sleep(1)
 
         Debug.history("[Campaign] Opening Liberation")
         click((685, 820))
-        sleep(1)
+        time.sleep(1)
 
         # Loop through available liberations
         winning = True
@@ -115,18 +114,18 @@ def run_campaign() ->int:
                         winning = False
                         click((870, 770))
                         break
-                    sleep(5)
+                    time.sleep(5)
             else:
                 attempts += 1
             if winning:
                 #drag the screen 400 pixels to the left
-                dragDrop((1000,430), (600,430))
+                drag_drop((1000,430), (600,430))
                 drag_count += 1
 
         if drag_count:
             #drag the screen back to the beginning
             for _ in range(1, drag_count):
-                dragDrop((100,430), (1000,430))
+                drag_drop((100,430), (1000,430))
         click((1820, 70))
     click((1840, 60))
     if timestamps:
@@ -139,10 +138,10 @@ def run_chaos_rift() -> int:
     """
     while color_at(1050, 970) == 'green':
         click((1050, 970))
-        moveTo((1200, 970))
+        move_to((1200, 970))
         start_loop = time.time()
         while time.time() - start_loop < 10 and not color_at(1050, 970) == 'green':
-            sleep(1)
+            time.sleep(1)
 
     click((1840, 55))
     return 0
@@ -155,12 +154,12 @@ def run_check_upgrade() -> int:
     the selector until the screen state matches the target configuration mode.
     """
     main_upgrade = Region(1661, 910, 259, 170)
-    target_mode = str(CONFIG['upgrade_mode']).lower()
+    target_mode = str(config['upgrade_mode']).lower()
 
     # Cycle selector modes inline until text configuration criteria are met
     while target_mode not in main_upgrade.text().lower():
         main_upgrade.click()
-        main_upgrade.moveMouseAway()
+        main_upgrade.move_mouse_away()
     return time.time() * 2
 
 def run_daylies() -> int:
@@ -185,7 +184,7 @@ def trigger_firestone_collect() -> bool:
     Open the Temple of Eternals and trigger the handling
     """
     press_key('e')
-    sleep(1)
+    time.sleep(1)
     return run_firestone_collect()
 
 def run_firestone_collect() -> int:
@@ -197,17 +196,17 @@ def run_firestone_collect() -> int:
     """
     global tasks
 
-    percentage = Region(1300, 417, 400, 40).getNumber('green')
-    jump_require = int(CONFIG['jump_percentage'])
+    percentage = Region(1300, 417, 400, 40).get_number('green')
+    jump_require = int(config['jump_percentage'])
     if percentage >= jump_require:
         Debug.info(f"[Firestone Collect] Time to jump! {percentage}%/{jump_require}%")
         tasks['check_upgrade'] = ('', 'run_check_upgrade', 0)
         click((1360 ,510))
-        sleep(0.5)
+        time.sleep(0.5)
         click((960, 660))
-        sleep(0.5)
+        time.sleep(0.5)
         click((1100, 720))
-        sleep(5)
+        time.sleep(5)
         click((950, 740))
     else:
         click((1840, 55))
@@ -233,7 +232,7 @@ def run_firestone_research() -> int:
         if img:
             Debug.history("[Firestone Research] Selecting Research")
             img.click()
-            sleep(1)
+            time.sleep(1)
             click((790, 720))
             if color_at(970, 660) == 'lightbrown_research_full':
                 Debug.warn("[Firestone Research] Research slots full")
@@ -241,12 +240,12 @@ def run_firestone_research() -> int:
                 click((1250, 200))
                 break
         else:
-            dragDrop((1130, 430), (730, 430))
+            drag_drop((1130, 430), (730, 430))
             drag_count += 1
 
     if drag_count:
         for _ in range(1, drag_count):
-            dragDrop((530, 430), (1130, 430))
+            drag_drop((530, 430), (1130, 430))
 
     click((1840, 55))
     return 0
@@ -257,7 +256,7 @@ def run_forbidden_knowledge() -> int:
     """
     for y_coords, name in [(350, 'Ledra'), (540, 'Yanamoth'), (700, 'Kramatak')]:
         click((1800, y_coords))
-        amount = Region(1600, 20, 100, 36).getNumber()
+        amount = Region(1600, 20, 100, 36).get_number()
         Debug.info(f"Amount for {name}: {amount}")
         if not amount:
             continue
@@ -313,16 +312,16 @@ def run_forbidden_knowledge() -> int:
                 continue
             if color_at(x, y) == color:
                 click((x, y))
-                cost = Region(970, 730, 120, 50).getNumber()
+                cost = Region(970, 730, 120, 50).get_number()
                 while cost and cost <= amount and color_at(1046, 750) == 'green':
                     Debug.info(f"Upgrading {stat}")
                     click((1046, 750))
-                    moveTo((1120, 750))
+                    move_to((1120, 750))
                     amount -= cost
                 click((1260, 270))
         click((220, 900))
         if color_at(960, 890) == 'green':
-            cost = Region(960, 900, 130, 50).getNumber()
+            cost = Region(960, 900, 130, 50).get_number()
             if cost and amount >= cost:
                 Debug.info(f"Recruiting {name}")
                 click((960, 890))
@@ -350,7 +349,7 @@ SWIPE_DISTANCE_X = 120
 
 def run_garage_asset_scraper() -> None:
     """
-    Execute a linear dragDrop carousel scraper within the War Machine Garage.
+    Execute a linear drag_drop carousel scraper within the War Machine Garage.
 
     Iterates through the vehicle carousel using fixed-distance spatial swipes,
     capturing visual assets and compiling an inventory database via live OCR.
@@ -359,7 +358,7 @@ def run_garage_asset_scraper() -> None:
     Debug.info("Initializing automated Garage asset scraper workflow...")
     scanned_machines: list[str] = []
 
-    # Calculate static start and end vectors for the horizontal dragDrop timeline
+    # Calculate static start and end vectors for the horizontal drag_drop timeline
     start_x, start_y = CAROUSEL_FIRST_SLOT
     end_x = start_x - SWIPE_DISTANCE_X
     end_y = start_y  # Maintain perfect horizontal trajectory during the swipe motion
@@ -369,7 +368,7 @@ def run_garage_asset_scraper() -> None:
 
     while True:
         # Give the Unity WASM interface a brief window to settle pre-inference
-        sleep(0.5)
+        time.sleep(0.5)
 
         # Extract and sanitize the active vehicle name via outline-dissolving OCR
         raw_name = MACHINE_NAME_REGION.text()
@@ -393,10 +392,10 @@ def run_garage_asset_scraper() -> None:
         cv2.imwrite(output_path, grab_screen_to_mat(BIG_IMAGE_REGION))
 
         # Execute linear shift transition to pull the adjacent asset into focus
-        dragDrop((start_x, start_y), (end_x, end_y))
+        drag_drop((start_x, start_y), (end_x, end_y))
 
         # Grant the Unity rendering engine ample headroom to clear scroll inertial animations
-        sleep(0.8)
+        time.sleep(0.8)
 
     Debug.info(f"Garage scraper cycle finished cleanly. Total unique assets mapped: {len(scanned_machines)}")
 
@@ -434,16 +433,16 @@ def run_hero_upgrade() -> int:
         # Exact horizontal pixel anchors for the hero upgrade triggers
         for x_coord in [120, 620, 820, 1020, 1220, 1420, 1620]:
             if color_at(x_coord, 930) == 'yellow':
-                moveTo((x_coord, 980))
-                mouseDown()
+                move_to((x_coord, 980))
+                mouse_down()
                 while color_at(x_coord, 930) == 'yellow':
-                    sleep(1)
-                mouseUp()
+                    time.sleep(1)
+                mouse_up()
                 clicked = True
             else:
                 inactive_slots += 1
         if clicked:
-            moveTo((x_coord, 1080))
+            move_to((x_coord, 1080))
 
         # Break the lifecycle loop once all monitored slots report depletion
         if inactive_slots == 7:
@@ -456,7 +455,7 @@ def run_ledra_supplies() -> int:
     """
     while color_at(560, 820) == 'yellow':
         click((560, 820))
-        moveTo((480, 820))
+        move_to((480, 820))
     click((1840, 55))
     click((1840, 55))
     return 0
@@ -469,7 +468,7 @@ def run_mailbox() -> int:
         if color_at(1130, 840) == 'green':
             click((1130, 840))
             click((1600, 980))
-            sleep(0.5)
+            time.sleep(0.5)
         click((1600, 980))
 
     click((1650, 40))
@@ -491,9 +490,9 @@ def run_map() -> None:
     while base_y < 1080:
         if color_at(110, base_y) == 'green':
             click((110, base_y))
-            sleep(0.5)
+            time.sleep(0.5)
             click((950, 650))
-            sleep(0.5)
+            time.sleep(0.5)
         else:
             ts = Region(100, 300, 60, 32).text('1234567890:', colormap['white'])
             if ts:
@@ -504,11 +503,11 @@ def run_map() -> None:
 
     zoom_match = _screen.exists(task_map_zoom)
     if zoom_match:
-        dragDrop(zoom_match, (1290, zoom_match.getY()))
+        drag_drop(zoom_match, (1290, zoom_match.get_y()))
 
     slots_full = False
     for mission_type in ['mystery', 'scout', 'adventure', 'war', 'monster', 'dragon']:
-        missions = _area.findAllList('images/tasks/map/mission/' + mission_type + '.png')
+        missions = _area.find_all('images/tasks/map/mission/' + mission_type + '.png')
         if missions:
             for m in missions:
                 m.click()
@@ -520,9 +519,10 @@ def run_map() -> None:
                         if timeout:
                             timestamps.append(timeout)
                     click((1090, 870))
-                    sleep(0.5)
+                    time.sleep(0.5)
                 else:
-                    if Region(960, 870, 560, 50).text('Youdnthavegsq', colormap['red']):
+                    txt = Region(960, 870, 560, 50).text('Youdnthavegsq', colormap['red'])
+                    if txt and len(txt) > 5:
                         slots_full = True
                     click((1530, 220))
                     break
@@ -547,9 +547,6 @@ def run_new_hero() -> int:
     Execute New Hero Screen
     """
     click((1840, 55))
-    # Still an accidential match
-    if color_at(1777, 87) == 'white':
-        click((1777, 87))
     return get_timeout(604800)
 
 def run_pickaxe() -> int:
@@ -578,8 +575,8 @@ def run_pirates_price() -> int:
                 click((x, 910))
                 claimed = True
 
-        dragDrop((1500, 800), (272, 800))
-        sleep(2)
+        drag_drop((1500, 800), (272, 800))
+        time.sleep(2)
         trials += 1
 
     click((1840, 55))
@@ -594,15 +591,12 @@ def run_quests() -> int:
     """
     for x in [760, 1170]:
         click((x, 130))
-        sleep(1)
+        time.sleep(1)
         while color_at(1380, 300) == 'green':
             click((1560, 300))
-            moveTo((1620, 300))
+            move_to((1620, 300))
 
     click((1840, 55))
-    # Still an accidential match
-    if color_at(1777, 87) == 'white':
-        click((1777, 87))
     return 0
 
 def run_scarab_game() -> int:
@@ -611,15 +605,15 @@ def run_scarab_game() -> int:
     """
     while color_at(1024, 1000) == 'green':
         click((1024,1000))
-        moveTo((800, 1000))
+        move_to((800, 1000))
         start_loop = time.time()
         while time.time() - start_loop < 10 and not color_at(1024, 1000) == 'green':
-            sleep(1)
+            time.sleep(1)
 
-    score = Region(177, 33, 125, 38).getNumber()
+    score = Region(177, 33, 125, 38).get_number()
     if score > 5000:
         click((1800, 220))
-        sleep(1)
+        time.sleep(1)
         return run_scarab_vault()
 
     click((1840, 55))
@@ -631,13 +625,13 @@ def run_scarab_vault() -> int:
     """
     while color_at(1010, 1010) == 'green':
         click((1010,1010))
-        moveTo((940, 1010))
+        move_to((940, 1010))
         start_loop = time.time()
         while time.time() - start_loop < 10 and not color_at(1010, 1010) == 'green':
-            sleep(1)
+            time.sleep(1)
 
     click((1840, 55))
-    sleep(1)
+    time.sleep(1)
     return run_scarab_game()
 
 def run_scarab_token() -> int:
@@ -646,7 +640,7 @@ def run_scarab_token() -> int:
     """
     click((610,800))
     click((1840, 55))
-    sleep(1)
+    time.sleep(1)
     return run_scarab_game()
 
 def run_signin() -> int:
@@ -672,18 +666,18 @@ def run_talents() -> int:
         match = _area.exists(bubble)
         if match:
             match.click()
-            sleep(1)
+            time.sleep(1)
             while color_at(1032, 853) == 'green_talents':
                 click((1020, 866))
-                moveTo((1100, 866))
+                move_to((1100, 866))
                 clicked = True
             click((1250, 320))
             break
-        dragDrop((950, 990), (950, 188))
+        drag_drop((950, 990), (950, 188))
         counter += 1
         if counter > 10:
             for _ in range(1, counter):
-                dragDrop((950, 188), (950, 990))
+                drag_drop((950, 188), (950, 990))
             break
 
     if clicked:
@@ -702,20 +696,20 @@ def run_tavern() -> int:
     while True:
         if color_at(400, 640) == 'yellow':
             click((400, 640))
-            sleep(0.5)
+            time.sleep(0.5)
         else:
             click((1670, 270))
             break
 
     click((1840, 55))
-    sleep(1)
+    time.sleep(1)
     return run_tavern_game()
 
 def run_tavern_game() -> int:
     """
     Run the tavern game
     """
-    amount = Region(1585, 30, 110, 35).getNumber()
+    amount = Region(1585, 30, 110, 35).get_number()
     if not amount:
         click((1840, 55))
         return 0
@@ -723,9 +717,9 @@ def run_tavern_game() -> int:
 
     for _ in range(1, int(amount)):
         click((960, 1020))
-        sleep(1)
+        time.sleep(1)
         click((random.choice([660, 960, 1260]) , random.choice([330, 760])))
-        sleep(5)
+        time.sleep(5)
 
     click((1840, 55))
     return 0
@@ -740,7 +734,7 @@ def run_upgrade_guardian() -> int:
         'ankaa': (1040, 1000),
         'azhar': (1200, 1000)
     }
-    dust = Region(1590, 20, 110, 32).getNumber()
+    dust = Region(1590, 20, 110, 32).get_number()
 
     while True:
         current = Region(250, 830, 300, 60).text('abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ', colormap['brown']).lower()
@@ -748,7 +742,7 @@ def run_upgrade_guardian() -> int:
             del pos[current]
 
             click((1050, 150)) # General
-            sleep(1)
+            time.sleep(1)
             if color_at(1090, 800) == 'green':
                 Debug.history(f"Training {current}")
                 click((1090,800))
@@ -758,36 +752,36 @@ def run_upgrade_guardian() -> int:
                 for _ in range(1, int(amount)):
                     if color_at(1590, 800) == 'green':
                         click((1590, 800))
-                        moveTo((1590, 880))
+                        move_to((1590, 880))
                         dust -= 20
                     else:
                         break
 
             click((1210, 150)) #Evolution
-            sleep(1)
-            cost = Region(1100, 767, 150, 40).getNumber('brown')
+            time.sleep(1)
+            cost = Region(1100, 767, 150, 40).get_number('brown')
             Debug.info(f"Evolution costs: {cost}")
             if cost >= dust and color_at(1220, 780) == 'green':
                 Debug.history(f"Evolving {current}")
                 click((1220, 780))
                 dust -= int(cost)
-                sleep(3)
+                time.sleep(3)
 
             click((1400, 150)) #Chaos Rift
-            sleep(1)
-            amount = Region(1564, 20, 160, 30).getNumber()
+            time.sleep(1)
+            amount = Region(1564, 20, 160, 30).get_number()
             Debug.info(f"Chaos rift amount: {amount}")
             while True:
-                cost = Region(1460, 630, 130, 40).getNumber()
+                cost = Region(1460, 630, 130, 40).get_number()
                 Debug.info(f"Chaos rift costs: {cost}")
                 if cost and cost >= dust:
                     Debug.history(f"Increase {current}'s holy damage")
                     click((1720, 760))
-                    sleep(1)
+                    time.sleep(1)
                     amount -= cost
 
             click((1560, 150)) #Guardian rarity
-            sleep(1)
+            time.sleep(1)
             if color_at(1365, 630) == 'green':
                 click((1365, 630))
 

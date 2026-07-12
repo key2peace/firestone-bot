@@ -5,10 +5,12 @@ Fully multi-platform utilizing mss, pyautogui, cv2, and pytesseract.
 import base64
 import datetime
 import hashlib
+import inspect
 import json
 import math
 import os
 import re
+import subprocess
 import time
 import threading
 import tkinter as tk
@@ -28,8 +30,9 @@ from watchdog.events import FileSystemEventHandler
 from watchdog.observers import Observer
 
 # Internal variables
-BOT_STARTED = time.time_ns()
-LOCKFILE = '.bot_running'
+bot_started = time.time_ns()
+lock_file = '.bot_running'
+reload_file = '.bot_reload'
 _ollama_cache: List[Dict[str, str]] = []
 
 colormap = {
@@ -46,6 +49,16 @@ colormap = {
     'yellow': (250, 255, 170, 255, 0, 100),
     'white': (230, 255, 230, 255, 230, 255)
 }
+
+# Config
+config = {
+    'upgrade_mode': '100',
+    'jump_percentage': '400',
+    'tracker_file': 'index.json',
+    'ollama_url': 'http://localhost:11434',
+    'ollama_model': 'llama3.2'
+}
+config_file = 'bot_settings.json'
 
 # name: (description, reached
 dailies = {
@@ -102,20 +115,10 @@ for root, _, files in os.walk('images/tasks/guardian'):
         filepath = os.path.join(root, filename)
         tasks[filename[:-4]] = (filepath, 'run_upgrade_guardian', 0)
 
-if os.path.exists(LOCKFILE):
-    os.remove(LOCKFILE)
+if os.path.exists(lock_file):
+    os.remove(lock_file)
 
-# Config
-CONFIG = {
-    'upgrade_mode': '100',
-    'jump_percentage': '400',
-    'tracker_file': 'index.json',
-    'ollama_url': 'http://localhost:11434',
-    'ollama_model': 'llama3.2:latest'
-}
-CONFIG_FILE = 'bot_settings.json'
-
-def ask_local_ollama(prompt: str) -> str:
+def ask_local_ollama(prompt: str, src_mat = None) -> str:
     """
     Evaluate an enemy lineup against a cached player baseline via /api/chat.
 
@@ -124,8 +127,20 @@ def ask_local_ollama(prompt: str) -> str:
     """
     global _ollama_cache
 
-    ollama_url = f"{CONFIG['ollama_url'].rstrip('/')}/api/chat"
-    model_name = CONFIG['ollama_model']
+    ollama_url = f"{config['ollama_url'].rstrip('/')}/api/chat"
+    model_name = config['ollama_model']
+    model_info = subprocess.run(['ollama','show', model_name], capture_output=True)
+    model_vision = True
+    if model_info:
+        if not model_info['returncode']:
+            pattern = r"\n    vision\n"
+            match = re.search(pattern, model_info['stdout'])
+            if not match and src_mat:
+                Debug.warn("[Ollama] This model does not support Vision. ")
+                model_vision = False
+                src_mat = None
+        else:
+            Debug.error(f"[Ollama] Error {model_info['returncode']} occured.")
 
     if not _ollama_cache:
         base_prompt = (
@@ -136,7 +151,7 @@ def ask_local_ollama(prompt: str) -> str:
             " - Append the chance percentage to that output as second argument.\n"
             " - No chat, no markdown, no thinking process, the output is intended for script usage.\n"
             " - Take into account that healers provide health to the entire team.\n"
-            f" - When evaluating setups MY team has the following setup:\n{CONFIG['MY_TEAM']}\n"
+            f" - When evaluating setups MY team has the following setup:\n{config['MY_TEAM']}\n"
         )
         _ollama_cache.append({"role": "user", "content": base_prompt})
 
@@ -155,65 +170,37 @@ def ask_local_ollama(prompt: str) -> str:
             Debug.error("[Ollama] Base handshake failed: %s", error)
             return ""
 
-    _ollama_cache = _ollama_cache[:2]
+    payload = {
+        'mode': model_name,
+        'messages': _ollama_cache[:2],
+        'stream': False
+    }
 
-    payload_messages = list(_ollama_cache) + [
-        {"role": "user", "content": prompt}
-    ]
+    message = {
+        'role': 'user',
+        'content': prompt
+    }
+
+    if model_vision and src_mat:
+        success, encoded_image = cv2.imencode('.png', src_mat)
+        if success:
+           message['images'] = base64.b64encode(encoded_image.tobytes()).decode('utf-8')
+
+    payload['messages'].append(message)
 
     try:
         response = requests.post(
             ollama_url,
-            json={"model": model_name, "messages": payload_messages, "stream": False},
+            json=payload,
             timeout=90
         )
         response.raise_for_status()
 
-        # Strip alle witregels en dwing HOOFDLETTERS ('YES' of 'NO')
-        ai_decision = response.json().get("message", {}).get("content", "").strip()
-        return ai_decision
+        return response.json().get("message", {}).get("content", "").strip()
 
     except Exception as error:
         Debug.error("[Ollama] Live matchmaking query failed: %s", error)
         return "NO"
-
-def ask_ollama_vision(src_mat, prompt_text: str, model: str = "llama3.2-vision") -> str:
-    """
-    Stream a live OpenCV viewport matrix directly into Ollama's vision model.
-    Encodes the numerical pixel matrix into a Base64 payload.
-    """
-    if src_mat is None or src_mat.size == 0:
-        return ""
-
-    try:
-        # 1. Encodeer de OpenCV NumPy-matrix naar een PNG-buffer in het geheugen
-        success, encoded_image = cv2.imencode('.png', src_mat)
-        if not success:
-            return ""
-
-        # 2. Zet de binaire buffer om in een schone Base64-string voor de JSON-payload
-        base64_string = base64.b64encode(encoded_image.tobytes()).decode('utf-8')
-
-        # 3. Bouw de specifieke Ollama multimodale chat-payload
-        payload = {
-            "model": model,
-            "messages": [
-                {
-                    "role": "user",
-                    "content": prompt_text,
-                    "images": [base64_string]
-                }
-            ],
-            "stream": False
-        }
-
-        # 4. Schiet de pixels over de lokale poort naar je VRAM
-        response = requests.post(CONFIG['ollama_url']+'/api/chat', json=payload, timeout=60)
-        return response.json().get("message", {}).get("content", "").strip()
-
-    except Exception as error:
-        Debug.error("Ollama Vision handshake failed: %s", error)
-        return ""
 
 def capture(filename: str) -> bool:
     """
@@ -271,7 +258,7 @@ def click(location: Union[Tuple[int, int], 'Region', 'Match']) -> None:
         mouse_controller.mouseUp()
         time.sleep(0.3)
     except mouse_controller.FailSafeException:
-        toggle_br()
+        pause_on()
 
 def color_at(x: int, y: int) -> str:
     """
@@ -302,10 +289,10 @@ def get_coords(location: Union[Tuple[int, int], 'Region', 'Match']) -> Tuple[int
     """
     # Extract coordinates safely
     try:
-        x, y = location.getX(), location.getY()
+        x, y = location.get_x(), location.get_y()
     except AttributeError:
         try:
-            x, y = location.getCenter().getX(), location.getCenter().getY()
+            x, y = location.get_center().get_x(), location.get_center().get_y()
         except AttributeError:
             try:
                 x, y = location
@@ -313,7 +300,7 @@ def get_coords(location: Union[Tuple[int, int], 'Region', 'Match']) -> Tuple[int
                 return (-1, -1)
     return (x, y)
 
-def dragDrop(start_location: Union[Tuple[int, int], 'Region', 'Match'],
+def drag_drop(start_location: Union[Tuple[int, int], 'Region', 'Match'],
              end_location: Union[Tuple[int, int], 'Region', 'Match']) -> None:
     """
     Perform a hardware-level drag and drop operation.
@@ -332,7 +319,7 @@ def dragDrop(start_location: Union[Tuple[int, int], 'Region', 'Match'],
         delay = get_distance(start_location, end_location) / 150
         pyautogui.dragTo(int(x2), int(y2), delay, button='left')
     except mouse_controller.FailSafeException:
-        toggle_br()
+        pause_on()
 
 def duration_text(start_time_ns: int, stop_time_ns: int = 0):
     """
@@ -415,7 +402,7 @@ def extract_color_layer(src_mat: np.ndarray, color_range: tuple[int, int, int, i
     # Reconstruct the high-fidelity alpha layer
     return cv2.merge([b_ch, g_ch, r_ch, new_alpha])
 
-def findAllList(image_path: str) -> list:
+def find_all(image_path: str) -> list:
     """
     Locate all matching iterations of a pattern across the entire primary monitor.
 
@@ -433,7 +420,7 @@ def findAllList(image_path: str) -> list:
 
     # Construct a temporary full-screen Region to execute the multi-scan
     full_screen = Region(0, 0, screen_width, screen_height)
-    return full_screen.findAllList(image_path)
+    return full_screen.find_all(image_path)
 
 def filter_mat_alpha(src_mat: np.ndarray, threshold: int = 128) -> np.ndarray:
     """
@@ -496,52 +483,6 @@ def get_next_reset(target_hour: int = 8) -> int:
         next_reset += datetime.timedelta(days=1)
 
     return int(next_reset.timestamp())
-
-def parse_ui_timeout(ocr_text: str) -> float | None:
-    """
-    Convert a game UI duration string (d hh:mm:ss) into an absolute UNIX timestamp.
-
-    Extracts days, hours, minutes, and seconds safely via localized regex matching
-    to calculate the precise future epoch execution boundary.
-
-    Args:
-        ocr_text (str): Raw string output captured from the target UI region.
-
-    Returns:
-        float | None: Future UNIX timestamp, or None if no valid timer is detected.
-    """
-    if not ocr_text:
-        return None
-
-    # Onbreekbare regex die flexibel omgaat met eventuele OCR-witruimtes of letters
-    # Vangt optioneel de dagen (d) op, gevolgd door hh:mm:ss
-    timer_pattern = r"(\d{2})?:?(\d{1,2}):(\d{2})"
-    match = re.search(timer_pattern, ocr_text.lower())
-    if match:
-        try:
-            # Extract groups and safely default the days to 0 if not present in UI
-            hours_str, minutes_str, seconds_str = match.groups()
-
-            hours = int(hours_str) if hours_str else 0
-            minutes = int(minutes_str)
-            seconds = int(seconds_str)
-
-            # Convert the duration matrix directly into absolute seconds
-            total_cooldown_seconds = (hours * 3600) + (minutes * 60) + seconds
-
-            # Return the absolute execution boundary timestamp
-            return time.time() + total_cooldown_seconds
-
-        except (ValueError, TypeError) as error:
-            Debug.error(f"[TIMEOUT-PARSE-ERROR] Failed to map UI clock vector: {error}")
-            return None
-    else:
-        try:
-            seconds = int(float(ocr_text))
-            return seconds
-        except (ValueError, TypeError) as error:
-            Debug.error(f"[TIMEOUT-PARSE-ERROR] Failed to map UI clock vector: {error}")
-            return None
 
 def get_pixel_color(x: int, y: int) -> Tuple[int, int, int]:
     """
@@ -623,7 +564,7 @@ def grab_screen_to_mat(region_obj: Region = None) -> 'np.ndarray | None':
         Debug.error("[grab_screen_to_mat] Failed to write matrix: %s", str(error))
         return None
 
-def mouseDown(timeout: float=0) -> None:
+def mouse_down(timeout: float=0) -> None:
     """
     Push left button and do not release unless timeout specified
 
@@ -634,19 +575,19 @@ def mouseDown(timeout: float=0) -> None:
         pause_check()
         mouse_controller.mouseDown()
         if timeout:
-            sleep(timeout)
+            time.sleep(timeout)
             mouse_controller.mouseUp()
     except mouse_controller.FailSafeException:
-        toggle_br()
+        pause_on()
 
-def mouseUp() -> None:
+def mouse_up() -> None:
     """
     Release mousebutton after mouseDown()
     """
     pause_check()
     mouse_controller.mouseUp()
 
-def moveTo(location: Union[Tuple[int, int], 'Region', 'Match']) -> None:
+def move_to(location: Union[Tuple[int, int], 'Region', 'Match']) -> None:
     """
     Perform a hardware-level mouse move.
 
@@ -663,7 +604,7 @@ def moveTo(location: Union[Tuple[int, int], 'Region', 'Match']) -> None:
         pause_check()
         mouse_controller.moveTo(x_coord, y_coord)
     except mouse_controller.FailSafeException:
-        toggle_br()
+        pause_on()
 
 def on_keyrelease(key) -> None:
     """
@@ -675,9 +616,12 @@ def on_keyrelease(key) -> None:
         # (un)pausing the game using Scroll Lock
         keys = keyboard.Key
         if key == keys.scroll_lock:
-            toggle_br()
-        elif key == keys.f5:
-            toggle_br()
+            if os.path.exists(lock_file):
+                pause_on()
+            else:
+                pause_off()
+        elif key in [keys.f5, keys.esc]:
+            pause_on(True)
         elif key == keys.print_screen:
             mat = grab_screen_to_mat()
             filename = pyautogui.prompt('File name', 'Capture Screen')
@@ -724,11 +668,72 @@ def pause_check() -> None:
     """
     System breaks
     """
-    if not os.path.exists(LOCKFILE):
+    if not os.path.exists(lock_file):
         Debug.info("Systems paused, toggle Scroll-Lock to continue.")
-        while not os.path.exists(LOCKFILE):
-            sleep(1)
+        while not os.path.exists(lock_file):
+            time.sleep(1)
         Debug.info("Moving on...")
+
+def pause_off() -> None:
+    """Create lock_file"""
+    with open(lock_file, 'wt', encoding='utf-8') as ptr:
+        ptr.write(str(time.time_ns()))
+        Debug.info('Initiated resume')
+
+def pause_on(reload: bool = False) -> None:
+    """Remove lock_file"""
+    if os.path.exists(lock_file):
+        os.remove(lock_file)
+        Debug.info('Initianted pause')
+
+    if reload:
+         with open(reload_file, 'wt', encoding='utf-8') as ptr:
+            ptr.write(str(time.time_ns()))
+            Debug.info('Initiated resume')
+
+def parse_ui_timeout(ocr_text: str) -> float | None:
+    """
+    Convert a game UI duration string (d hh:mm:ss) into an absolute UNIX timestamp.
+
+    Extracts days, hours, minutes, and seconds safely via localized regex matching
+    to calculate the precise future epoch execution boundary.
+
+    Args:
+        ocr_text (str): Raw string output captured from the target UI region.
+
+    Returns:
+        float | None: Future UNIX timestamp, or None if no valid timer is detected.
+    """
+    if not ocr_text:
+        return None
+
+    timer_pattern = r"(\d{2})?:?(\d{1,2}):(\d{2})"
+    match = re.search(timer_pattern, ocr_text.lower())
+    if match:
+        try:
+            # Extract groups and safely default the days to 0 if not present in UI
+            hours_str, minutes_str, seconds_str = match.groups()
+
+            hours = int(hours_str) if hours_str else 0
+            minutes = int(minutes_str)
+            seconds = int(seconds_str)
+
+            # Convert the duration matrix directly into absolute seconds
+            total_cooldown_seconds = (hours * 3600) + (minutes * 60) + seconds
+
+            # Return the absolute execution boundary timestamp
+            return time.time() + total_cooldown_seconds
+
+        except (ValueError, TypeError) as error:
+            Debug.error(f"[TIMEOUT-PARSE-ERROR] Failed to map UI clock vector: {error}")
+            return None
+    else:
+        try:
+            seconds = int(float(ocr_text))
+            return seconds
+        except (ValueError, TypeError) as error:
+            Debug.error(f"[TIMEOUT-PARSE-ERROR] Failed to map UI clock vector: {error}")
+            return None
 
 def popup(message: str, title: str = 'Bot Notification', timeout: float = 0) -> None:
     """
@@ -819,29 +824,19 @@ def similarity(img1: np.ndarray, img2: np.ndarray) -> float:
         Debug.error("[CoreSimilarity] Template evaluation failed:\n%s", str(error))
         return 0.0
 
-def sleep(seconds: float) -> None:
-    """Obvious"""
-    time.sleep(seconds)
-
-def toggle_br() -> None:
-    """Toggle LOCKFILE existance"""
-    if os.path.exists(LOCKFILE):
-        os.remove(LOCKFILE)
-        Debug.info('Initianted pause')
-    else:
-        with open(LOCKFILE, 'wt', encoding='utf-8') as ptr:
-            ptr.write(str(time.time_ns()))
-            Debug.info('Initiated resume')
-
 class Debug:
     """
     A simple colorful terminal logger supporting variable arguments.
     """
+    def _gen_origin() -> str:
+        """Santa's little helper"""
+        frame, filename, lineno, function, code_context, index = inspect.stack()[3]
+        return str(f"\n{function} in {filename}:{lineno}\n")
 
     @staticmethod
     def error(msg: str, *args) -> None:
         """Log runtime exceptions and critical failures."""
-        Debug.output('error', msg, *args)
+        Debug.output('error', msg+_gen_string(), *args)
 
     @staticmethod
     def info(msg: str, *args) -> None:
@@ -878,12 +873,11 @@ class Debug:
             try:
                 # Voer de traditionele Python string-formatting veilig uit
                 formatted_msg = msg % args
-                print(f"{color}[{timestamp}][{padded_level}] {formatted_msg}\033[0m")
+                print(f"[{timestamp}]{color}[{padded_level}] {formatted_msg}\033[0m")
             except TypeError:
-                # Fallback mocht de formatting-syntax niet matchen met de args
-                print(f"{color}[{timestamp}][{padded_level}] {msg} {args}\033[0m")
+                print(f"[{timestamp}]{color}[{padded_level}] {msg} {args}\033[0m")
         else:
-            print(f"{color}[{timestamp}][{padded_level}] {msg}\033[0m")
+            print(f"[{timestamp}]{color}[{padded_level}] {msg}\033[0m")
 
 class ImageEventHandler(FileSystemEventHandler):
     """
@@ -990,7 +984,7 @@ class ImageTracker:
             return
         file_dir = os.path.dirname(file_path)
         file_base = os.path.basename(file_path)
-        tracker_path = os.path.join(file_dir, CONFIG['tracker_file'])
+        tracker_path = os.path.join(file_dir, config['tracker_file'])
         tracker_data = self.get(file_dir)
 
         try:
@@ -1006,7 +1000,7 @@ class ImageTracker:
     def get(self, file_path: str) -> Dict[str, Any]:
         """Fetch tracking configurations mapped to a specific filename target key."""
         file_dir = os.path.dirname(file_path) if os.path.isfile(file_path) else file_path
-        tracker_path = os.path.join(file_dir, CONFIG['tracker_file'])
+        tracker_path = os.path.join(file_dir, config['tracker_file'])
 
         if not os.path.exists(tracker_path):
             return {}
@@ -1032,7 +1026,7 @@ class ImageTracker:
         """Purge an existing tracking sequence dictionary record from the config file."""
         file_dir = os.path.dirname(file_path)
         file_base = os.path.basename(file_path)
-        tracker_path = os.path.join(file_dir, CONFIG['tracker_file'])
+        tracker_path = os.path.join(file_dir, config['tracker_file'])
         tracker_data = self.get(file_dir)
 
         if file_base in tracker_data:
@@ -1165,7 +1159,7 @@ class Region():
             Debug.error(f'[match] {e}')
             return None
 
-    def findAllList(self, image_path: str) ->List[Match]:
+    def find_all(self, image_path: str) ->List[Match]:
         """
         Locate all matching iterations of a pattern within this region boundaries.
 
@@ -1207,7 +1201,7 @@ class Region():
 
         return found_matches
 
-    def getCenter(self) ->Match:
+    def get_center(self) ->Match:
         """
         Calculate and return the structural midpoint coordinates of the region.
 
@@ -1218,7 +1212,7 @@ class Region():
         cy = self.y + int(self.h / 2)
         return Match(cx, cy, 0, 0, 1.0)
 
-    def getH(self) ->int:
+    def get_h(self) ->int:
         """
         Return the structural height parameter of this zone.
 
@@ -1227,7 +1221,7 @@ class Region():
         """
         return self.h
 
-    def getNumber(self, color_map: str = 'white') -> float:
+    def get_number(self, color_map: str = 'white') -> float:
         """
         Extract the number from a region
 
@@ -1238,11 +1232,11 @@ class Region():
             floatt: the extracted value
         """
         number = self.text('1234567890.,', colormap[color_map]).replace('.','').replace(',','.')
-        if number:
+        if number and not number == '.':
             return float(number)
         return 0
 
-    def getW(self) ->int:
+    def get_w(self) ->int:
         """
         Return the structural width parameter of this zone.
 
@@ -1251,7 +1245,7 @@ class Region():
         """
         return self.w
 
-    def getX(self) ->int:
+    def get_x(self) ->int:
         """
         Return the absolute top-left X-coordinate anchor.
 
@@ -1260,7 +1254,7 @@ class Region():
         """
         return self.x
 
-    def getY(self) ->int:
+    def get_y(self) ->int:
         """
         Return the absolute top-left Y-coordinate anchor.
 
@@ -1308,7 +1302,7 @@ class Region():
         time.sleep(duration)
         root.destroy()
 
-    def moveMouseAway(self) ->None:
+    def move_mouse_away(self) ->None:
         """
         Teleport the OS cursor safely outside the active evaluation boundaries.
 
@@ -1317,7 +1311,7 @@ class Region():
         """
         target_x = self.x + self.w + 10
         target_y = self.y + int(self.h / 2)
-        moveTo((target_x, target_y))
+        move_to((target_x, target_y))
 
     def text(self, expect: str = None, color_mask: tuple = None) -> str:
         """
@@ -1341,7 +1335,7 @@ class Region():
             _, thresh = cv2.threshold(gray, 0, 255, cv2.THRESH_BINARY_INV + cv2.THRESH_OTSU)
 
         # 3. Upscale the clean 1-channel binary matrix to expand small font pixels
-        clean_mat = cv2.resize(thresh, None, fx=5.0, fy=5.0, interpolation=cv2.INTER_CUBIC)
+        clean_mat = cv2.resize(thresh, None, fx=4.0, fy=4.0, interpolation=cv2.INTER_CUBIC)
 
         # 4. Clean up remaining stroke artifact noise using a minimal 2x2 rectangular kernel
         clean_mat = cv2.morphologyEx(
@@ -1350,6 +1344,8 @@ class Region():
             cv2.getStructuringElement(cv2.MORPH_RECT, (2, 2))
         )
 
+        cv2.imwrite('capture/text_' + str(time.time_ns()) + '.png', clean_mat)
+
         tessdata_path = r"C:\Program Files\Tesseract-OCR\tessdata/kiddosy.traineddata"
         lang_model = "kiddosy" if os.path.exists(tessdata_path) else "eng"
 
@@ -1357,15 +1353,23 @@ class Region():
         if expect:
             tess_config += f' -c tessedit_char_whitelist={expect}'
 
-        raw_output = str(pytesseract.image_to_string(clean_mat, config=tess_config)).strip()
+        for psm_mode in [3, 7, 8, 10]:
+            raw_output = str(pytesseract.image_to_string(clean_mat, config=tess_config + f' --psm {psm_mode}')).strip()
+            if raw_output:
+                # Debug.info(f"[Region.text]\nExpect: {expect}\nPSM: {psm_mode}\nReturn: {raw_output}")
+                break
 
-        if expect:
+        if raw_output and expect:
             clean_output = re.sub(r'[\s\n\r]', '', raw_output.lower())
             if clean_output and re.search(r'[' + expect + r']+', clean_output):
                 return raw_output
 
             clean_mat = cv2.bitwise_not(clean_mat)
-            raw_output = str(pytesseract.image_to_string(clean_mat, config=tess_config)).strip()
+            for psm_mode in [3, 7, 8, 10]:
+                raw_output = str(pytesseract.image_to_string(clean_mat, config=tess_config + f' --psm {psm_mode}')).strip()
+                if raw_output:
+                    # Debug.info(f"[Region.text 2]\nExpect: {expect}\nReturn: {raw_output}")
+                    break
             clean_output = re.sub(r'[\s\n\r]', '', raw_output.lower())
             if not clean_output or not re.search(r'[' + expect + r']+', clean_output):
                 return ''
@@ -1441,11 +1445,11 @@ class Match(Region):
         return self.score
 
 os.system("color")
-if os.path.exists(CONFIG_FILE):
+if os.path.exists(config_file):
     try:
-        with open(CONFIG_FILE, 'r', encoding='utf-8') as f:
+        with open(config_file, 'r', encoding='utf-8') as f:
             loaded_config = json.load(f)
-            CONFIG.update(loaded_config)
+            config.update(loaded_config)
     except Exception as e:
         Debug.error("[Core] Unable to load configuration\n%s", str(e))
 

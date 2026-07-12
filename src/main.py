@@ -4,17 +4,19 @@ Main Entry Point and Workflow Runner for Firestone Bot.
 Acts as the central orchestrator, executing modular gameplay subroutines
 while monitoring the application lifecycle and emergency shutdown signals.
 """
+import os
 import time
 import task_logic
 
 from custom_core import (
+    color_at,
     Debug,
-    dragDrop,
+    drag_drop,
     duration_text,
-    moveTo,
+    move_to,
     pause_check,
     Region,
-    sleep,
+    reload_file,
     tasks
 )
 
@@ -59,6 +61,12 @@ def main() -> None:
         while True:
             pause_check()
 
+            if os.path.exists(reload_file):
+                os.remove(reload_file)
+                Debug.info('Initianting reload')
+                crazygames_check()
+                tasks['check_upgrade'] = ('', 'run_check_upgrade', 0)
+
             # loop through tasks
             #start_tasks = time.time_ns()
             for name, (pattern, task_function_name, timeout) in tasks.items():
@@ -84,8 +92,8 @@ def main() -> None:
                     Debug.history("[Tasks] %s detected", friendly_name)
                     match.highlight(1)
                     match.click()
-                    match.moveMouseAway()
-                    sleep(1)
+                    match.move_mouse_away()
+                    time.sleep(1)
 
                 if hasattr(task_logic, task_function_name):
                     start_task = time.time_ns()
@@ -100,21 +108,23 @@ def main() -> None:
                 else:
                     Debug.history("[Task] %s - Missing handler %s", friendly_name, task_function_name)
 
+                if color_at(1777, 87) == 'white':
+                    click((1777, 87))
             #Debug.history("[Tasks] Finished in %s", duration_text(start_tasks))
 
-            task_count = Region(90, 160, 50, 38).getNumber()
+            task_count = Region(90, 160, 50, 38).get_number()
             if int(task_count) > 3:
                 # drag around the area to reveal task images
                 flipper = not flipper
-                x = main_finished.getX()+50
-                y1 = main_finished.getY()+250
-                y2 = y1 + main_finished.getH()
+                x = main_finished.get_x()+50
+                y1 = main_finished.get_y()+250
+                y2 = y1 + main_finished.get_h()
                 for _ in range(0, 2):
                     if flipper:
-                        dragDrop((x, y1), (x, y2))
+                        drag_drop((x, y1), (x, y2))
                     else:
-                        dragDrop((x, y2), (x, y1))
-                moveTo((x - 60, y1 - 60))
+                        drag_drop((x, y2), (x, y1))
+                move_to((x - 60, y1 - 60))
 
     except KeyboardInterrupt as e:
         Debug.info("[Main] Received Exception\n%s", str(e))

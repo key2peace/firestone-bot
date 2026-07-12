@@ -38,6 +38,7 @@ But sadly, new OculiX IDE looking shiny on my desktop, getting frustrated by the
 	- Evolving guardians
 	- Chaos of Rift upgrades
   - Guild expeditions
+  - Ledra supplies
   - Map:
     - Claim finished tasks
 	- Pick new tasks in the order mystery, scout, adventure, war, monster, dragon
@@ -61,17 +62,6 @@ But sadly, new OculiX IDE looking shiny on my desktop, getting frustrated by the
 	- Blueprints
 	- Rarity
   - Meteorite Research
-
-
-- Tasks not yet supported (TODO):
-  - Alchemist
-  - Engineer:
-    - Read selected crew setup
-  - Garage:
-	- Workshop
-	- Upgrades
-	- Rarity
-  - Ledra supplies
 
 ## License
 This code is released under the MIT License, for more details, see [License](https://github.com/key2peace/firestone-bot/blob/main/LICENSE)
