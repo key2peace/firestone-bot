@@ -19,49 +19,86 @@ But sadly, new OculiX IDE looking shiny on my desktop, getting frustrated by the
 ## Features
 - Auto maximize and disable gamebar on crazygames
 - Tasks supported:
-  - Arcane Crystal:
-	- Spending a maximum of 5 pixels per run
-	- Awakening
-  - Campaign Battles:
-	- Pick up the loot
-	- Run daily liberation missions
-  - Chaos Rift:
-    - Fight monster
-  - Daily sign-in
+  - Character:
+    - Quests
   - Engineer:
-    - Pick up tools
-  - Forbidden Knowledge:
-	- Perform upgrades and recruiting
-  - Guardians:
+    - Engineer:
+      - Pick up tools
+  - Library:
+    - Firestone research:
+	  - Claim finished tasks
+  - Magic quarter:
 	- Train guardians
 	- Enlighten guardians
 	- Evolving guardians
 	- Chaos of Rift upgrades
-  - Guild expeditions
-  - Ledra supplies
+  - Guild:
+	- Arcane Crystal:
+	  - Spending a maximum of 5 pixels per run
+	  - Awakening
+    - Chaos Rift:
+      - Fight monster
+	  - Supplies
+	- Guild expeditions
   - Map:
     - Claim finished tasks
 	- Pick new tasks in the order mystery, scout, adventure, war, monster, dragon
-  - Pirates price pickup
-  - Scarab Game:
-    - Play the game
-	- Pickup scarab token
-	- Pickup pharao's vault
+	- Campaign Battles:
+	  - Pick up the loot
+	  - Run daily liberation missions
+  - Pirate ship:
+    - Pirates price
+  - Shop:
+    - Daily rewards
   - Tavern:
-	- Play the game (spending a max of 10 tokens per run)
-	- Convert beer to tokens
+	- Scarab Game:
+      - Play the game
+	  - Pickup scarab token
+	  - Pickup pharao's vault
+	- Tavern Game:
+	  - Play the game (spending a max of 10 tokens per run)
+	  - Convert beer to tokens
+  - Temple of eternals:
+    - Collect when 400% reached
 
-
-- Tasks not yet supported (work in progress):
+- Tasks not yet supported:
   - Alchemist
-  - Arena of kings
+    - Experiments
+    - Transmute (not yet unlocked)
+  - Bag
+    - Opening chests
+  - Battles:
+    - Arena of kings
+  - Battle pass
   - Engineer:
-    - Read selected crew setup
-  - Garage:
-	- Upgrades
-	- Blueprints
-	- Rarity
-  - Meteorite Research
+    - Engineer:
+      - Read selected crew setup (for Arena of kings)
+    - Garage:
+	  - Upgrades
+	  - Blueprints
+	  - Rarity
+	  - Index machines (for Arena of kings)
+  - Events
+  - Exotic Merchant:
+    - Sell items
+	- Exotic upgrades
+	- Emblem market
+  - Guild
+    - Automatic bank deposits
+	- Tree of Life
+	- Forbidden Knowledge:
+	  - Perform upgrades and recruiting
+  - Library:
+    - Firestone research:
+	  - Improve task selection
+	- Meteorite Research
+  - Map:
+    - Campgaing:
+	  - Select battles
+  - Pirate ship:
+    - Mercenaries
+  - Shop:
+    - Mystery box
 
 ## License
 This code is released under the MIT License, for more details, see [License](https://github.com/key2peace/firestone-bot/blob/main/LICENSE)

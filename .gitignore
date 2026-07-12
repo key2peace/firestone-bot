@@ -219,4 +219,7 @@ __marimo__/
 
 # Other files
 src/capture/
-src/.bot_running
+src/.bot*
+src/bot_settings.json
+src/images/*.json
+src/logs/

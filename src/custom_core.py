@@ -30,15 +30,14 @@ from watchdog.events import FileSystemEventHandler
 from watchdog.observers import Observer
 
 # Internal variables
-bot_started = time.time_ns()
-lock_file = '.bot_running'
-reload_file = '.bot_reload'
 _ollama_cache: List[Dict[str, str]] = []
+bot_started: int = time.time_ns()
 
 colormap = {
     # name: r_min, r_max, g_min, g_max, b_min, b_max
     'black': (0, 10, 0, 10, 0, 10),
     'blue': (8, 12, 125, 135, 250, 255),
+    'blue_forbidden_knowledge': (20,35,55,65,135,145),
     'blue_liberation_lost': (32, 35, 75, 80, 123, 128),
     'brown_liberation_won': (192, 197, 143, 146, 99, 103),
     'lightbrown_research_full': (228, 236, 205, 215, 180, 190),
@@ -54,11 +53,12 @@ colormap = {
 config = {
     'upgrade_mode': '100',
     'jump_percentage': '400',
+    'logfile': 'logs/firestone-bot.log',
     'tracker_file': 'index.json',
     'ollama_url': 'http://localhost:11434',
-    'ollama_model': 'llama3.2'
+    'ollama_model': 'llama3.2:latest'
 }
-config_file = 'bot_settings.json'
+config_file: str = 'bot_settings.json'
 
 # name: (description, reached
 dailies = {
@@ -72,53 +72,64 @@ dailies = {
     'miner':        ('Hit the arcane crystal 5 times', 6, 0)
 }
 
-# name: (pattern, callable, timeout)
-tasks = {
-    'check_upgrade':        ('',                                     'run_check_upgrade', 0),
-    'hero_upgrade':         ('',                                     'run_hero_upgrade', 0),
-    'arcane_crystal':       ('images/tasks/arcane_crystal.png',      'run_arcane_crystal', 0),
-    'arena_of_kings':       ('images/tasks/arena_of_kings.png',      'run_arena_of_kings', 0),
-    'awakening':            ('images/tasks/awakening.png',           'run_awakening', 0),
-    'campaign':             ('images/tasks/campaign.png',            'run_campaign', 0),
-    'chaos_rift':           ('images/tasks/chaos_rift.png',          'run_chaos_rift', 0),
-    'daylies':              ('',                                     'run_daylies', 0),
-    'engineer':             ('images/tasks/engineer.png',            'run_engineer', 0),
-    'firestone_collect':    ('images/tasks/firestone/collect.png',   'run_firestone_collect', 0),
-    'firestone_research':   ('images/tasks/firestone/research.png',  'run_firestone_research', 0),
-    'forbidden_knowledge':  ('images/tasks/forbidden_knowledge.png', 'run_forbidden_knowledge', 0),
-    'garage':               ('images/tasks/garage.png',              'run_garage', 0),
-    'garage_chaos_rift':    ('images/tasks/garage_chaos_rift.png',   'run_garage', 0),
-    'guild_expeditions':    ('images/tasks/guild_expeditions.png',   'run_guild_expeditions', 0),
-    'ledra_supplies':       ('images/tasks/ledra_supplies.png',      'run_ledra_supplies', 0),
-    'mailbox':              ('images/tasks/mailbox.png',             'run_mailbox', 0),
-    'map':                  ('images/tasks/map.png',                 'run_map', 0),
-    #'new_hero':             ('images/tasks/new_hero.png',            'run_new_hero', 0),
-    'meteorite':            ('images/tasks/meteorite.png',           'run_meteorite', 0),
-    'pickaxe':              ('images/tasks/pickaxe.png',             'run_pickaxe', 0),
-    'pharaos_vault':        ('images/tasks/pharaos_vault.png',       'run_scarab_vault', 0),
-    'pirates_price':        ('images/tasks/pirates_price.png',       'run_pirates_price', 0),
-    'quests':               ('images/tasks/quests.png',              'run_quests', 0),
-    'scarab_token':         ('images/tasks/scarab_token.png',        'run_scarab_token', 0),
-    'scarab_game':          ('images/tasks/scarab_game.png',         'run_scarab_game', 0),
-    'sign_in':              ('images/tasks/sign_in.png',             'run_signin', 0),
-    'tavern':               ('images/tasks/tavern.png',              'run_tavern', 0),
-    'talents':              ('images/tasks/talents/upgrade.png',     'run_talents', 0),
-    'firestone_collect2':   ('',                                     'trigger_firestone_collect', 0)
-}
-
-# Add guardian upgrades to the tasks
-for root, _, files in os.walk('images/tasks/guardian'):
-    png_files = [f for f in files if f.lower().endswith('.png')]
-    if not png_files:
-        continue
-    for filename in png_files:
-        filepath = os.path.join(root, filename)
-        tasks[filename[:-4]] = (filepath, 'run_upgrade_guardian', 0)
-
+lock_file: str = '.bot_running'
 if os.path.exists(lock_file):
     os.remove(lock_file)
 
-def ask_local_ollama(prompt: str, src_mat = None) -> str:
+reload_file: str = '.bot_reload'
+if os.path.exists(reload_file):
+    os.remove(reload_file)
+
+# name: (pattern, callable, timeout)
+tasks = {
+    '_check_upgrade':       ('',                                'run_check_upgrade'),
+    '_hero_upgrade':        ('',                                'run_hero_upgrade'),
+    '_daylies':             ('',                                'run_daylies'),
+    '_firestone_collect':   ('',                                'trigger_firestone_collect'),
+
+    'alchemist':            ('alchemist/alchemist.png',         'run_alchemist'),
+    'arcane_crystal':       ('guild/arcane_crystal.png',        'run_arcane_crystal'),
+    'arena_of_kings':       ('arena_of_kings.png',              'run_arena_of_kings'),
+    'awakening':            ('guild/awakening.png',             'run_awakening'),
+    'campaign':             ('map/campaign.png',                'run_campaign'),
+    'chaos_rift':           ('guild/chaos_rift.png',            'run_chaos_rift'),
+    'engineer':             ('engineer/engineer.png',           'run_engineer'),
+    'firestone_collect':    ('library/firestone_collect.png',   'run_firestone_collect'),
+    'firestone_research':   ('library/firestone_research.png',  'run_firestone_research'),
+    'forbidden_knowledge':  ('guild/forbidden_knowledge.png',   'run_forbidden_knowledge'),
+    'garage':               ('engineer/garage.png',             'run_garage'),
+    'garage_chaos_rift':    ('engineer/garage_chaos_rift.png',  'run_garage'),
+    'garage_rarity':        ('engineer/garage_rarity.png',      'run_garage'),
+    'guild_expeditions':    ('guild/guild_expeditions.png',     'run_guild_expeditions'),
+    'ledra_supplies':       ('guild/chaos_rift_supplies.png',   'run_ledra_supplies'),
+    'mailbox':              ('mailbox.png',                     'run_mailbox'),
+    'map':                  ('map/map.png',                     'run_map'),
+    #'new_hero':             ('new_hero.png',                    'run_new_hero'),
+    'meteorite':            ('library/meteorite_research.png',  'run_meteorite'),
+    'pickaxe':              ('guild/pickaxe.png',               'run_pickaxe'),
+    'pharaos_vault':        ('tavern/pharaos_vault.png',        'run_scarab_vault'),
+    'pirates_price':        ('pirate_ship/pirates_price.png',   'run_pirates_price'),
+    'quests':               ('character/quests.png',            'run_quests'),
+    'scarab_token':         ('tavern/scarab_token.png',         'run_scarab_token'),
+    'scarab_game':          ('tavern/scarab_game.png',          'run_scarab_game'),
+    'sign_in':              ('shop/sign_in.png',                'run_signin'),
+    'tavern':               ('tavern/tavern_pickup.png',        'run_tavern'),
+    'talents':              ('character/talents_upgrade.png',   'run_talents')
+}
+
+# Add guardian upgrades to the tasks
+tasks_file_path: str = "images/tasks/magic_quarter"
+for tasks_root, _, tasks_files in os.walk(tasks_file_path):
+    task_files = [f for f in tasks_files if f.lower().endswith('.png')]
+    if not task_files:
+        continue
+    for task_filename in task_files:
+        tasks_filepath = os.path.join(tasks_root, task_filename)
+        tasks[task_filename[:-4]] = (tasks_filename[len(tasks_file_path)-1::], 'run_upgrade_guardian')
+
+timeouts = {}
+
+def ask_ollama(prompt: str, src_mat = None) -> str:
     """
     Evaluate an enemy lineup against a cached player baseline via /api/chat.
 
@@ -129,12 +140,12 @@ def ask_local_ollama(prompt: str, src_mat = None) -> str:
 
     ollama_url = f"{config['ollama_url'].rstrip('/')}/api/chat"
     model_name = config['ollama_model']
-    model_info = subprocess.run(['ollama','show', model_name], capture_output=True)
+    model_info = subprocess.run(['ollama','show', model_name], capture_output=True, check=True)
     model_vision = True
     if model_info:
-        if not model_info['returncode']:
+        if not model_info.returncode:
             pattern = r"\n    vision\n"
-            match = re.search(pattern, model_info['stdout'])
+            match = re.search(pattern, str(model_info.stdout))
             if not match and src_mat:
                 Debug.warn("[Ollama] This model does not support Vision. ")
                 model_vision = False
@@ -151,9 +162,9 @@ def ask_local_ollama(prompt: str, src_mat = None) -> str:
             " - Append the chance percentage to that output as second argument.\n"
             " - No chat, no markdown, no thinking process, the output is intended for script usage.\n"
             " - Take into account that healers provide health to the entire team.\n"
-            f" - When evaluating setups MY team has the following setup:\n{config['MY_TEAM']}\n"
+            #f" - When evaluating setups MY team has the following setup:\n{config['MY_TEAM']}\n"
         )
-        _ollama_cache.append({"role": "user", "content": base_prompt})
+        _ollama_cache = [{"role": "user", "content": base_prompt}]
 
         try:
             Debug.history("[Ollama] Establishing static base handshake cache...")
@@ -184,7 +195,7 @@ def ask_local_ollama(prompt: str, src_mat = None) -> str:
     if model_vision and src_mat:
         success, encoded_image = cv2.imencode('.png', src_mat)
         if success:
-           message['images'] = base64.b64encode(encoded_image.tobytes()).decode('utf-8')
+            message['images'] = base64.b64encode(encoded_image.tobytes()).decode('utf-8')
 
     payload['messages'].append(message)
 
@@ -564,6 +575,10 @@ def grab_screen_to_mat(region_obj: Region = None) -> 'np.ndarray | None':
         Debug.error("[grab_screen_to_mat] Failed to write matrix: %s", str(error))
         return None
 
+def mean(collection: List) -> int:
+    """Another little helper"""
+    return int(sum(collection) / len(collection))
+
 def mouse_down(timeout: float=0) -> None:
     """
     Push left button and do not release unless timeout specified
@@ -622,6 +637,7 @@ def on_keyrelease(key) -> None:
                 pause_off()
         elif key in [keys.f5, keys.esc]:
             pause_on(True)
+        """
         elif key == keys.print_screen:
             mat = grab_screen_to_mat()
             filename = pyautogui.prompt('File name', 'Capture Screen')
@@ -631,6 +647,7 @@ def on_keyrelease(key) -> None:
                     if overwrite == 'Cancel':
                         return
                 cv2.imwrite('capture/'+filename, mat)
+        """
     except AttributeError:
         pass
 
@@ -638,14 +655,14 @@ def optimize_alpha_channels(target_dir: str = 'images', threshold: int = 128) ->
     """Walk through the images folder and alpha flatten unprocessed images"""
     if not os.path.exists(target_dir):
         return
-    Debug.info("Starting full image workspace alpha channel optimization scan...")
+    Debug.info("[optimize_alpha_channels] Starting full image workspace alpha channel optimization scan...")
     for root, _, files in os.walk(target_dir):
         png_files = [f for f in files if f.lower().endswith('.png')]
         if not png_files:
             continue
         for filename in png_files:
             filepath = os.path.join(root, filename)
-            if not TRACKER.verify(filepath):
+            if not tracker.verify(filepath):
                 try:
                     src = cv2.imread(filepath, cv2.IMREAD_UNCHANGED)
 
@@ -661,7 +678,7 @@ def optimize_alpha_channels(target_dir: str = 'images', threshold: int = 128) ->
 
                 except Exception as e:
                     Debug.error("[optimize_alpha_channels] Alpha Optimizer could not write %s:\n%s", filepath, str(e))
-                TRACKER.add(filepath)
+                tracker.add(filepath)
     Debug.info("[optimize_alpha_channels] Alpha optimization scan complete. All indices successfully synchronized.")
 
 def pause_check() -> None:
@@ -687,7 +704,9 @@ def pause_on(reload: bool = False) -> None:
         Debug.info('Initianted pause')
 
     if reload:
-         with open(reload_file, 'wt', encoding='utf-8') as ptr:
+        if os.path.exists(reload_file):
+            return
+        with open(reload_file, 'wt', encoding='utf-8') as ptr:
             ptr.write(str(time.time_ns()))
             Debug.info('Initiated resume')
 
@@ -725,14 +744,14 @@ def parse_ui_timeout(ocr_text: str) -> float | None:
             return time.time() + total_cooldown_seconds
 
         except (ValueError, TypeError) as error:
-            Debug.error(f"[TIMEOUT-PARSE-ERROR] Failed to map UI clock vector: {error}")
+            Debug.error(f"[parse_ui_timeout] Failed to map UI clock vector: {error}")
             return None
     else:
         try:
             seconds = int(float(ocr_text))
             return seconds
         except (ValueError, TypeError) as error:
-            Debug.error(f"[TIMEOUT-PARSE-ERROR] Failed to map UI clock vector: {error}")
+            Debug.error(f"[parse_ui_timeout] Failed to map UI clock vector: {error}")
             return None
 
 def popup(message: str, title: str = 'Bot Notification', timeout: float = 0) -> None:
@@ -770,7 +789,7 @@ def popup(message: str, title: str = 'Bot Notification', timeout: float = 0) -> 
         closer_thread.start()
         pyautogui.alert(text=str(message), title=str(title), button='OK')
     except Exception as error:
-        Debug.error("[CorePopup] Render failed:\n%s", str(error))
+        Debug.error(f"[popup] Render failed:\n{error}")
 
 def press_key(key_name: str) -> None:
     """
@@ -821,22 +840,23 @@ def similarity(img1: np.ndarray, img2: np.ndarray) -> float:
         return float(max_val)
 
     except cv2.error as error:
-        Debug.error("[CoreSimilarity] Template evaluation failed:\n%s", str(error))
+        Debug.error(f"[similarity] Template evaluation failed:\n{error}")
         return 0.0
 
 class Debug:
     """
     A simple colorful terminal logger supporting variable arguments.
     """
+    @staticmethod
     def _gen_origin() -> str:
         """Santa's little helper"""
-        frame, filename, lineno, function, code_context, index = inspect.stack()[3]
-        return str(f"\n{function} in {filename}:{lineno}\n")
+        _, file_name, lineno, function, _, _ = inspect.stack()[3]
+        return str(f"\n{function} in {file_name}:{lineno}\n")
 
     @staticmethod
     def error(msg: str, *args) -> None:
         """Log runtime exceptions and critical failures."""
-        Debug.output('error', msg+_gen_string(), *args)
+        Debug.output('error', msg+Debug._gen_origin(), *args)
 
     @staticmethod
     def info(msg: str, *args) -> None:
@@ -868,16 +888,18 @@ class Debug:
         timestamp = time.strftime('%Y-%m-%d %H:%M:%S')
         padded_level = loglevel.rjust(7)
 
-        # Als er extra argumenten zijn meegegeven voor string formatting (zoals %s)
         if args:
             try:
-                # Voer de traditionele Python string-formatting veilig uit
                 formatted_msg = msg % args
-                print(f"[{timestamp}]{color}[{padded_level}] {formatted_msg}\033[0m")
             except TypeError:
-                print(f"[{timestamp}]{color}[{padded_level}] {msg} {args}\033[0m")
+                formatted_msg = f"{msg} {args}"
         else:
-            print(f"[{timestamp}]{color}[{padded_level}] {msg}\033[0m")
+            formatted_msg = msg
+
+        print(f"[{timestamp}] {color}[{padded_level}] {formatted_msg}\033[0m")
+        if config['logfile']:
+            with open(config['logfile'], 'at', encoding='utf-8') as logptr:
+                logptr.write(f"\n[{timestamp}] [{padded_level}] {formatted_msg}")
 
 class ImageEventHandler(FileSystemEventHandler):
     """
@@ -924,7 +946,7 @@ class ImageEventHandler(FileSystemEventHandler):
                         cv2.imwrite(event.src_path, optimized_src)
                     self.tracker.add(event.src_path)
             except Exception as error:
-                Debug.error("[ImageTracker] Optimization failed for %s:\n%s", str(event.src_path), str(error))
+                Debug.error(f"[ImageTracker.on_any_events] Optimization failed for {event.src_path}:\n{error}")
 
         # 2. Process Move and Rename loops with asset migration tracking
         elif event.event_type == 'moved':
@@ -995,7 +1017,7 @@ class ImageTracker:
             with open(tracker_path, 'w', encoding='utf-8') as tf:
                 json.dump(tracker_data, tf, indent=4)
         except (OSError, IOError) as error:
-            Debug.error("[ImageTracker] Failed writing to %s:\n%s", str(tracker_path), str(error))
+            Debug.error(f"[ImageTracker.add] Failed writing to {tracker_path}:\n{error}")
 
     def get(self, file_path: str) -> Dict[str, Any]:
         """Fetch tracking configurations mapped to a specific filename target key."""
@@ -1035,7 +1057,7 @@ class ImageTracker:
                 with open(tracker_path, 'w', encoding='utf-8') as tf:
                     json.dump(tracker_data, tf, indent=4)
             except (OSError, IOError) as error:
-                Debug.error("[ImageTracker] Failed clearing key from %s:\n%s", str(tracker_path), str(error))
+                Debug.error(f"[ImageTracker.remove] Failed clearing key from {tracler_path}:\n{error}")
 
     def verify(self, file_path: str) -> bool:
         """Validate live file timestamps and hashes against historic state tracking data."""
@@ -1107,7 +1129,6 @@ class Region():
         if template_rgba is None:
             return False
         min_val, max_val, min_loc, max_loc = cv2.minMaxLoc(res)
-        #Debug.info(f"MinVal:{min_val} MaxVal:{max_val}")
 
         if len(template_rgba.shape) == 3 and template_rgba.shape[2] == 4:
             is_matched = min_val <= 0.1
@@ -1156,7 +1177,7 @@ class Region():
             h_size, w_size = template_rgba.shape[:2]
             return (res, h_size, w_size)
         except Exception as e:
-            Debug.error(f'[match] {e}')
+            Debug.error(f'[Region.match] {e}')
             return None
 
     def find_all(self, image_path: str) ->List[Match]:
@@ -1189,19 +1210,19 @@ class Region():
             abs_y = self.y + min_loc[1]
             found_matches.append(Match(abs_x, abs_y, w_size, h_size, 1.0 - min_val))
 
-            # Zero-masking for SQDIFF: Fill the found region with 1.0 (worst match possible)
+            # Zero-masking for SQDIFF: Fill the found region with white (worst match possible)
             # to completely hide it from subsequent minMaxLoc evaluations
             cv2.rectangle(
                 res,
                 min_loc,
                 (min_loc[0] + w_size, min_loc[1] + h_size),
-                1.0,
+                (255,  255, 255),
                 -1
             )
 
         return found_matches
 
-    def get_center(self) ->Match:
+    def get_center(self) -> Match:
         """
         Calculate and return the structural midpoint coordinates of the region.
 
@@ -1211,6 +1232,42 @@ class Region():
         cx = self.x + int(self.w / 2)
         cy = self.y + int(self.h / 2)
         return Match(cx, cy, 0, 0, 1.0)
+
+    def get_color_avg(self, widen: int = 0) -> Tuple[int, int, int, int, int, int]:
+        """
+        Retrieve the RGB color range values of the area.
+
+        Args:
+            widen (int, optional): The amout of range extension.
+
+        Returns:
+            tuple[int, int, int, int, int, int]: A tuple containing (Rmin, Rmax, Gmin, Gmax, Bmin, Bmax) channels.
+        """
+        try:
+            b = []
+            g = []
+            r = []
+
+            pixels = grab_screen_to_mat(self)
+            for y in range(pixels.shape[0]):
+                for x in range(pixels.shape[1]):
+                    b_ch, g_ch, r_ch = pixels[y, x]
+                    b.append(b_ch)
+                    g.append(g_ch)
+                    r.append(r_ch)
+
+            r_min = min(r) - widen if min(r) - widen else 0
+            r_max = max(r) + widen if not max(r) + widen > 255 else 255
+            g_min = min(g) - widen if min(g) - widen else 0
+            g_max = max(g) + widen if not max(g) + widen > 255 else 255
+            b_min = min(b) - widen if min(b) - widen else 0
+            b_max = max(b) + widen if not max(b) + widen > 255 else 255
+
+            Debug.info(f"r_avg: {mean(r)} g_avg: {mean(g)} b_avg: {mean(b)}")
+            return (r_min, r_max, g_min, g_max, b_min, b_max)
+        except Exception as error:
+            Debug.error(f"[get_color_avg] Failed to extract color map coordinates:\n{error}")
+            return (0, 0, 0, 0, 0, 0)
 
     def get_h(self) ->int:
         """
@@ -1231,7 +1288,17 @@ class Region():
         Return:
             floatt: the extracted value
         """
-        number = self.text('1234567890.,', colormap[color_map]).replace('.','').replace(',','.')
+        number = self.text('1234567890.,', colormap[color_map])
+        sanitized = ''
+
+        for a in range(0, len(number)):
+            char = number[len(number) - 1 - a]
+            if char in [',','.'] and a < 2:
+                sanitized = '.' + sanitized
+            elif char.isnumeric():
+                sanitized = char + sanitized
+        number = sanitized
+
         if number and not number == '.':
             return float(number)
         return 0
@@ -1274,33 +1341,33 @@ class Region():
             duration (float): Seconds to retain the visual canvas bounding overlay.
         """
         # 1. Initialize a borderless top-level widget wrapper
-        root = tk.Tk()
-        root.overrideredirect(True)
-        root.attributes('-topmost', True)
+        box = tk.Tk()
+        box.overrideredirect(True)
+        box.attributes('-topmost', True)
 
         # 2. Map geometry to perfectly frame the match dimensions
-        root.geometry(f"{self.w}x{self.h}+{self.x}+{self.y}")
+        box.geometry(f"{self.w}x{self.h}+{self.x}+{self.y}")
 
         # 3. Configure a click-through transparent background with a solid red border
         # 'wm_attributes' handles transparency options natively across platforms
-        if root.tk.call('tk', 'windowingsystem') == 'win32':
-            root.wm_attributes('-transparentcolor', 'white')
+        if box.tk.call('tk', 'windowingsystem') == 'win32':
+            box.wm_attributes('-transparentcolor', 'white')
             canvas_bg = 'white'
         else:
-            root.wait_visibility(root)
-            root.wm_attributes('-alpha', 0.8) # Fallback smooth opacity for Unix/Mac
+            box.wait_visibility(box)
+            box.wm_attributes('-alpha', 0.8) # Fallback smooth opacity for Unix/Mac
             canvas_bg = 'black'
 
-        canvas = tk.Canvas(root, width=self.w, height=self.h, bg=canvas_bg, highlightthickness=0)
+        canvas = tk.Canvas(box, width=self.w, height=self.h, bg=canvas_bg, highlightthickness=0)
         canvas.pack()
 
         # Draw a thick 3-pixel red rectangular outline inside the overlay bounds
         canvas.create_rectangle(0, 0, self.w, self.h, outline='red', width=3)
 
         # 4. Process interface frame cycles and automatically close after timeout
-        root.update()
+        box.update()
         time.sleep(duration)
-        root.destroy()
+        box.destroy()
 
     def move_mouse_away(self) ->None:
         """
@@ -1356,7 +1423,6 @@ class Region():
         for psm_mode in [3, 7, 8, 10]:
             raw_output = str(pytesseract.image_to_string(clean_mat, config=tess_config + f' --psm {psm_mode}')).strip()
             if raw_output:
-                # Debug.info(f"[Region.text]\nExpect: {expect}\nPSM: {psm_mode}\nReturn: {raw_output}")
                 break
 
         if raw_output and expect:
@@ -1368,7 +1434,6 @@ class Region():
             for psm_mode in [3, 7, 8, 10]:
                 raw_output = str(pytesseract.image_to_string(clean_mat, config=tess_config + f' --psm {psm_mode}')).strip()
                 if raw_output:
-                    # Debug.info(f"[Region.text 2]\nExpect: {expect}\nReturn: {raw_output}")
                     break
             clean_output = re.sub(r'[\s\n\r]', '', raw_output.lower())
             if not clean_output or not re.search(r'[' + expect + r']+', clean_output):
@@ -1451,9 +1516,9 @@ if os.path.exists(config_file):
             loaded_config = json.load(f)
             config.update(loaded_config)
     except Exception as e:
-        Debug.error("[Core] Unable to load configuration\n%s", str(e))
+        Debug.error(f"[Core] Unable to load configuration\n{e}")
 
-TRACKER = ImageTracker()
+tracker = ImageTracker()
 optimize_alpha_channels()
 if os.name == 'nt':
     import pydirectinput
@@ -1464,3 +1529,5 @@ else:
     mouse_controller = pyautogui
 keyboard_listener = keyboard.Listener(on_release=on_keyrelease)
 keyboard_listener.start()
+
+#Debug.info(ask_ollama('Can you do this? (Just a yes or no is enough)'))

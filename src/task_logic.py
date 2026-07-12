@@ -14,9 +14,10 @@ from custom_core import (
     #dailies,
     get_next_reset,
     #get_suffix_rank,
+    get_pixel_color,
     get_timeout,
     parse_ui_timeout,
-    tasks,
+    timeouts,
     click,
     color_at,
     colormap,
@@ -95,9 +96,8 @@ def run_campaign() ->int:
 
         # Loop through available liberations
         winning = True
-        attempts = 0
         drag_count = 0
-        while winning and attempts < 5:
+        while winning and drag_count < 10:
             if  color_at(200, 800) == 'green':
                 Debug.history("[Campaign] Select Liberation")
                 click((200, 800))
@@ -106,26 +106,24 @@ def run_campaign() ->int:
                 start_ts = time.time_ns()
                 while True:
                     if color_at(870, 770) == 'green' and color_at(960, 690) == 'brown_liberation_won':
-                        Debug.history("[Campaign] Liberation successfully finished in %s", duration_text(start_ts))
+                        Debug.history(f"[Campaign] Liberation successfully finished in {duration_text(start_ts)}")
                         click((870, 770))
                         break
                     if color_at(870, 770) == 'green' and color_at(960, 720) == 'blue_liberation_lost':
-                        Debug.history("[Campaign] Liberation successfully finished in %s", duration_text(start_ts))
+                        Debug.warn(f"[Campaign] Liberation lost in {duration_text(start_ts)}")
                         winning = False
                         click((870, 770))
                         break
                     time.sleep(5)
-            else:
-                attempts += 1
             if winning:
                 #drag the screen 400 pixels to the left
-                drag_drop((1000,430), (600,430))
+                drag_drop((1000,430), (590,430))
                 drag_count += 1
 
         if drag_count:
             #drag the screen back to the beginning
             for _ in range(1, drag_count):
-                drag_drop((100,430), (1000,430))
+                drag_drop((590,430), (1000,430))
         click((1820, 70))
     click((1840, 60))
     if timestamps:
@@ -194,13 +192,13 @@ def run_firestone_collect() -> int:
     Fires a precise exit input to clear the localized inventory
     overlay and return execution context back to the central loop.
     """
-    global tasks
+    global timeouts
 
     percentage = Region(1300, 417, 400, 40).get_number('green')
     jump_require = int(config['jump_percentage'])
     if percentage >= jump_require:
-        Debug.info(f"[Firestone Collect] Time to jump! {percentage}%/{jump_require}%")
-        tasks['check_upgrade'] = ('', 'run_check_upgrade', 0)
+        Debug.warn(f"[Firestone Collect] Time to jump! {percentage}%/{jump_require}%")
+        timeouts['run_check_upgrade'] = 0
         click((1360 ,510))
         time.sleep(0.5)
         click((960, 660))
@@ -220,7 +218,7 @@ def run_firestone_research() -> int:
     pixel color scans. Phase 2 processes active template research bubbles and
     executes screen drag operations to initialize new available projects.
     """
-    task_firestone_research_bubble = 'images/tasks/firestone/research_bubble.png'
+    task_firestone_research_bubble = 'images/tasks/library/firestone_research_bubble.png'
 
     for x_coords in [1220, 520]:
         if color_at(x_coords, 980) == 'green':
@@ -254,10 +252,9 @@ def run_forbidden_knowledge() -> int:
     """
     Run forbidden knowledge circle
     """
-    for y_coords, name in [(350, 'Ledra'), (540, 'Yanamoth'), (700, 'Kramatak')]:
+    for y_coords, name in [(350, 'Ledra'), (520, 'Yanamoth'), (680, 'Kramatak')]:
         click((1800, y_coords))
         amount = Region(1600, 20, 100, 36).get_number()
-        Debug.info(f"Amount for {name}: {amount}")
         if not amount:
             continue
         if name == 'Ledra': # Circle setup
@@ -273,7 +270,7 @@ def run_forbidden_knowledge() -> int:
                 (600, 240, 'Mana heroes'),
                 (820, 75, 'Energy heroes')
             ]
-            color = 'blue'
+            color = 'blue_forbidden_knowledge'
         elif name == 'Yanamoth': # Triangle setup
             coords = [
                 (960, 30, 'Raining gold'),
@@ -307,23 +304,25 @@ def run_forbidden_knowledge() -> int:
             continue
 
         for x, y, stat in coords:
-            Region(x - 5, y - 5, 10, 10).highlight(3)
+            Region(x - 10, y - 10, 20, 20).highlight(5)
             if not amount:
                 continue
+            Debug.info(f"Color at {x},{y} :{color_at(x, y)} ({get_pixel_color(x, y)})")
             if color_at(x, y) == color:
                 click((x, y))
-                cost = Region(970, 730, 120, 50).get_number()
+                cost = Region(975, 730, 100, 40).get_number()
                 while cost and cost <= amount and color_at(1046, 750) == 'green':
-                    Debug.info(f"Upgrading {stat}")
+                    Debug.history(f"- Upgrading {stat}")
                     click((1046, 750))
                     move_to((1120, 750))
                     amount -= cost
+                    sleep(1)
                 click((1260, 270))
         click((220, 900))
         if color_at(960, 890) == 'green':
             cost = Region(960, 900, 130, 50).get_number()
             if cost and amount >= cost:
-                Debug.info(f"Recruiting {name}")
+                Debug.history(f"- Recruiting {name}")
                 click((960, 890))
                 amount -= cost
 
@@ -658,7 +657,7 @@ def run_talents() -> int:
     """
     Upgrade talents
     """
-    bubble = 'images/tasks/talents/bubble.png'
+    bubble = 'images/tasks/character/talents_bubble.png'
     _area = Region(470, 170, 1340, 860)
     counter = 0
     clicked = False
@@ -738,6 +737,7 @@ def run_upgrade_guardian() -> int:
 
     while True:
         current = Region(250, 830, 300, 60).text('abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ', colormap['brown']).lower()
+        Debug.info(f"Current: {current}")
         if current and current in pos:
             del pos[current]
 
@@ -749,7 +749,7 @@ def run_upgrade_guardian() -> int:
             amount, _ = divmod(dust, 20)
             if amount:
                 Debug.history(f"Enlightening {current} {amount} times")
-                for _ in range(1, int(amount)):
+                for _ in range(int(amount)):
                     if color_at(1590, 800) == 'green':
                         click((1590, 800))
                         move_to((1590, 880))
@@ -759,9 +759,11 @@ def run_upgrade_guardian() -> int:
 
             click((1210, 150)) #Evolution
             time.sleep(1)
-            cost = Region(1100, 767, 150, 40).get_number('brown')
-            Debug.info(f"Evolution costs: {cost}")
-            if cost >= dust and color_at(1220, 780) == 'green':
+            cost_region = Region(1100, 767, 150, 40)
+            avg = cost_region.get_color_avg()
+            cost = cost_region.get_number('brown')
+            Debug.info(f"Evolution costs:{cost} dust:{dust} avg: {avg}")
+            if cost <= dust and color_at(1220, 780) == 'green':
                 Debug.history(f"Evolving {current}")
                 click((1220, 780))
                 dust -= int(cost)
@@ -770,11 +772,9 @@ def run_upgrade_guardian() -> int:
             click((1400, 150)) #Chaos Rift
             time.sleep(1)
             amount = Region(1564, 20, 160, 30).get_number()
-            Debug.info(f"Chaos rift amount: {amount}")
             while True:
-                cost = Region(1460, 630, 130, 40).get_number()
-                Debug.info(f"Chaos rift costs: {cost}")
-                if cost and cost >= dust:
+                cost = Region(1695, 755, 140, 45).get_number()
+                if cost and cost >= amount:
                     Debug.history(f"Increase {current}'s holy damage")
                     click((1720, 760))
                     time.sleep(1)
@@ -788,8 +788,7 @@ def run_upgrade_guardian() -> int:
             if not pos:
                 break
 
-            for name, (x, y) in pos.items():
-                x, y = next(iter(pos))
+            for _, (x, y) in pos.items():
                 click((x, y))
                 break
 

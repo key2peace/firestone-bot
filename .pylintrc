@@ -18,10 +18,6 @@ disable= C0301, # line-too-long
 output-format=colorized
 reports=no
 
-[BASIC]
-#method-rgx=[a-z_][a-zA-Z0-9_]{2,30}$
-#argument-rgx=[a-z_][a-zA-Z0-9_]{2,30}$
-
 [TYPECHECK]
 ignored-modules=cv2,mss,pyautogui,pytesseract
 
