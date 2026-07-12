@@ -125,7 +125,7 @@ for tasks_root, _, tasks_files in os.walk(tasks_file_path):
         continue
     for task_filename in task_files:
         tasks_filepath = os.path.join(tasks_root, task_filename)
-        tasks[task_filename[:-4]] = (task_filepath[len(tasks_file_path)-1::], 'run_upgrade_guardian')
+        tasks[task_filename[:-4]] = (tasks_filepath[len(tasks_file_path)-1::], 'run_upgrade_guardian')
 
 timeouts = {}
 
