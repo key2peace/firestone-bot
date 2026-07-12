@@ -125,7 +125,7 @@ for tasks_root, _, tasks_files in os.walk(tasks_file_path):
         continue
     for task_filename in task_files:
         tasks_filepath = os.path.join(tasks_root, task_filename)
-        tasks[task_filename[:-4]] = (tasks_filename[len(tasks_file_path)-1::], 'run_upgrade_guardian')
+        tasks[task_filename[:-4]] = (task_filepath[len(tasks_file_path)-1::], 'run_upgrade_guardian')
 
 timeouts = {}
 
@@ -151,7 +151,7 @@ def ask_ollama(prompt: str, src_mat = None) -> str:
                 model_vision = False
                 src_mat = None
         else:
-            Debug.error(f"[Ollama] Error {model_info['returncode']} occured.")
+            Debug.error(f"[Ollama] Error {model_info.returncode} occured.")
 
     if not _ollama_cache:
         base_prompt = (
@@ -637,7 +637,6 @@ def on_keyrelease(key) -> None:
                 pause_off()
         elif key in [keys.f5, keys.esc]:
             pause_on(True)
-        """
         elif key == keys.print_screen:
             mat = grab_screen_to_mat()
             filename = pyautogui.prompt('File name', 'Capture Screen')
@@ -647,7 +646,6 @@ def on_keyrelease(key) -> None:
                     if overwrite == 'Cancel':
                         return
                 cv2.imwrite('capture/'+filename, mat)
-        """
     except AttributeError:
         pass
 
@@ -908,14 +906,14 @@ class ImageEventHandler(FileSystemEventHandler):
     Intercepts creation, modification, deletion, and relocation boundaries
     within the image directory to synchronize metadata records with the tracker.
     """
-    def __init__(self, tracker: 'ImageTracker') -> None:
+    def __init__(self, the_tracker: 'ImageTracker') -> None:
         """
         Initialize the event handler with a reference to the core tracker.
 
         Args:
             tracker (ImageTracker): The parent tracking database manager instance.
         """
-        self.tracker: 'ImageTracker' = tracker
+        self.tracker: 'ImageTracker' = the_tracker
 
     def on_any_event(self, event: Any) -> None:
         """
@@ -1057,7 +1055,7 @@ class ImageTracker:
                 with open(tracker_path, 'w', encoding='utf-8') as tf:
                     json.dump(tracker_data, tf, indent=4)
             except (OSError, IOError) as error:
-                Debug.error(f"[ImageTracker.remove] Failed clearing key from {tracler_path}:\n{error}")
+                Debug.error(f"[ImageTracker.remove] Failed clearing key from {tracker_path}:\n{error}")
 
     def verify(self, file_path: str) -> bool:
         """Validate live file timestamps and hashes against historic state tracking data."""

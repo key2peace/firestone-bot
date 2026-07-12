@@ -316,7 +316,7 @@ def run_forbidden_knowledge() -> int:
                     click((1046, 750))
                     move_to((1120, 750))
                     amount -= cost
-                    sleep(1)
+                    time.sleep(1)
                 click((1260, 270))
         click((220, 900))
         if color_at(960, 890) == 'green':
