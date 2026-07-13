@@ -67,13 +67,13 @@ def main() -> None:
             if os.path.exists(reload_file):
                 os.remove(reload_file)
                 crazygames_check()
-                timeouts['run_check_upgrade'] = 0
+                timeouts['check_upgrade'] = 0
 
             # loop through tasks
             for name, (pattern, task_function_name) in tasks.items():
                 friendly_name = name.replace('_', ' ').title()
 
-                if timeouts[task_function_name] and timeouts[task_function_name] >= time.time():
+                if task_function_name in timeouts and timeouts[task_function_name] >= time.time():
                     continue
 
                 pause_check()

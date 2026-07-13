@@ -41,6 +41,7 @@ colormap = {
     'blue_liberation_lost': (32, 35, 75, 80, 123, 128),
     'brown_liberation_won': (192, 197, 143, 146, 99, 103),
     'lightbrown_research_full': (228, 236, 205, 215, 180, 190),
+    'lightbrown': (239, 239, 218, 218, 189, 189),
     'brown': (80, 88, 37, 41, 14, 18),
     'green': (0, 24, 140, 255, 0, 32),
     'green_talents': (100, 135, 150, 255, 0, 25),
@@ -82,50 +83,68 @@ if os.path.exists(reload_file):
 
 # name: (pattern, callable, timeout)
 tasks = {
-    '_check_upgrade':       ('',                                'run_check_upgrade'),
-    '_hero_upgrade':        ('',                                'run_hero_upgrade'),
-    '_daylies':             ('',                                'run_daylies'),
+    '_check_upgrade':       ('',                                'check_upgrade'),
+    '_hero_upgrade':        ('',                                'check_heroes'),
+    '_daylies':             ('',                                'daylies'),
     '_firestone_collect':   ('',                                'trigger_firestone_collect'),
+    'mailbox':              ('mailbox.png',                     'mailbox'),
+    #'new_hero':             ('new_hero.png',                    'new_hero'),
 
-    'alchemist':            ('alchemist/alchemist.png',         'run_alchemist'),
-    'arcane_crystal':       ('guild/arcane_crystal.png',        'run_arcane_crystal'),
-    'arena_of_kings':       ('arena_of_kings.png',              'run_arena_of_kings'),
-    'awakening':            ('guild/awakening.png',             'run_awakening'),
-    'campaign':             ('map/campaign.png',                'run_campaign'),
-    'chaos_rift':           ('guild/chaos_rift.png',            'run_chaos_rift'),
-    'engineer':             ('engineer/engineer.png',           'run_engineer'),
-    'firestone_collect':    ('library/firestone_collect.png',   'run_firestone_collect'),
-    'firestone_research':   ('library/firestone_research.png',  'run_firestone_research'),
-    'forbidden_knowledge':  ('guild/forbidden_knowledge.png',   'run_forbidden_knowledge'),
-    'garage':               ('engineer/garage.png',             'run_garage'),
-    'garage_chaos_rift':    ('engineer/garage_chaos_rift.png',  'run_garage'),
-    'garage_rarity':        ('engineer/garage_rarity.png',      'run_garage'),
-    'guild_expeditions':    ('guild/guild_expeditions.png',     'run_guild_expeditions'),
-    'ledra_supplies':       ('guild/chaos_rift_supplies.png',   'run_ledra_supplies'),
-    'mailbox':              ('mailbox.png',                     'run_mailbox'),
-    'map':                  ('map/map.png',                     'run_map'),
-    #'new_hero':             ('new_hero.png',                    'run_new_hero'),
-    'meteorite':            ('library/meteorite_research.png',  'run_meteorite'),
-    'pickaxe':              ('guild/pickaxe.png',               'run_pickaxe'),
-    'pharaos_vault':        ('tavern/pharaos_vault.png',        'run_scarab_vault'),
-    'pirates_price':        ('pirate_ship/pirates_price.png',   'run_pirates_price'),
-    'quests':               ('character/quests.png',            'run_quests'),
-    'scarab_token':         ('tavern/scarab_token.png',         'run_scarab_token'),
-    'scarab_game':          ('tavern/scarab_game.png',          'run_scarab_game'),
-    'sign_in':              ('shop/sign_in.png',                'run_signin'),
-    'tavern':               ('tavern/tavern_pickup.png',        'run_tavern'),
-    'talents':              ('character/talents_upgrade.png',   'run_talents')
+    # alchemist
+    'alchemist':            ('alchemist/alchemist.png',         'alchemist'),
+
+    # arena of kings
+    'arena_of_kings':       ('arena_of_kings.png',              'arena_of_kings'),
+
+    #character
+    'quests':               ('character/quests.png',            'character_quests'),
+    'talents':              ('character/talents_upgrade.png',   'character_talents'),
+
+    # engineer
+    'engineer':             ('engineer/engineer.png',           'engineer'),
+    'garage':               ('engineer/garage.png',             'garage'),
+    'garage_chaos_rift':    ('engineer/garage_chaos_rift.png',  'garage'),
+    'garage_rarity':        ('engineer/garage_rarity.png',      'garage'),
+
+    # guild
+    'arcane_crystal':       ('guild/arcane_crystal.png',        'guild_arcanecrystal'),
+    'awakening':            ('guild/awakening.png',             'guild__arcanecrystal_awakening'),
+    'chaos_rift':           ('guild/chaos_rift.png',            'guild_chaosrift'),
+    'forbidden_knowledge':  ('guild/forbidden_knowledge.png',   'guild_forbidden_knowledge'),
+    'guild_expeditions':    ('guild/expeditions.png',           'guild_expeditions'),
+    'pickaxe':              ('guild/pickaxe.png',               'engineer_engineer'),
+    'ledra_supplies':       ('guild/chaos_rift_supplies.png',   'ledra_supplies'),
+
+    # library
+    'firestone_collect':    ('library/firestone_collect.png',   'firestone_collect'),
+    'firestone_research':   ('library/firestone_research.png',  'firestone_research'),
+    'meteorite_research':   ('library/meteorite_research.png',  'meteorite'),
+
+    # map
+    'campaign':             ('map/campaign.png',                'map_campaign'),
+    'map':                  ('map/map.png',                     'map'),
+
+    # pirate ship
+    'pirates_price':        ('pirate_ship/pirates_price.png',   'pirates_price'),
+
+    # shop
+    'sign_in':              ('shop/sign_in.png',                'shop_signin'),
+
+    # tavern
+    'pharaos_vault':        ('tavern/pharaos_vault.png',        'tavern_scarab_vault'),
+    'scarab_token':         ('tavern/scarab_token.png',         'tavern_scarab_token'),
+    'scarab_game':          ('tavern/scarab_game.png',          'tavern_scarab_game'),
+    'tavern_collect':       ('tavern/tavern_pickup.png',        'tavern_tavern_collect')
 }
 
-# Add guardian upgrades to the tasks
-tasks_file_path: str = "images/tasks/magic_quarter"
-for tasks_root, _, tasks_files in os.walk(tasks_file_path):
+# Add magic quarter upgrades to the tasks
+for tasks_root, _, tasks_files in os.walk("images/tasks/magic_quarter"):
     task_files = [f for f in tasks_files if f.lower().endswith('.png')]
     if not task_files:
         continue
     for task_filename in task_files:
-        tasks_filepath = os.path.join(tasks_root, task_filename)
-        tasks[task_filename[:-4]] = (tasks_filepath[len(tasks_file_path)-1::], 'run_upgrade_guardian')
+        tasks_filepath = os.path.join('magic_quarter', task_filename)
+        tasks[task_filename[:-4]] = (tasks_filepath, 'magic_quarter')
 
 timeouts = {}
 
@@ -261,7 +280,9 @@ def click(location: Union[Tuple[int, int], 'Region', 'Match']) -> None:
     x_coord, y_coord = get_coords(location)
 
     try:
-        pause_check()
+        if not os.path.exists(lock_file):
+            return
+
         mouse_controller.moveTo(x_coord, y_coord)
         time.sleep(0.3)
         mouse_controller.mouseDown()
@@ -325,7 +346,9 @@ def drag_drop(start_location: Union[Tuple[int, int], 'Region', 'Match'],
 
     # Execute precise drag-and-drop workflow matching Unity engine requirements
     try:
-        pause_check()
+        if not os.path.exists(lock_file):
+            return
+
         mouse_controller.moveTo(int(x1), int(y1))
         delay = get_distance(start_location, end_location) / 150
         pyautogui.dragTo(int(x2), int(y2), delay, button='left')
@@ -587,7 +610,9 @@ def mouse_down(timeout: float=0) -> None:
         'timeout (float, optional)
     """
     try:
-        pause_check()
+        if not os.path.exists(lock_file):
+            return
+
         mouse_controller.mouseDown()
         if timeout:
             time.sleep(timeout)
@@ -599,7 +624,9 @@ def mouse_up() -> None:
     """
     Release mousebutton after mouseDown()
     """
-    pause_check()
+    if not os.path.exists(lock_file):
+        return
+
     mouse_controller.mouseUp()
 
 def move_to(location: Union[Tuple[int, int], 'Region', 'Match']) -> None:
@@ -616,7 +643,9 @@ def move_to(location: Union[Tuple[int, int], 'Region', 'Match']) -> None:
     x_coord, y_coord = get_coords(location)
 
     try:
-        pause_check()
+        if not os.path.exists(lock_file):
+            return
+
         mouse_controller.moveTo(x_coord, y_coord)
     except mouse_controller.FailSafeException:
         pause_on()
@@ -796,7 +825,8 @@ def press_key(key_name: str) -> None:
     Args:
         key_name (str): The alphanumeric identifier string (e.g., 'enter', 'space').
     """
-    pause_check()
+    if not os.path.exists(lock_file):
+        return
     keyboard_controller.press(key_name)
 
 def similarity(img1: np.ndarray, img2: np.ndarray) -> float:

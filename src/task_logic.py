@@ -35,7 +35,116 @@ from custom_core import (
 
 _screen = Region(0, 0, 1920, 1080)
 
-def run_arcane_crystal() -> int:
+def alchemist() -> int:
+    """
+    Execute the Alchemist navigational cleanup subroutine.
+    """
+    click((1855, 115))
+    return 0
+
+def arena_of_kings() -> int:
+    """
+    Execute the Arena of Kings navigational cleanup subroutine.
+    """
+    click((1855, 115))
+    return 0
+
+def character_talents() -> int:
+    """
+    Upgrade talents
+    """
+    bubble = 'images/tasks/character/talents_bubble.png'
+    _area = Region(470, 170, 1340, 860)
+    counter = 0
+    clicked = False
+    while True:
+        match = _area.exists(bubble)
+        if match:
+            match.click()
+            time.sleep(1)
+            while color_at(1032, 853) == 'green_talents':
+                click((1020, 866))
+                move_to((1100, 866))
+                clicked = True
+            click((1250, 320))
+            break
+        drag_drop((950, 990), (950, 188))
+        counter += 1
+        if counter > 10:
+            for _ in range(1, counter):
+                drag_drop((950, 188), (950, 990))
+            break
+
+    if clicked:
+        click((1650, 980))
+
+    click((1850, 80))
+    return 0
+
+def check_heroes() -> int:
+    """
+    Execute sequential hero upgrades based on real-time RAM pixel color scans.
+
+    Evaluates specific coordinate anchors across the character bar for active
+    gold indicators and fires hardware clicks on available slots dynamically.
+    """
+    while True:
+        inactive_slots = 0
+        clicked = False
+
+        # Exact horizontal pixel anchors for the hero upgrade triggers
+        for x_coord in [120, 620, 820, 1020, 1220, 1420, 1620]:
+            if color_at(x_coord, 930) == 'yellow':
+                move_to((x_coord, 980))
+                mouse_down()
+                while color_at(x_coord, 930) == 'yellow':
+                    time.sleep(1)
+                mouse_up()
+                clicked = True
+            else:
+                inactive_slots += 1
+        if clicked:
+            move_to((x_coord, 1080))
+
+        # Break the lifecycle loop once all monitored slots report depletion
+        if inactive_slots == 7:
+            return get_timeout(10)
+    return 0
+
+def check_upgrade() -> int:
+    """
+    Validate and enforce the global hero upgrade multiplier mode via OCR.
+
+    Scans the primary upgrade interaction canvas text and sequentially clicks
+    the selector until the screen state matches the target configuration mode.
+    """
+    main_upgrade = Region(1661, 910, 259, 170)
+    target_mode = str(config['upgrade_mode']).lower()
+
+    # Cycle selector modes inline until text configuration criteria are met
+    while target_mode not in main_upgrade.text().lower():
+        main_upgrade.click()
+        main_upgrade.move_mouse_away()
+    return time.time() * 2
+
+def daylies() -> int:
+    """
+    Run daylie tasks
+    """
+    return get_next_reset()
+
+def engineer() -> int:
+    """
+    Execute the Engineer resource allocation routine.
+
+    Interacts with the localized production interface before firing
+    global exit anchors to restore primary canvas visibility.
+    """
+    click((1620, 730))
+    click((1840, 55))
+    return get_timeout(21600)
+
+def guild_arcanecrystal() -> int:
     """
     Execute the Arcane Crystal interface routing subroutine.
     """
@@ -52,18 +161,11 @@ def run_arcane_crystal() -> int:
     if score and int(score) > 500:
         click((1800, 370))
         time.sleep(1)
-        return run_awakening()
+        return guild__arcanecrystal_awakening()
     click((1840, 55))
     return 0
 
-def run_arena_of_kings() -> int:
-    """
-    Execute the Arena of Kings navigational cleanup subroutine.
-    """
-    click((1855, 115))
-    return 0
-
-def run_awakening() -> int:
+def guild__arcanecrystal_awakening() -> int:
     """
     Process awakening screen
     """
@@ -75,7 +177,21 @@ def run_awakening() -> int:
     click((1840, 55))
     return 0
 
-def run_campaign() ->int:
+def guild_chaosrift() -> int:
+    """
+    Run chaos rift challenge.
+    """
+    while color_at(1050, 970) == 'green':
+        click((1050, 970))
+        move_to((1200, 970))
+        start_loop = time.time()
+        while time.time() - start_loop < 10 and not color_at(1050, 970) == 'green':
+            time.sleep(1)
+
+    click((1840, 55))
+    return 0
+
+def map_campaign() ->int:
     """Perform Campaign Task"""
     timestamps = []
 
@@ -130,62 +246,15 @@ def run_campaign() ->int:
         return min(timestamps)
     return 0
 
-def run_chaos_rift() -> int:
-    """
-    Run chaos rift challenge.
-    """
-    while color_at(1050, 970) == 'green':
-        click((1050, 970))
-        move_to((1200, 970))
-        start_loop = time.time()
-        while time.time() - start_loop < 10 and not color_at(1050, 970) == 'green':
-            time.sleep(1)
-
-    click((1840, 55))
-    return 0
-
-def run_check_upgrade() -> int:
-    """
-    Validate and enforce the global hero upgrade multiplier mode via OCR.
-
-    Scans the primary upgrade interaction canvas text and sequentially clicks
-    the selector until the screen state matches the target configuration mode.
-    """
-    main_upgrade = Region(1661, 910, 259, 170)
-    target_mode = str(config['upgrade_mode']).lower()
-
-    # Cycle selector modes inline until text configuration criteria are met
-    while target_mode not in main_upgrade.text().lower():
-        main_upgrade.click()
-        main_upgrade.move_mouse_away()
-    return time.time() * 2
-
-def run_daylies() -> int:
-    """
-    Run daylie tasks
-    """
-    return get_next_reset()
-
-def run_engineer() -> int:
-    """
-    Execute the Engineer resource allocation routine.
-
-    Interacts with the localized production interface before firing
-    global exit anchors to restore primary canvas visibility.
-    """
-    click((1620, 730))
-    click((1840, 55))
-    return get_timeout(21600)
-
 def trigger_firestone_collect() -> bool:
     """
     Open the Temple of Eternals and trigger the handling
     """
     press_key('e')
     time.sleep(1)
-    return run_firestone_collect()
+    return firestone_collect()
 
-def run_firestone_collect() -> int:
+def firestone_collect() -> int:
     """
     Execute the Firestone collection interface clearing routing.
 
@@ -198,7 +267,7 @@ def run_firestone_collect() -> int:
     jump_require = int(config['jump_percentage'])
     if percentage >= jump_require:
         Debug.warn(f"[Firestone Collect] Time to jump! {percentage}%/{jump_require}%")
-        timeouts['run_check_upgrade'] = 0
+        timeouts['check_upgrade'] = 0
         click((1360 ,510))
         time.sleep(0.5)
         click((960, 660))
@@ -210,7 +279,7 @@ def run_firestone_collect() -> int:
         click((1840, 55))
     return get_timeout(1800)
 
-def run_firestone_research() -> int:
+def firestone_research() -> int:
     """
     Manage the Firestone research pipeline lifecycle in two distinct phases.
 
@@ -218,18 +287,28 @@ def run_firestone_research() -> int:
     pixel color scans. Phase 2 processes active template research bubbles and
     executes screen drag operations to initialize new available projects.
     """
-    task_firestone_research_bubble = 'images/tasks/library/firestone_research_bubble.png'
-
     for x_coords in [1220, 520]:
         if color_at(x_coords, 980) == 'green':
             click((x_coords, 980))
 
     drag_count = 0
-    while drag_count <= 10:
-        img = _screen.exists(task_firestone_research_bubble)
-        if img:
-            Debug.history("[Firestone Research] Selecting Research")
-            img.click()
+    _area = Region(0, 130, 1690, 770)
+    while drag_count <= 5:
+        pixels = grab_screen_to_mat(_area)
+        found = False
+        for y in range(0, pixels.shape[0], 10):
+            count = 0
+            for x in range(0, pixels.shape[1], 10):
+                b_ch, g_ch, r_ch = pixels[y, x]
+                if b_ch == 222 and g_ch == 73 and r_ch == 13:
+                    count += 1
+                    if count > 2:
+                        found = True
+                        break
+            if found:
+                break
+        if found:
+            click((x + 150, y + 150))
             time.sleep(1)
             click((790, 720))
             if color_at(970, 660) == 'lightbrown_research_full':
@@ -238,17 +317,17 @@ def run_firestone_research() -> int:
                 click((1250, 200))
                 break
         else:
-            drag_drop((1130, 430), (730, 430))
+            drag_drop((1000, 430), (200, 430))
             drag_count += 1
 
     if drag_count:
         for _ in range(1, drag_count):
-            drag_drop((530, 430), (1130, 430))
+            drag_drop((200, 430), (1000, 430))
 
     click((1840, 55))
     return 0
 
-def run_forbidden_knowledge() -> int:
+def guild_forbidden_knowledge() -> int:
     """
     Run forbidden knowledge circle
     """
@@ -330,7 +409,7 @@ def run_forbidden_knowledge() -> int:
     return 0
 
 
-def run_garage() -> int:
+def garage() -> int:
     """
     Process the garage page
     """
@@ -346,7 +425,7 @@ CAROUSEL_FIRST_SLOT = (450, 850)                 # Active X/Y anchor of the left
 # Explicit spatial width of a single carousel item icon including spacing margins
 SWIPE_DISTANCE_X = 120
 
-def run_garage_asset_scraper() -> None:
+def garage_asset_scraper() -> None:
     """
     Execute a linear drag_drop carousel scraper within the War Machine Garage.
 
@@ -398,7 +477,7 @@ def run_garage_asset_scraper() -> None:
 
     Debug.info(f"Garage scraper cycle finished cleanly. Total unique assets mapped: {len(scanned_machines)}")
 
-def run_guild_expeditions() -> int:
+def guild_expeditions() -> int:
     """
     Execute sequentially coordinated inputs inside the Guild Expeditions panel.
 
@@ -418,37 +497,7 @@ def run_guild_expeditions() -> int:
         return min(timestamps)
     return 0
 
-def run_hero_upgrade() -> int:
-    """
-    Execute sequential hero upgrades based on real-time RAM pixel color scans.
-
-    Evaluates specific coordinate anchors across the character bar for active
-    gold indicators and fires hardware clicks on available slots dynamically.
-    """
-    while True:
-        inactive_slots = 0
-        clicked = False
-
-        # Exact horizontal pixel anchors for the hero upgrade triggers
-        for x_coord in [120, 620, 820, 1020, 1220, 1420, 1620]:
-            if color_at(x_coord, 930) == 'yellow':
-                move_to((x_coord, 980))
-                mouse_down()
-                while color_at(x_coord, 930) == 'yellow':
-                    time.sleep(1)
-                mouse_up()
-                clicked = True
-            else:
-                inactive_slots += 1
-        if clicked:
-            move_to((x_coord, 1080))
-
-        # Break the lifecycle loop once all monitored slots report depletion
-        if inactive_slots == 7:
-            return get_timeout(10)
-    return 0
-
-def run_ledra_supplies() -> int:
+def ledra_supplies() -> int:
     """
     Process ledra supplies
     """
@@ -459,21 +508,22 @@ def run_ledra_supplies() -> int:
     click((1840, 55))
     return 0
 
-def run_mailbox() -> int:
+def mailbox() -> int:
     """
     Check mailbox
     """
-    while not Region(720, 240, 470, 70).text('Themailboxspty.'):
-        if color_at(1130, 840) == 'green':
-            click((1130, 840))
-            click((1600, 980))
-            time.sleep(0.5)
+    while not color_at(1600, 980) == 'lightbrown':
+        if color_at(1320, 830) == 'green':
+            click((1320, 840))
+            click((1190, 720))
+            time.sleep(1)
         click((1600, 980))
+        time.sleep(1)
 
     click((1650, 40))
     return get_timeout(3600)
 
-def run_map() -> None:
+def map() -> None:
     """
     Manage world map operations including reward claiming and dynamic deployment.
 
@@ -534,21 +584,21 @@ def run_map() -> None:
     #    return min(timestamps)
     return 0
 
-def run_meteorite() -> int:
+def meteorite() -> int:
     """
     Execute the Meteorite Research.
     """
     click((1840, 55))
     return 0
 
-def run_new_hero() -> int:
+def new_hero() -> int:
     """
     Execute New Hero Screen
     """
     click((1840, 55))
     return get_timeout(604800)
 
-def run_pickaxe() -> int:
+def engineer_engineer() -> int:
     """
     Execute the Pickaxe tool allocation and interaction routine.
 
@@ -559,7 +609,7 @@ def run_pickaxe() -> int:
     click((1840, 55))
     return 0
 
-def run_pirates_price() -> int:
+def pirates_price() -> int:
     """
     Execute the Pirates Price tool allocation and interaction routine.
 
@@ -581,7 +631,7 @@ def run_pirates_price() -> int:
     click((1840, 55))
     return 0
 
-def run_quests() -> int:
+def character_quests() -> int:
     """
     Execute the quest completion and collection protocol.
 
@@ -598,7 +648,7 @@ def run_quests() -> int:
     click((1840, 55))
     return 0
 
-def run_scarab_game() -> int:
+def tavern_scarab_game() -> int:
     """
     Play scarab game
     """
@@ -613,12 +663,12 @@ def run_scarab_game() -> int:
     if score > 5000:
         click((1800, 220))
         time.sleep(1)
-        return run_scarab_vault()
+        return tavern_scarab_vault()
 
     click((1840, 55))
     return 0
 
-def run_scarab_vault() -> int:
+def tavern_scarab_vault() -> int:
     """
     Process Pharao's Vault
     """
@@ -631,18 +681,18 @@ def run_scarab_vault() -> int:
 
     click((1840, 55))
     time.sleep(1)
-    return run_scarab_game()
+    return tavern_scarab_game()
 
-def run_scarab_token() -> int:
+def tavern_scarab_token() -> int:
     """
     Get daily scarab token
     """
     click((610,800))
     click((1840, 55))
     time.sleep(1)
-    return run_scarab_game()
+    return tavern_scarab_game()
 
-def run_signin() -> int:
+def shop_signin() -> int:
     """
     Collect Sign-In Bonus
     """
@@ -653,39 +703,7 @@ def run_signin() -> int:
     click((1840, 55))
     return get_next_reset()
 
-def run_talents() -> int:
-    """
-    Upgrade talents
-    """
-    bubble = 'images/tasks/character/talents_bubble.png'
-    _area = Region(470, 170, 1340, 860)
-    counter = 0
-    clicked = False
-    while True:
-        match = _area.exists(bubble)
-        if match:
-            match.click()
-            time.sleep(1)
-            while color_at(1032, 853) == 'green_talents':
-                click((1020, 866))
-                move_to((1100, 866))
-                clicked = True
-            click((1250, 320))
-            break
-        drag_drop((950, 990), (950, 188))
-        counter += 1
-        if counter > 10:
-            for _ in range(1, counter):
-                drag_drop((950, 188), (950, 990))
-            break
-
-    if clicked:
-        click((1650, 980))
-
-    click((1850, 80))
-    return 0
-
-def run_tavern() -> int:
+def tavern_tavern_collect() -> int:
     """
     Manage the tavern dispatch queue and resource accumulation.
 
@@ -702,9 +720,9 @@ def run_tavern() -> int:
 
     click((1840, 55))
     time.sleep(1)
-    return run_tavern_game()
+    return tavern_tavern_game()
 
-def run_tavern_game() -> int:
+def tavern_tavern_game() -> int:
     """
     Run the tavern game
     """
@@ -723,9 +741,9 @@ def run_tavern_game() -> int:
     click((1840, 55))
     return 0
 
-def run_upgrade_guardian() -> int:
+def magic_quarter() -> int:
     """
-    Guardian Upgrade
+    Magic Quarter
     """
     pos = {
         'vermilion': (740, 1000),
@@ -737,7 +755,6 @@ def run_upgrade_guardian() -> int:
 
     while True:
         current = Region(250, 830, 300, 60).text('abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ', colormap['brown']).lower()
-        Debug.info(f"Current: {current}")
         if current and current in pos:
             del pos[current]
 
@@ -746,51 +763,47 @@ def run_upgrade_guardian() -> int:
             if color_at(1090, 800) == 'green':
                 Debug.history(f"Training {current}")
                 click((1090,800))
-            amount, _ = divmod(dust, 20)
-            if amount:
-                Debug.history(f"Enlightening {current} {amount} times")
-                for _ in range(int(amount)):
-                    if color_at(1590, 800) == 'green':
-                        click((1590, 800))
-                        move_to((1590, 880))
-                        dust -= 20
-                    else:
-                        break
-
-            click((1210, 150)) #Evolution
+            while color_at(1590, 800) == 'green':
+                click((1590, 800))
+                move_to((1590, 880))
+                time.sleep(1)
+ 
+            click((1210, 150)) # Evolution
             time.sleep(1)
-            cost_region = Region(1100, 767, 150, 40)
-            avg = cost_region.get_color_avg()
-            cost = cost_region.get_number('brown')
-            Debug.info(f"Evolution costs:{cost} dust:{dust} avg: {avg}")
-            if cost <= dust and color_at(1220, 780) == 'green':
+            while color_at(1220, 780) == 'green':
                 Debug.history(f"Evolving {current}")
                 click((1220, 780))
-                dust -= int(cost)
-                time.sleep(3)
+                move_to((1100, 880))
+                time.sleep(1)
 
-            click((1400, 150)) #Chaos Rift
+            click((1400, 150)) # Chaos Rift
             time.sleep(1)
-            amount = Region(1564, 20, 160, 30).get_number()
-            while True:
-                cost = Region(1695, 755, 140, 45).get_number()
-                if cost and cost >= amount:
-                    Debug.history(f"Increase {current}'s holy damage")
-                    click((1720, 760))
-                    time.sleep(1)
-                    amount -= cost
+            while color_at(1630, 775) == 'green':
+                Debug.history(f"Increase {current}'s holy damage")
+                click((1720, 760))
+                move_to((1600, 880))
+                time.sleep(1)
 
-            click((1560, 150)) #Guardian rarity
+            click((1560, 150)) # Guardian rarity
             time.sleep(1)
             if color_at(1365, 630) == 'green':
                 click((1365, 630))
+        else:
+            current = Region(690, 120, 540, 40).text('abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ', colormap['white']).lower()
+            if current:
+                for name, (_, _) in pos.items():
+                    if name in current:
+                        del pos[name]
+                        click((1500, 160))
+                        click((1500, 160))
+                        break
 
-            if not pos:
-                break
+        if not pos:
+            break
 
-            for _, (x, y) in pos.items():
-                click((x, y))
-                break
+        for _, (x, y) in pos.items():
+            click((x, y))
+            break
 
     click((1840, 55))
     return 120

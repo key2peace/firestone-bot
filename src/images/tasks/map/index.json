@@ -1,0 +1,14 @@
+{
+    "campaign.png": {
+        "timestamp": 1783884951.4787602,
+        "sha256": "e9acf4fbccca47e60cbbdd66a37072f8913a74d6b772b3e97635e12a6a37cca7"
+    },
+    "map.png": {
+        "timestamp": 1783884951.4947035,
+        "sha256": "7bfb74be8fe5d514aaad4d0ce965f87a77815ee79da19c5b86821d066a0aad81"
+    },
+    "zoom.png": {
+        "timestamp": 1782706994.6538568,
+        "sha256": "a880b213808ff4ceabe7c128f7ad628428e021ea75f100e615ef2a7e376bc01b"
+    }
+}

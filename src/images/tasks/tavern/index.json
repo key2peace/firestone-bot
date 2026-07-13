@@ -1,0 +1,18 @@
+{
+    "pharaos_vault.png": {
+        "timestamp": 1783884951.6068661,
+        "sha256": "b2852dfa90e0209c4b40610232c9c8df11fc55188b73a5cd09f3672421b6a931"
+    },
+    "scarab_game.png": {
+        "timestamp": 1783884951.6208656,
+        "sha256": "894ba086e7046505bd72e5679b65ab826e996a68491892aaacdb1ccd2e3cde12"
+    },
+    "scarab_token.png": {
+        "timestamp": 1783884951.634802,
+        "sha256": "db23eb8372110f1ea653950b7e44e4d9b702658f97752b08911108a7db10b045"
+    },
+    "tavern_pickup.png": {
+        "timestamp": 1783884951.6497445,
+        "sha256": "95b45f237673c4eb644ac8c52181182c60cf63a9eef91b6669100988117c77f6"
+    }
+}

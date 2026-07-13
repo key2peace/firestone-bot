@@ -1,0 +1,26 @@
+{
+    "adventure.png": {
+        "timestamp": 1783884951.5097036,
+        "sha256": "53a1b78adc3c95a0fcd58ab22a0455551309863112f2b13a54af1c6475f8b8eb"
+    },
+    "dragon.png": {
+        "timestamp": 1783884951.5255148,
+        "sha256": "397028144424592b955b1cb163e2db7c45ed0152d009d0fa3cbbf0d47ceeddd3"
+    },
+    "monster.png": {
+        "timestamp": 1783884951.5395186,
+        "sha256": "e7860823582d7b4e516e957848a29b05699582dd581ab7daf39ef0be2e548cb3"
+    },
+    "mystery.png": {
+        "timestamp": 1783884951.554303,
+        "sha256": "dac3b7d003f224a51b95c05d25ecef14e46c2d4ae4ce7e3edf9f357464fe207e"
+    },
+    "scout.png": {
+        "timestamp": 1783884951.5678563,
+        "sha256": "db3eb7bd2d5147922d2d78692cef5e04b56fcec7973c0a329ab1c3fe1ee5e2ba"
+    },
+    "war.png": {
+        "timestamp": 1783884951.5828564,
+        "sha256": "f7842a43f817af4d1af39b5724f73ae43b5f8215231bcaef013633f1210a1fd6"
+    }
+}
