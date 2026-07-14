@@ -107,7 +107,7 @@ But sadly, new OculiX IDE looking shiny on my desktop, getting frustrated by the
     - Mercenaries
 
 ## Installation
-- Ensure you have at least python 3.2 installed
+- Ensure you have at least [Python 3.1](https://www.python.org/downloads/) installed
 - Install [Tesseract](https://tesseractocr.org/#install)
 - Ensure python and tesseract are in your path
 - Then:
