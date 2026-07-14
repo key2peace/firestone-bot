@@ -47,7 +47,7 @@ def timeout_reinit() -> None:
     """
     global timeouts
 
-    for name, (_, task_function_name, reset_on_reload) in tasks.items():
+    for _, (_, task_function_name, reset_on_reload) in tasks.items():
         if reset_on_reload and task_function_name in timeouts:
             del timeouts[task_function_name]
 

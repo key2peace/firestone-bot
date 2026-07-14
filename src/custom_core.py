@@ -1299,7 +1299,7 @@ class Region():
             b_max = max(b) + widen if not max(b) + widen > 255 else 255
 
             return (int(r_min), int(r_max), int(g_min), int(g_max), int(b_min), int(b_max))
-        except Exception as error:
+        except Exception:
             return (0, 0, 0, 0, 0, 0)
 
     def get_h(self) ->int:

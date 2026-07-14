@@ -16,7 +16,6 @@ from custom_core import (
     get_next_reset,
     #get_suffix_rank,
     get_pixel_color,
-    get_pixel_color,
     get_timeout,
     parse_ui_timeout,
     timeouts,
