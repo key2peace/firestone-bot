@@ -1,18 +1,14 @@
 {
-    "firestone_collect.png": {
-        "timestamp": 1783884951.356396,
-        "sha256": "895b5c9b607c76a41bec4fce008e87535cffc63194b304cb0edd40153c7bc1b7"
-    },
     "firestone_research.png": {
-        "timestamp": 1783884951.371403,
+        "timestamp": 1784043748.9350252,
         "sha256": "4f07fb1d25e00bd62773fefd6d7a3d1b07b169430ce106e8c7ec5ba0ca6efec2"
     },
     "firestone_research_bubble.png": {
-        "timestamp": 1783884951.3868625,
+        "timestamp": 1784043748.9519541,
         "sha256": "83183a182a4d8be6ac28bc7e83f345be1089d436857f1d48bf52f31cc8ed79bb"
     },
     "meteorite_research.png": {
-        "timestamp": 1783884951.4018726,
+        "timestamp": 1784043748.9688995,
         "sha256": "351678c22c49d872eece2fa3a736fd6c5701c0f15494aa934cec700061e382e2"
     }
 }

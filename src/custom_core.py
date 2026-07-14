@@ -46,8 +46,9 @@ colormap = {
     'green': (0, 24, 140, 255, 0, 32),
     'green_talents': (100, 135, 150, 255, 0, 25),
     'red': (240, 255, 0, 26, 0, 10),
-    'yellow': (250, 255, 170, 255, 0, 100),
-    'white': (230, 255, 230, 255, 230, 255)
+    'yellow': (240, 255, 157, 255, 0, 100),
+    'white': (230, 255, 230, 255, 230, 255),
+    'gamebar': (33, 33, 34, 34, 51, 51)
 }
 
 # Config
@@ -81,60 +82,62 @@ reload_file: str = '.bot_reload'
 if os.path.exists(reload_file):
     os.remove(reload_file)
 
-# name: (pattern, callable, timeout)
+# name: (pattern, callable, timeout, reset_on_reload)
 tasks = {
-    '_check_upgrade':       ('',                                'check_upgrade'),
-    '_hero_upgrade':        ('',                                'check_heroes'),
-    '_daylies':             ('',                                'daylies'),
-    '_firestone_collect':   ('',                                'trigger_firestone_collect'),
-    'mailbox':              ('mailbox.png',                     'mailbox'),
-    #'new_hero':             ('new_hero.png',                    'new_hero'),
+    '_check_upgrade':       ('',                                'check_upgrade', 1),
+    '_hero_upgrade':        ('',                                'check_heroes', 1),
+    '_daylies':             ('',                                'daylies', 0),
+    '_temple_of_eternals':  ('',                               'temple_of_eternals', 1),
+    #'new_hero':             ('new_hero.png',                    'new_hero', 1),
 
     # alchemist
-    'alchemist':            ('alchemist/alchemist.png',         'alchemist'),
+    'alchemist':            ('alchemist/alchemist.png',         'alchemist', 1),
 
     # arena of kings
-    'arena_of_kings':       ('arena_of_kings.png',              'arena_of_kings'),
+    'arena_of_kings':       ('arena_of_kings.png',              'arena_of_kings', 1),
 
     #character
-    'quests':               ('character/quests.png',            'character_quests'),
-    'talents':              ('character/talents_upgrade.png',   'character_talents'),
+    'quests':               ('character/quests.png',            'character_quests', 1),
+    'talents':              ('character/talents_upgrade.png',   'character_talents', 1),
 
     # engineer
-    'engineer':             ('engineer/engineer.png',           'engineer'),
-    'garage':               ('engineer/garage.png',             'garage'),
-    'garage_chaos_rift':    ('engineer/garage_chaos_rift.png',  'garage'),
-    'garage_rarity':        ('engineer/garage_rarity.png',      'garage'),
+    'engineer':             ('engineer/engineer.png',           'engineer', 1),
+    'garage':               ('engineer/garage.png',             'engineer_garage', 1),
+    'garage_chaos_rift':    ('engineer/garage_chaos_rift.png',  'engineer_garage', 1),
+    'garage_rarity':        ('engineer/garage_rarity.png',      'engineer_garage', 1),
 
     # guild
-    'arcane_crystal':       ('guild/arcane_crystal.png',        'guild_arcanecrystal'),
-    'awakening':            ('guild/awakening.png',             'guild__arcanecrystal_awakening'),
-    'chaos_rift':           ('guild/chaos_rift.png',            'guild_chaosrift'),
-    'forbidden_knowledge':  ('guild/forbidden_knowledge.png',   'guild_forbidden_knowledge'),
-    'guild_expeditions':    ('guild/expeditions.png',           'guild_expeditions'),
-    'pickaxe':              ('guild/pickaxe.png',               'engineer_engineer'),
-    'ledra_supplies':       ('guild/chaos_rift_supplies.png',   'ledra_supplies'),
+    'arcane_crystal':       ('guild/arcane_crystal.png',        'guild_arcanecrystal', 1),
+    'awakening':            ('guild/awakening.png',             'guild_awakening', 1),
+    #'bank'                  {'',                                'guild_bank', 0),
+    'chaos_rift':           ('guild/chaos_rift.png',            'guild_chaos_rift', 1),
+    'chaos_rift_supplies':  ('guild/chaos_rift_supplies.png',   'guild_chaos_rift_supplies', 1),
+    'expeditions':          ('guild/expeditions.png',           'guild_expeditions', 1),
+    'forbidden_knowledge':  ('guild/forbidden_knowledge.png',   'guild_forbidden_knowledge', 1),
+    'pickaxe':              ('guild/pickaxe.png',               'guild_pickaxe', 1),
 
     # library
-    'firestone_collect':    ('library/firestone_collect.png',   'firestone_collect'),
-    'firestone_research':   ('library/firestone_research.png',  'firestone_research'),
-    'meteorite_research':   ('library/meteorite_research.png',  'meteorite'),
+    'firestone_research':   ('library/firestone_research.png',  'library_firestone_research', 1),
+    'meteorite_research':   ('library/meteorite_research.png',  'library_meteorite_research', 1),
 
     # map
-    'campaign':             ('map/campaign.png',                'map_campaign'),
-    'map':                  ('map/map.png',                     'map'),
+    'campaign':             ('map/campaign.png',                'map_campaign', 1),
+    'map':                  ('map/map.png',                     'map_map', 1),
 
     # pirate ship
-    'pirates_price':        ('pirate_ship/pirates_price.png',   'pirates_price'),
+    'pirates_price':        ('pirate_ship/pirates_price.png',   'pirates_price', 1),
 
     # shop
-    'sign_in':              ('shop/sign_in.png',                'shop_signin'),
+    'sign_in':              ('shop/sign_in.png',                'shop_signin', 0),
 
     # tavern
-    'pharaos_vault':        ('tavern/pharaos_vault.png',        'tavern_scarab_vault'),
-    'scarab_token':         ('tavern/scarab_token.png',         'tavern_scarab_token'),
-    'scarab_game':          ('tavern/scarab_game.png',          'tavern_scarab_game'),
-    'tavern_collect':       ('tavern/tavern_pickup.png',        'tavern_tavern_collect')
+    'pharaos_vault':        ('tavern/pharaos_vault.png',        'tavern_pharaos_vault', 1),
+    'scarab_game':          ('tavern/scarab_game.png',          'tavern_scarab_game', 1),
+    'scarab_token':         ('tavern/scarab_token.png',         'tavern_scarab_token', 1),
+    'tavern_collect':       ('tavern/tavern_pickup.png',        'tavern_tavern_collect', 1),
+
+    # temple of eternals
+    'temple_of_eternals':   ('temple_of_eternals.png',          'temple_of_eternals', 0)
 }
 
 # Add magic quarter upgrades to the tasks
@@ -144,7 +147,7 @@ for tasks_root, _, tasks_files in os.walk("images/tasks/magic_quarter"):
         continue
     for task_filename in task_files:
         tasks_filepath = os.path.join('magic_quarter', task_filename)
-        tasks[task_filename[:-4]] = (tasks_filepath, 'magic_quarter')
+        tasks[task_filename[:-4]] = (tasks_filepath, 'magic_quarter', 1)
 
 timeouts = {}
 
@@ -600,7 +603,12 @@ def grab_screen_to_mat(region_obj: Region = None) -> 'np.ndarray | None':
 
 def mean(collection: List) -> int:
     """Another little helper"""
-    return int(sum(collection) / len(collection))
+    total: int = 0
+    items: int = 0
+    for val in collection:
+        total += int(val)
+        items += 1
+    return int(total/items)
 
 def mouse_down(timeout: float=0) -> None:
     """
@@ -682,7 +690,7 @@ def optimize_alpha_channels(target_dir: str = 'images', threshold: int = 128) ->
     """Walk through the images folder and alpha flatten unprocessed images"""
     if not os.path.exists(target_dir):
         return
-    Debug.info("[optimize_alpha_channels] Starting full image workspace alpha channel optimization scan...")
+    Debug.info("[optimize_alpha_channels] Starting scan...")
     for root, _, files in os.walk(target_dir):
         png_files = [f for f in files if f.lower().endswith('.png')]
         if not png_files:
@@ -699,14 +707,14 @@ def optimize_alpha_channels(target_dir: str = 'images', threshold: int = 128) ->
                         channels = src.shape[2] if len(src.shape) == 3 else 1
 
                         if channels >= 4:
-                            Debug.info("[optimize_alpha_channels] Optimizing alpha layers for: %s", str(filepath))
+                            Debug.info("[optimize_alpha_channels] Optimizing %s", str(filepath))
                             optimized_src = filter_mat_alpha(src, threshold)
                             cv2.imwrite(filepath, optimized_src)
 
                 except Exception as e:
                     Debug.error("[optimize_alpha_channels] Alpha Optimizer could not write %s:\n%s", filepath, str(e))
                 tracker.add(filepath)
-    Debug.info("[optimize_alpha_channels] Alpha optimization scan complete. All indices successfully synchronized.")
+    Debug.info("[optimize_alpha_channels] Scan complete.")
 
 def pause_check() -> None:
     """
@@ -716,7 +724,6 @@ def pause_check() -> None:
         Debug.info("Systems paused, toggle Scroll-Lock to continue.")
         while not os.path.exists(lock_file):
             time.sleep(1)
-        Debug.info("Moving on...")
 
 def pause_off() -> None:
     """Create lock_file"""
@@ -728,7 +735,7 @@ def pause_on(reload: bool = False) -> None:
     """Remove lock_file"""
     if os.path.exists(lock_file):
         os.remove(lock_file)
-        Debug.info('Initianted pause')
+        Debug.info('Initiated pause')
 
     if reload:
         if os.path.exists(reload_file):
@@ -1291,10 +1298,8 @@ class Region():
             b_min = min(b) - widen if min(b) - widen else 0
             b_max = max(b) + widen if not max(b) + widen > 255 else 255
 
-            Debug.info(f"r_avg: {mean(r)} g_avg: {mean(g)} b_avg: {mean(b)}")
-            return (r_min, r_max, g_min, g_max, b_min, b_max)
+            return (int(r_min), int(r_max), int(g_min), int(g_max), int(b_min), int(b_max))
         except Exception as error:
-            Debug.error(f"[get_color_avg] Failed to extract color map coordinates:\n{error}")
             return (0, 0, 0, 0, 0, 0)
 
     def get_h(self) ->int:
@@ -1327,9 +1332,10 @@ class Region():
                 sanitized = char + sanitized
         number = sanitized
 
-        if number and not number == '.':
+        try:
             return float(number)
-        return 0
+        except ValueError:
+            return 0
 
     def get_w(self) ->int:
         """
@@ -1413,6 +1419,7 @@ class Region():
         Extract textual values from the region viewport using custom OCR tuning.
         Supports a custom RGB color mask to isolate specific styled game fonts.
         """
+        #self.highlight(3)
         src_mat = grab_screen_to_mat(self)
         if src_mat is None or src_mat.size == 0:
             return ''
@@ -1438,8 +1445,6 @@ class Region():
             cv2.MORPH_CLOSE,
             cv2.getStructuringElement(cv2.MORPH_RECT, (2, 2))
         )
-
-        cv2.imwrite('capture/text_' + str(time.time_ns()) + '.png', clean_mat)
 
         tessdata_path = r"C:\Program Files\Tesseract-OCR\tessdata/kiddosy.traineddata"
         lang_model = "kiddosy" if os.path.exists(tessdata_path) else "eng"

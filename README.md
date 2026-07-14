@@ -19,6 +19,8 @@ But sadly, new OculiX IDE looking shiny on my desktop, getting frustrated by the
 ## Features
 - Auto maximize and disable gamebar on crazygames
 - Tasks supported:
+  - Alchemist
+    - Experiments
   - Character:
     - Quests
   - Engineer:
@@ -27,6 +29,7 @@ But sadly, new OculiX IDE looking shiny on my desktop, getting frustrated by the
   - Library:
     - Firestone research:
 	  - Claim finished tasks
+	  - Start new researches
   - Magic quarter:
 	- Train guardians
 	- Enlighten guardians
@@ -34,11 +37,13 @@ But sadly, new OculiX IDE looking shiny on my desktop, getting frustrated by the
 	- Chaos of Rift upgrades
   - Guild:
 	- Arcane Crystal:
-	  - Spending a maximum of 5 pixels per run
+	  - Spending a maximum of 5 pickaxes per run
 	  - Awakening
     - Chaos Rift:
       - Fight monster
 	  - Supplies
+	- Forbidden Knowledge:
+	  - Perform upgrades and recruiting
 	- Guild expeditions
   - Map:
     - Claim finished tasks
@@ -50,6 +55,7 @@ But sadly, new OculiX IDE looking shiny on my desktop, getting frustrated by the
     - Pirates price
   - Shop:
     - Daily rewards
+    - Mystery box
   - Tavern:
 	- Scarab Game:
       - Play the game
@@ -62,8 +68,7 @@ But sadly, new OculiX IDE looking shiny on my desktop, getting frustrated by the
     - Collect when 400% reached
 
 - Tasks not yet supported:
-  - Alchemist
-    - Experiments
+  - Alchemist:
     - Transmute (not yet unlocked)
   - Bag
     - Opening chests
@@ -83,22 +88,45 @@ But sadly, new OculiX IDE looking shiny on my desktop, getting frustrated by the
     - Sell items
 	- Exotic upgrades
 	- Emblem market
-  - Guild
-    - Automatic bank deposits
+  - Guild:
+	- Bank:
+      - Automatic bank deposits
+	  - Acknowledge deposit messages
 	- Tree of Life
-	- Forbidden Knowledge:
-	  - Perform upgrades and recruiting
+	- Guild hall:
+	  - Acknowledge deposit messages
   - Library:
-    - Firestone research:
-	  - Improve task selection
 	- Meteorite Research
+  - Main:
+    - Kill miner/dragons so they disappear quicker
   - Map:
-    - Campgaing:
+    - Campaign:
 	  - Select battles
+  - Oracle (not yet unlocked)
   - Pirate ship:
     - Mercenaries
-  - Shop:
-    - Mystery box
+
+## Installation
+- Ensure you have at least python 3.2 installed
+- Install [Tesseract](https://tesseractocr.org/#install)
+- Ensure python and tesseract are in your path
+- Then:
+```
+	git clone https://github.com/key2peace/firestone-bot.git
+	cd firestone-bot
+	pip install -r requirements.txt
+```
+
+## Starting
+- Run the code:
+```
+cd firestone-bot/src
+python main.py
+```
+- Start the game and go full-screen
+- When ready, press the Scroll-Lock key.
+- If things go wrong -> Scroll-Lock
+- Wanna make a screenshot? Press the Print Screen, provide a name, and it will be saved in the capture subfolder
 
 ## License
 This code is released under the MIT License, for more details, see [License](https://github.com/key2peace/firestone-bot/blob/main/LICENSE)

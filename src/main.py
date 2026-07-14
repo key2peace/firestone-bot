@@ -37,13 +37,19 @@ def crazygames_check() -> None:
         img.waitVanish()
 
     # Crazygames gamebar
-    img = _screen.exists('images/misc/gamebar.png')
-    d = Region(0, 1034, 1920, 46).get_color_avg()
-    Debug.info(f"Color AVG: {d}")
-    if img:
+    if color_at(735, 1060) == "gamebar":
         Debug.history("[Crazygames] Disabling bottom gamebar")
-        img.click()
-        img.waitVanish()
+        click((960, 1050))
+
+def timeout_reinit() -> None:
+    """
+    Clean some timeouts
+    """
+    global timeouts
+
+    for name, (_, task_function_name, reset_on_reload) in tasks.items():
+        if reset_on_reload and task_function_name in timeouts:
+            del timeouts[task_function_name]
 
 def main() -> None:
     """
@@ -67,10 +73,10 @@ def main() -> None:
             if os.path.exists(reload_file):
                 os.remove(reload_file)
                 crazygames_check()
-                timeouts['check_upgrade'] = 0
+                timeout_reinit()
 
             # loop through tasks
-            for name, (pattern, task_function_name) in tasks.items():
+            for name, (pattern, task_function_name, _) in tasks.items():
                 friendly_name = name.replace('_', ' ').title()
 
                 if task_function_name in timeouts and timeouts[task_function_name] >= time.time():
@@ -100,7 +106,10 @@ def main() -> None:
                     actual_function = getattr(task_logic, task_function_name)
 
                     Debug.history(f"[Task] {friendly_name} - Launching {task_function_name}")
-                    timeout_return = int(actual_function()) # pylint: disable=assignment-from-no-return
+                    if pattern:
+                        timeout_return = int(actual_function()) # pylint: disable=assignment-from-no-return
+                    else:
+                        timeout_return = int(actual_function(True)) # pylint: disable=assignment-from-no-return
                     if timeout_return:
                         timeouts[task_function_name] = int(timeout_return)
                         timeout_return = duration_text(time.time_ns(), timeout_return*1000000000)
@@ -111,6 +120,7 @@ def main() -> None:
                 else:
                     Debug.history(f"[Task] {friendly_name} - Missing handler '{task_function_name}'")
 
+            #check amount of tasks, scroll to check if we can find more non timeouted ones in the list
             task_count = Region(90, 160, 50, 38).get_number()
             if int(task_count) > 3:
                 # drag around the area to reveal task images
@@ -126,6 +136,21 @@ def main() -> None:
                     move_to((x + 160, y1))
 
                 flipper = not flipper
+
+            # check if we got mail
+            mail_count = Region(100, 570, 50, 38).get_number()
+            if mail_count:
+                click((60, 620))
+                time.sleep(1)
+                while not color_at(1600, 980) == 'lightbrown':
+                    if color_at(1320, 830) == 'green':
+                        click((1320, 840))
+                        time.sleep(0.3)
+                        click((1190, 720))
+                        time.sleep(0.3)
+                    click((1600, 980))
+                    time.sleep(0.3)
+                click((1650, 40))
 
     except KeyboardInterrupt as e:
         Debug.error(f"Received Exception\n{e}")
