@@ -53,12 +53,22 @@ colormap = {
 
 # Config
 config = {
-    'upgrade_mode': '100',
-    'jump_percentage': '400',
-    'logfile': 'logs/firestone-bot.log',
-    'tracker_file': 'index.json',
-    'ollama_url': 'http://localhost:11434',
-    'ollama_model': 'llama3.2:latest'
+    # System settings
+    'logfile':                  'logs/firestone-bot.log',
+    'tracker_file':             'index.json',
+    'ollama_url':               'http://localhost:11434',
+    'ollama_model':             'llama3.2:latest',
+
+    # Game settings
+    'alchemist_dragon_blood':   True,
+    'alchemist_strange_dust':   False,
+    'alchemist_exotic_coin':    False,
+    'jump_percentage':          400,
+    'transmute_legendary':      True,
+    'transmute_epic':           False,
+    'transmute_rare':           False,
+    'transmute_uncommon':       False,
+    'upgrade_mode':             '100'
 }
 config_file: str = 'bot_settings.json'
 
@@ -82,12 +92,17 @@ reload_file: str = '.bot_reload'
 if os.path.exists(reload_file):
     os.remove(reload_file)
 
+# general screens
+screen = Region(0, 0, 1920, 1080)
+main_finished = Region(0, 0, 160, 750)
+main_upgrade = Region(1661, 910, 259, 170)
+
 # name: (pattern, callable, timeout, reset_on_reload)
 tasks = {
+    # starting with these
     '_check_upgrade':       ('',                                'check_upgrade', 1),
-    '_hero_upgrade':        ('',                                'check_heroes', 1),
+    '_check_heroes':        ('',                                'check_heroes', 1),
     '_daylies':             ('',                                'daylies', 0),
-    '_temple_of_eternals':  ('',                               'temple_of_eternals', 1),
     #'new_hero':             ('new_hero.png',                    'new_hero', 1),
 
     # alchemist
@@ -109,11 +124,11 @@ tasks = {
     # guild
     'arcane_crystal':       ('guild/arcane_crystal.png',        'guild_arcanecrystal', 1),
     'awakening':            ('guild/awakening.png',             'guild_awakening', 1),
-    #'bank'                  {'',                                'guild_bank', 0),
     'chaos_rift':           ('guild/chaos_rift.png',            'guild_chaos_rift', 1),
     'chaos_rift_supplies':  ('guild/chaos_rift_supplies.png',   'guild_chaos_rift_supplies', 1),
     'expeditions':          ('guild/expeditions.png',           'guild_expeditions', 1),
     'forbidden_knowledge':  ('guild/forbidden_knowledge.png',   'guild_forbidden_knowledge', 1),
+    '_guild':               ('',                                'guild', 0),
     'pickaxe':              ('guild/pickaxe.png',               'guild_pickaxe', 1),
 
     # library
@@ -137,7 +152,12 @@ tasks = {
     'tavern_collect':       ('tavern/tavern_pickup.png',        'tavern_tavern_collect', 1),
 
     # temple of eternals
-    'temple_of_eternals':   ('temple_of_eternals.png',          'temple_of_eternals', 0)
+    'temple_of_eternals':   ('temple_of_eternals.png',          'temple_of_eternals', 0),
+
+    # others on the end
+    '_temple_of_eternals':  ('',                                'temple_of_eternals', 1),
+    '_check_mail':          ('',                                'check_mail', 1),
+    '_check_taskcount':     ('',                                'check_taskcount', 0)
 }
 
 # Add magic quarter upgrades to the tasks
@@ -204,7 +224,7 @@ def ask_ollama(prompt: str, src_mat = None) -> str:
             return ""
 
     payload = {
-        'mode': model_name,
+        'model': model_name,
         'messages': _ollama_cache[:2],
         'stream': False
     }
@@ -565,7 +585,7 @@ def get_suffix_rank(suffix: str) -> int:
 
     return 0
 
-def get_timeout(seconds: float) -> float:
+def get_timeout(seconds: float) -> int:
     """
     Generate timestamp for duration timeout
 
@@ -573,9 +593,9 @@ def get_timeout(seconds: float) -> float:
         'seconds' (float) the duration of the timeout
 
     Returns:
-        float timestamp
+        int timestamp
     """
-    return time.time()+seconds
+    return int(time.time()+seconds)
 
 def grab_screen_to_mat(region_obj: Region = None) -> 'np.ndarray | None':
     """
@@ -657,6 +677,10 @@ def move_to(location: Union[Tuple[int, int], 'Region', 'Match']) -> None:
         mouse_controller.moveTo(x_coord, y_coord)
     except mouse_controller.FailSafeException:
         pause_on()
+
+def my_round(number: float, base: float = 64) -> int:
+    """Simple round function for any base."""
+    return round(base * round(number/base), 0)
 
 def on_keyrelease(key) -> None:
     """
@@ -1321,15 +1345,25 @@ class Region():
         Return:
             floatt: the extracted value
         """
-        number = self.text('1234567890.,', colormap[color_map])
+        # old '1234567890.,+%'
+        number = self.text('', colormap[color_map])
         sanitized = ''
+        plusfound = False
 
         for a in range(0, len(number)):
             char = number[len(number) - 1 - a]
-            if char in [',','.'] and a < 2:
+            if char in [',','.'] and len(str(sanitized)) < 3:
                 sanitized = '.' + sanitized
+            elif char == '+':
+                plusfound = True
             elif char.isnumeric():
                 sanitized = char + sanitized
+
+        # There must be a + in the string as the number starts with it,
+        # ocr however, sometimes sees this as a 4
+        if sanitized and not plusfound and sanitized[0] == 4:
+            sanitized = sanitized[1::]
+
         number = sanitized
 
         try:
@@ -1494,7 +1528,7 @@ class Region():
             time.sleep(0.2)
         return False
 
-    def waitVanish(self, image_path: str = None, timeout:  float = 3):
+    def wait_vanish(self, image_path: str = None, timeout:  float = 3):
         """
         Block thread execution until the target state pattern disappears from this region.
 

@@ -18,96 +18,136 @@ But sadly, new OculiX IDE looking shiny on my desktop, getting frustrated by the
 
 ## Features
 - Auto maximize and disable gamebar on crazygames
-- Tasks supported:
-  - Alchemist
-    - Experiments
-  - Character:
-    - Quests
-  - Engineer:
-    - Engineer:
-      - Pick up tools
-  - Library:
-    - Firestone research:
-	  - Claim finished tasks
-	  - Start new researches
-  - Magic quarter:
-	- Train guardians
-	- Enlighten guardians
-	- Evolving guardians
-	- Chaos of Rift upgrades
-  - Guild:
-	- Arcane Crystal:
-	  - Spending a maximum of 5 pickaxes per run
-	  - Awakening
-    - Chaos Rift:
-      - Fight monster
-	  - Supplies
-	- Forbidden Knowledge:
-	  - Perform upgrades and recruiting
-	- Guild expeditions
-  - Map:
-    - Claim finished tasks
-	- Pick new tasks in the order mystery, scout, adventure, war, monster, dragon
-	- Campaign Battles:
-	  - Pick up the loot
-	  - Run daily liberation missions
-  - Pirate ship:
-    - Pirates price
-  - Shop:
-    - Daily rewards
-    - Mystery box
-  - Tavern:
-	- Scarab Game:
-      - Play the game
-	  - Pickup scarab token
-	  - Pickup pharao's vault
-	- Tavern Game:
-	  - Play the game (spending a max of 10 tokens per run)
-	  - Convert beer to tokens
-  - Temple of eternals:
-    - Collect when 400% reached
+- Caputres F5/Esc keypress in order to pause the bot
 
-- Tasks not yet supported:
-  - Alchemist:
-    - Transmute (not yet unlocked)
-  - Bag
-    - Opening chests
-  - Battles:
-    - Arena of kings
-  - Battle pass
-  - Engineer:
-    - Engineer:
-      - Read selected crew setup (for Arena of kings)
-    - Garage:
-	  - Upgrades
-	  - Blueprints
-	  - Rarity
-	  - Index machines (for Arena of kings)
-  - Events
-  - Exotic Merchant:
-    - Sell items
-	- Exotic upgrades
-	- Emblem market
-  - Guild:
-	- Bank:
-      - Automatic bank deposits
-	  - Acknowledge deposit messages
-	- Tree of Life
-	- Guild hall:
-	  - Acknowledge deposit messages
-  - Library:
-	- Meteorite Research
-  - Main:
-    - Kill miner/dragons so they disappear quicker
-  - Map:
-    - Campaign:
-	  - Select battles
-  - Oracle (not yet unlocked)
-  - Pirate ship:
-    - Mercenaries
+## Tasks supported
+
+### Alchemist
+- Experiments
+- Transmute
+
+### Character
+- Quests
+
+### Engineer
+- Engineer:
+  - Pick up tools
+
+### Library
+- Firestone research:
+  - Claim finished tasks
+  - Start new researches
+
+### Magic quarter
+- Train guardians
+- Enlighten guardians
+- Evolving guardians
+- Chaos of Rift upgrades
+
+### Guild
+- Arcane Crystal:
+  - Spending a maximum of 5 pickaxes per run
+- Awakening
+- Bank:
+  - Perform max bank deposit
+  - Visit treasury
+  - Visit bank log
+  - Claim Locker rewards
+- Chaos Rift:
+  - Fight monster
+  - Supplies
+- Forbidden Knowledge:
+  - Perform upgrades and recruiting
+  - Guild expeditions
+- Guild hall:
+    - Guild log
+
+### Main
+- Upgrade heroes when possible
+- On (re)start/empower, the upgrade multiplier is enforced to a configurable value
+
+### Map
+- Claim finished tasks
+- Pick new tasks in the order ``mystery``, ``dragon``, ``monster``, ``war``, ``adventure``, ``scout``
+- Campaign Battles:
+  - Pick up the loot
+  - Run daily liberation missions
+
+### Pirate ship
+- Pirates price
+
+### Shop
+- Daily rewards
+- Mystery box
+
+### Tavern
+- Scarab Game:
+  - Play the game
+  - Pickup scarab token
+  - Pickup pharao's vault
+- Tavern Game:
+  - Play the game (spending a max of 10 tokens per run)
+  - Convert beer to tokens
+
+### Temple of eternals
+- Collect when configurable percentage has been reached
+  (Note: the + can still be seen as a 4, I *AM* trying to evade this...)
+
+## Tasks not yet supported
+### Alchemist:
+- Below transmute (not yet unlocked)
+
+### Bag
+- Opening chests
+
+### Battles
+- Arena of kings
+
+### Battle pass
+- anything
+
+### Engineer
+- Engineer:
+  - Read selected crew setup (for Arena of kings)
+- Garage:
+  - Upgrades
+  - Blueprints
+  - Rarity
+  - Index machines (for Arena of kings)
+
+### Events
+
+### Exotic Merchant
+- Sell items
+- Exotic upgrades
+- Emblem market
+
+### Guild
+- Tree of Life
+
+### Library
+- Meteorite Research
+
+### Main
+- Kill miner/dragons so they disappear quicker
+
+### Map
+- Campaign:
+  - Select battles
+
+### Oracle (not yet unlocked)
+- anything
+
+### Pirate ship
+- Mercenaries
+
+### Tavern
+- Ancient artifacts:
+  - Upgrade
+  - Rarity
 
 ## Installation
-- Ensure you have at least [Python 3.1](https://www.python.org/downloads/) installed
+- Ensure you have at least [Python 3.10](https://www.python.org/downloads/) installed
 - Install [Tesseract](https://tesseractocr.org/#install)
 - Ensure python and tesseract are in your path
 - Then:

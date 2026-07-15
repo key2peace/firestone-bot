@@ -12,44 +12,32 @@ from custom_core import (
     click,
     color_at,
     Debug,
-    drag_drop,
     duration_text,
+    main_finished,
     move_to,
     pause_check,
     Region,
     reload_file,
+    screen,
     tasks,
     timeouts
 )
-
-_screen = Region(0, 0, 1920, 1080)
-main_finished = Region(0, 0, 160, 750)
 
 def crazygames_check() -> None:
     """
     Check for crazygames specific elements
     """
     # Crazygames maximize game screen button
-    img = _screen.exists('images/misc/gamebar_maximize.png')
+    img = screen.exists('images/misc/gamebar_maximize.png')
     if img:
         Debug.history("[Crazygames] Going fullscreen")
         img.click()
-        img.waitVanish()
+        img.wait_vanish()
 
     # Crazygames gamebar
     if color_at(735, 1060) == "gamebar":
         Debug.history("[Crazygames] Disabling bottom gamebar")
         click((960, 1050))
-
-def timeout_reinit() -> None:
-    """
-    Clean some timeouts
-    """
-    global timeouts
-
-    for _, (_, task_function_name, reset_on_reload) in tasks.items():
-        if reset_on_reload and task_function_name in timeouts:
-            del timeouts[task_function_name]
 
 def main() -> None:
     """
@@ -66,7 +54,6 @@ def main() -> None:
     crazygames_check()
 
     try:
-        flipper = True
         while True:
             pause_check()
 
@@ -120,40 +107,18 @@ def main() -> None:
                 else:
                     Debug.history(f"[Task] {friendly_name} - Missing handler '{task_function_name}'")
 
-            #check amount of tasks, scroll to check if we can find more non timeouted ones in the list
-            task_count = Region(90, 160, 50, 38).get_number()
-            if int(task_count) > 3:
-                # drag around the area to reveal task images
-                x = main_finished.get_x()+50
-                y1 = main_finished.get_y()+200
-                y2 = y1 + 320
-
-                if flipper:
-                    drag_drop((x, y1), (x, y2))
-                    move_to((x + 160, y2))
-                else:
-                    drag_drop((x, y2), (x, y1))
-                    move_to((x + 160, y1))
-
-                flipper = not flipper
-
-            # check if we got mail
-            mail_count = Region(100, 570, 50, 38).get_number()
-            if mail_count:
-                click((60, 620))
-                time.sleep(1)
-                while not color_at(1600, 980) == 'lightbrown':
-                    if color_at(1320, 830) == 'green':
-                        click((1320, 840))
-                        time.sleep(0.3)
-                        click((1190, 720))
-                        time.sleep(0.3)
-                    click((1600, 980))
-                    time.sleep(0.3)
-                click((1650, 40))
-
     except KeyboardInterrupt as e:
         Debug.error(f"Received Exception\n{e}")
+
+def timeout_reinit() -> None:
+    """
+    Clean some timeouts
+    """
+    global timeouts
+
+    for _, (_, task_function_name, reset_on_reload) in tasks.items():
+        if reset_on_reload and task_function_name in timeouts:
+            del timeouts[task_function_name]
 
 if __name__ == "__main__":
     # Ensure top-level entry point isolation for compiled binary stability

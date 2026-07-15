@@ -12,29 +12,34 @@ import time
 import cv2
 
 from custom_core import (
-    #dailies,
-    get_next_reset,
-    #get_suffix_rank,
-    get_pixel_color,
-    get_timeout,
-    parse_ui_timeout,
-    timeouts,
     click,
     color_at,
     colormap,
     config,
+    #dailies,
     Debug,
     drag_drop,
     duration_text,
+    get_next_reset,
+    get_pixel_color,
+    #get_suffix_rank,
+    get_timeout,
     grab_screen_to_mat,
+    main_finished,
+    main_upgrade,
     mouse_down,
     mouse_up,
     move_to,
+    my_round,
+    parse_ui_timeout,
     press_key,
-    Region
+    Region,
+    screen,
+    timeouts
 )
 
-_screen = Region(0, 0, 1920, 1080)
+
+flipper = True
 
 def alchemist(trigger: bool = False) -> int:
     """
@@ -47,16 +52,12 @@ def alchemist(trigger: bool = False) -> int:
         time.sleep(2)
 
     coords = {
-        'Dragon blood': (850, 800, True),
-        'Strange Dust': (1220, 1180, False),
-        'Exotic coin': (1600, 1550, False)
+        'Dragon blood': (850, 800, config['alchemist_dragon_blood']),
+        'Strange Dust': (1220, 1180, config['alchemist_strange_dust']),
+        'Exotic coin': (1600, 1550, config['alchemist_exotic_coin'])
     }
-    for name, (button_x, duration_x, upgrade) in coords.items():
-        if upgrade and color_at(button_x, 800) == 'green':
-            Debug.history(f"Starting {name} Experiment")
-            click((button_x, 800))
-            time.sleep(1)
 
+    for name, (button_x, duration_x, upgrade) in coords.items():
         ts = Region(duration_x, 690, 280, 30).text('', colormap['white'])
         if ts == 'Completed':
             Debug.history(f"Completed {name} Experiment")
@@ -67,6 +68,31 @@ def alchemist(trigger: bool = False) -> int:
             if ts:
                 timestamps.append(ts)
 
+        if upgrade and color_at(button_x, 800) == 'green':
+            Debug.history(f"Starting {name} Experiment")
+            click((button_x, 800))
+            time.sleep(1)
+            ts = Region(duration_x, 690, 280, 30).text('', colormap['white'])
+            if re.search(r"(\d{2})?:?(\d{1,2}):(\d{2})", ts.lower()):
+                ts = parse_ui_timeout(ts)
+                if ts:
+                    timestamps.append(ts)
+
+    click((1400, 170))
+    coords = {
+        'legendary': (420, config['transmute_legendary']),
+        'epic':      (580, config['transmute_epic']),
+        'rare':      (740, config['transmute_rare']),
+        'uncommon':  (900, config['transmute_uncommon'])
+    }
+
+    for name (y, obtain) in coords.items():
+        if obtain:
+            while color_at(1800, y) == 'green':
+                time.sleep(0.5)
+                Debug.history(f"Transmuting a {name} chest")
+                click((1800, y))
+                move_to((1840, y))
     click((1840, 60))
     if timestamps:
         return min(timestamps)
@@ -102,6 +128,7 @@ def character_quests(trigger: bool = False) -> int:
         while color_at(1380, 300) == 'green':
             click((1560, 300))
             move_to((1620, 300))
+            time.sleep(1)
 
     click((1840, 55))
     if trigger:
@@ -176,6 +203,53 @@ def check_heroes(trigger: bool = False) -> int:
             return get_timeout(10)
     return 0
 
+def check_mail(trigger: bool = False) -> int:
+    """
+    Check if we got mail
+    """
+    mail_count = Region(100, 570, 50, 38).get_number()
+    if mail_count:
+        click((60, 620))
+        time.sleep(1)
+        while not color_at(1600, 980) == 'lightbrown':
+            if color_at(1320, 830) == 'green':
+                click((1320, 840))
+                time.sleep(0.3)
+                click((1190, 720))
+                time.sleep(0.3)
+            click((1600, 980))
+            time.sleep(0.3)
+        click((1650, 40))
+
+    return get_timeout(300)
+
+def check_taskcount(trigger: bool = False) -> int:
+    """
+    Check amount of tasks, scroll to check if we can find more non timeouted ones in the list
+    """
+    global flipper
+
+    if trigger:
+        pass
+
+    task_count = Region(90, 160, 50, 38).get_number()
+    if int(task_count) > 3:
+        # drag around the area to reveal task images
+        x = main_finished.get_x()+50
+        y1 = main_finished.get_y()+200
+        y2 = y1 + 320
+
+        if flipper:
+            drag_drop((x, y1), (x, y2))
+            move_to((x + 160, y2))
+        else:
+            drag_drop((x, y2), (x, y1))
+            move_to((x + 160, y1))
+
+        flipper = not flipper
+
+    return get_timeout(120)
+
 def check_upgrade(trigger: bool = False) -> int:
     """
     Validate and enforce the global hero upgrade multiplier mode via OCR.
@@ -186,13 +260,13 @@ def check_upgrade(trigger: bool = False) -> int:
     if trigger:
         pass
 
-    main_upgrade = Region(1661, 910, 259, 170)
     target_mode = str(config['upgrade_mode']).lower()
 
     # Cycle selector modes inline until text configuration criteria are met
     while target_mode not in main_upgrade.text().lower():
         main_upgrade.click()
         main_upgrade.move_mouse_away()
+
     return time.time() * 2
 
 def daylies(trigger: bool = False) -> int:
@@ -289,6 +363,36 @@ def engineer_garage_asset_scraper() -> None:
 
     Debug.info(f"Garage scraper cycle finished cleanly. Total unique assets mapped: {len(scanned_machines)}")
 
+def guild(trigger: bool = False) -> int:
+    """
+    """
+    if trigger:
+        pass
+
+    for coords in [
+        (960, 540),   # Center of screen
+        (1860, 430),  # Guild icon on main screen
+        (300, 700),   # Bank on guild map
+        (180, 300),   # Bank (to ensure proper selection)
+        (1130, 750),  # Max donation
+        (180, 450),   # Treasury
+        (180, 600),   # Bank log
+        (180, 800),   # Locker
+        (950, 940),   # Claim rewards (just punch it)
+        (1670, 50),   # Exit the bank
+        (1070, 500),  # Guild hall
+        (180, 800),   # Guild log
+        (1670, 50),   # Exit guild hall
+        #(1600, 260),  # Tree of life
+        #(1810, 1000), # Personal tree
+        #(1840, 60),   # Exit tree of life
+        (1840, 60)    # Return to map
+    ]:
+        time.sleep(1)
+        click(coords)
+
+    return get_timeout(7200)
+
 def guild_arcanecrystal(trigger: bool = False) -> int:
     """
     Execute the Arcane Crystal interface routing subroutine.
@@ -322,11 +426,12 @@ def guild_awakening(trigger: bool = False) -> int:
         pass
 
     while color_at(1600, 600) == 'yellow':
-        click((1600, 600))
-        move_to((1520, 600))
+        click((1800, 600))
+        move_to((1880, 600))
         time_start = time.time()
-        while time.time() - time_start < 10 and not color_at(1600, 600) == 'yellow':
+        while time.time() - time_start < 6 and not color_at(1600, 600) == 'yellow':
             time.sleep(0.5)
+
     click((1840, 55))
     return 0
 
@@ -641,7 +746,7 @@ def map_campaign(trigger: bool = False) ->int:
         # Loop through available liberations
         winning = True
         drag_count = 0
-        while winning and drag_count < 10:
+        while winning and drag_count < 6:
             if  color_at(200, 800) == 'green':
                 Debug.history("[Campaign] Select Liberation")
                 click((200, 800))
@@ -704,16 +809,22 @@ def map_map(trigger: bool = False) -> None:
                     timestamps.append(timeout)
             base_y += 150
 
-    zoom_match = _screen.exists(task_map_zoom)
+    zoom_match = screen.exists(task_map_zoom)
     if zoom_match:
         drag_drop(zoom_match, (1290, zoom_match.get_y()))
 
     for mission_type in ['mystery', 'dragon', 'monster', 'war', 'adventure', 'scout']:
         missions = _area.find_all('images/tasks/map/mission/' + mission_type + '.png')
         if missions:
+            clicked = []
             for m in missions:
+                x = my_round(m.get_x())
+                y = my_round(m.get_y())
+                if [x, y] in clicked:
+                    continue
+                clicked.append([x, y])
                 m.click()
-                m.waitVanish()
+                m.wait_vanish()
                 if color_at(1090, 870) == 'green':
                     ts = Region(1000, 790, 200, 36).text('1234567890:', colormap['green'])
                     if ts:
@@ -723,8 +834,10 @@ def map_map(trigger: bool = False) -> None:
                     click((1090, 870))
                     time.sleep(0.5)
                 else:
+                    txt = Region(960, 870, 560, 50).text('Youdnthavegsq', colormap['red'])
                     click((1530, 220))
-                    continue
+                    if txt and len(txt) > 10:
+                        break
 
     click((1840, 55))
     #if timestamps:
@@ -779,10 +892,12 @@ def shop_signin(trigger: bool = False) -> int:
 
     # Check for the mystery box while here
     click((620, 100))
-    if color_at(600, 870) == 'yellow':
+    time.sleep(1)
+    if color_at(740, 900) == 'yellow':
         Debug.history("[shop_signin] Picked up mystery box")
-        click((600, 870))
+        click((600, 900))
 
+    time.sleep(1)
     click((1840, 55))
     return get_next_reset()
 
@@ -898,6 +1013,7 @@ def temple_of_eternals(trigger: bool = False) -> int:
         time.sleep(2)
 
     percentage = Region(1430, 417, 180, 40).get_number('green')
+
     jump_require = int(config['jump_percentage'])
     if percentage >= jump_require:
         Debug.warn(f"[temple_of_eternals] Time to jump! {percentage}%/{jump_require}%")
