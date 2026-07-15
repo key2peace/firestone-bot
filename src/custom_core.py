@@ -92,11 +92,6 @@ reload_file: str = '.bot_reload'
 if os.path.exists(reload_file):
     os.remove(reload_file)
 
-# general screens
-screen = Region(0, 0, 1920, 1080)
-main_finished = Region(0, 0, 160, 750)
-main_upgrade = Region(1661, 910, 259, 170)
-
 # name: (pattern, callable, timeout, reset_on_reload)
 tasks = {
     # starting with these
@@ -1585,8 +1580,15 @@ if os.path.exists(config_file):
     except Exception as e:
         Debug.error(f"[Core] Unable to load configuration\n{e}")
 
+# general regions
+screen = Region(0, 0, 1920, 1080)
+main_finished = Region(0, 0, 160, 750)
+main_upgrade = Region(1661, 910, 259, 170)
+
+# filetracker
 tracker = ImageTracker()
-optimize_alpha_channels()
+
+# keyboard and mouse mapping
 if os.name == 'nt':
     import pydirectinput
     keyboard_controller = pydirectinput
@@ -1597,4 +1599,6 @@ else:
 keyboard_listener = keyboard.Listener(on_release=on_keyrelease)
 keyboard_listener.start()
 
+# execute immediately
+optimize_alpha_channels()
 #Debug.info(ask_ollama('Can you do this? (Just a yes or no is enough)'))

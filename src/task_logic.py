@@ -86,7 +86,7 @@ def alchemist(trigger: bool = False) -> int:
         'uncommon':  (900, config['transmute_uncommon'])
     }
 
-    for name (y, obtain) in coords.items():
+    for name, (y, obtain) in coords.items():
         if obtain:
             while color_at(1800, y) == 'green':
                 time.sleep(0.5)
