@@ -14,9 +14,7 @@ from custom_core import (
     Debug,
     duration_text,
     main_finished,
-    move_to,
     pause_check,
-    Region,
     reload_file,
     screen,
     tasks,
@@ -71,6 +69,9 @@ def main() -> None:
 
                 pause_check()
 
+                if color_at(1777, 87) == 'white':
+                    click((1777, 87))
+
                 if pattern:
                     match = None
                     match_count = 0
@@ -100,8 +101,6 @@ def main() -> None:
                     if timeout_return:
                         timeouts[task_function_name] = int(timeout_return)
                         timeout_return = duration_text(time.time_ns(), timeout_return*1000000000)
-                    if color_at(1777, 87) == 'white':
-                        click((1777, 87))
                     duration = duration_text(start_task)
                     Debug.history(f"[Task] {friendly_name} - Finished in {duration} (return: {timeout_return})")
                 else:

@@ -63,6 +63,10 @@ But sadly, new OculiX IDE looking shiny on my desktop, getting frustrated by the
     - Guild log
 
 ### Main
+- Battle pass
+- Mail:
+  - Claiming rewards
+  - Deleting claimed messages
 - Upgrade heroes when possible
 - On (re)start/empower, the upgrade multiplier is enforced to a configurable value
 
@@ -103,9 +107,6 @@ But sadly, new OculiX IDE looking shiny on my desktop, getting frustrated by the
 ### Battles
 - Arena of kings
 
-### Battle pass
-- anything
-
 ### Engineer
 - Engineer:
   - Read selected crew setup (for Arena of kings)
@@ -114,8 +115,6 @@ But sadly, new OculiX IDE looking shiny on my desktop, getting frustrated by the
   - Blueprints
   - Rarity
   - Index machines (for Arena of kings)
-
-### Events
 
 ### Exotic Merchant
 - Sell items
@@ -129,6 +128,7 @@ But sadly, new OculiX IDE looking shiny on my desktop, getting frustrated by the
 - Meteorite Research
 
 ### Main
+- Events
 - Kill miner/dragons so they disappear quicker
 
 ### Map

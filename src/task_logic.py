@@ -110,6 +110,29 @@ def arena_of_kings(trigger: bool = False) -> int:
     click((1855, 115))
     return 0
 
+def battle_pass(trigger: bool = False) -> int:
+    """
+    Check if we got a baatle pass to claim
+    """
+    if trigger:
+        pass
+
+    if color_at(1890, 800) == 'red':
+        click((1860, 814))
+        time.sleep(1)
+        click((1110, 60))
+
+        for x in range(390, 1820, 200):
+            if color_at(x, 950) == 'green':
+                time.sleep(0.3)
+                click((x, 850))
+    else:
+        Debug.info(f"[battle_pass] color:{color_at(1890, 800)} rgb: {get_pixel_color(1890, 800)}")
+
+    time.sleep(0.3)
+    click((1840, 55))
+    return get_timeout(14400)
+
 def character_quests(trigger: bool = False) -> int:
     """
     Execute the quest completion and collection protocol.
@@ -207,8 +230,10 @@ def check_mail(trigger: bool = False) -> int:
     """
     Check if we got mail
     """
-    mail_count = Region(100, 570, 50, 38).get_number()
-    if mail_count:
+    if trigger:
+        pass
+
+    if color_at(110, 590) == "red":
         click((60, 620))
         time.sleep(1)
         while not color_at(1600, 980) == 'lightbrown':
@@ -365,6 +390,7 @@ def engineer_garage_asset_scraper() -> None:
 
 def guild(trigger: bool = False) -> int:
     """
+    Walk the guild map
     """
     if trigger:
         pass

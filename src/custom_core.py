@@ -98,6 +98,7 @@ tasks = {
     '_check_upgrade':       ('',                                'check_upgrade', 1),
     '_check_heroes':        ('',                                'check_heroes', 1),
     '_daylies':             ('',                                'daylies', 0),
+    '_battle_pass':         ('',                                'battle_pass', 1),
     #'new_hero':             ('new_hero.png',                    'new_hero', 1),
 
     # alchemist
@@ -1340,15 +1341,19 @@ class Region():
         Return:
             floatt: the extracted value
         """
-        # old '1234567890.,+%'
-        number = self.text('', colormap[color_map])
+        number = self.text('1234567890.,+%:', colormap[color_map])
+        Debug.info(f"Number start: {number}")
+        if not number:
+            return 0
         sanitized = ''
         plusfound = False
+        dotcomma_found = False
 
         for a in range(0, len(number)):
             char = number[len(number) - 1 - a]
             if char in [',','.'] and len(str(sanitized)) < 3:
                 sanitized = '.' + sanitized
+                dotcomma_found = True
             elif char == '+':
                 plusfound = True
             elif char.isnumeric():
@@ -1356,10 +1361,14 @@ class Region():
 
         # There must be a + in the string as the number starts with it,
         # ocr however, sometimes sees this as a 4
-        if sanitized and not plusfound and sanitized[0] == 4:
-            sanitized = sanitized[1::]
+        if sanitized:
+            if not plusfound and sanitized[0] == 4:
+                sanitized = sanitized[1::]
+            if not dotcomma_found:
+                sanitized = sanitized[:-1]
 
         number = sanitized
+        Debug.info(f"Number end: {number}")
 
         try:
             return float(number)
