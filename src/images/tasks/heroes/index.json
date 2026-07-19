@@ -1,0 +1,58 @@
+{
+    "benedictus.png": {
+        "timestamp": 1784228480.3437147,
+        "sha256": "28c175b8e863107c46d6631961280bea29382f4ee1e3158eeab91660dedf9461"
+    },
+    "boris.png": {
+        "timestamp": 1784228480.3634775,
+        "sha256": "9d39c77c32f2b4e7eb4e3a81d71640cda4e46585a686532810675a2492dd3651"
+    },
+    "talia.png": {
+        "timestamp": 1784228480.3795905,
+        "sha256": "7cffb6b8dd3033304a73461d7dd89b9b1e468b15394f6e7a0aa20107891e3391"
+    },
+    "blaze.png": {
+        "timestamp": 1784305640.2664785,
+        "sha256": "216e5ef3621dd109f0db7c465273cb8da59ab71ce5e2f4dfd8566e109aada38a"
+    },
+    "burt.png": {
+        "timestamp": 1784305640.2899468,
+        "sha256": "3ed10747173d76749d770f7f8466a180012288b6e67d059951a26588d5a225fa"
+    },
+    "cirilo.png": {
+        "timestamp": 1784309966.183173,
+        "sha256": "d0b0cece6f6605a85401174c6e71c04d6ebba3812a63ac2fe9c00eeaab7b7038"
+    },
+    "leo.png": {
+        "timestamp": 1784309966.2012212,
+        "sha256": "219e3d63a822a87969e1d06d87de6fe5abf90c43631f49f6c915c7d703afbda2"
+    },
+    "muriel.png": {
+        "timestamp": 1784309966.219152,
+        "sha256": "d0ba519879931514f12cfb71107c57769169837e201221714d5adaac7a703150"
+    },
+    "vermilion_evo3.png": {
+        "timestamp": 1784309966.2370512,
+        "sha256": "9b9babaeadb203e05c90d28fa3ec52958d5edb950968631b0914180c2b4abcb0"
+    },
+    "burt_ranger.png": {
+        "timestamp": 1784361751.4402869,
+        "sha256": "3ed10747173d76749d770f7f8466a180012288b6e67d059951a26588d5a225fa"
+    },
+    "muriel_invisible.png": {
+        "timestamp": 1784361751.4599693,
+        "sha256": "d0ba519879931514f12cfb71107c57769169837e201221714d5adaac7a703150"
+    },
+    "muriel_nurse.png": {
+        "timestamp": 1784361751.478158,
+        "sha256": "2f02e800fcf841947dd095c6d49b91f43a40f0d387e744487dac51648b72cf12"
+    },
+    "solaine.png": {
+        "timestamp": 1784361751.4942622,
+        "sha256": "2154b0c0b73f560a62e8c9674acbadd1440e33b8e5aeba1d279b85cb06444925"
+    },
+    "vermilion_evo1.png": {
+        "timestamp": 1784361751.5112717,
+        "sha256": "c8622812ca3087638b5bc85a7d6ff98c7ff045b162f0d23170e271dcfd778474"
+    }
+}

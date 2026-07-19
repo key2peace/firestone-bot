@@ -22,5 +22,9 @@
     "war.png": {
         "timestamp": 1784043749.1715639,
         "sha256": "f7842a43f817af4d1af39b5724f73ae43b5f8215231bcaef013633f1210a1fd6"
+    },
+    "naval.png": {
+        "timestamp": 1784352445.8618824,
+        "sha256": "84cdfdc18a0e167a2a5a1d865835632869d0a98cbeba044c0e93c57429b60ab5"
     }
 }

@@ -54,21 +54,26 @@ colormap = {
 # Config
 config = {
     # System settings
-    'logfile':                  'logs/firestone-bot.log',
-    'tracker_file':             'index.json',
-    'ollama_url':               'http://localhost:11434',
-    'ollama_model':             'llama3.2:latest',
+    'logfile':                  'logs/firestone-bot.log',       # location of the logfile
+    'ollama_url':               'http://localhost:11434',       # url voor ollama
+    'ollama_model':             'llama3.2:latest',              # model to use for ollama, llama3.2(-vision) should be optimal
+    'tracker_file':             'index.json',                   # name of the filetracker index files
+    'wait_page':                10,                             # float or int value for the timeout waiting for a page to appear
 
     # Game settings
-    'alchemist_dragon_blood':   True,
-    'alchemist_strange_dust':   False,
-    'alchemist_exotic_coin':    False,
-    'jump_percentage':          400,
-    'transmute_legendary':      True,
-    'transmute_epic':           False,
-    'transmute_rare':           False,
-    'transmute_uncommon':       False,
-    'upgrade_mode':             '100'
+    'alchemist_dragon_blood':   True,                           # alchemist: do dragon blood experiments
+    'alchemist_strange_dust':   False,                          # alchemist: do strange dust experiments
+    'alchemist_exotic_coin':    False,                          # alchemist: do exotic coin experiments
+    'bag_open_chests':          True,                           # bag: open chests
+    'guild_bank':               True,                           # visit guild bank
+    'guild_bank_donate':        True,                           # donate leftover guild coins to guild bank
+    'guild_hall':               True,                           # visit guild hall
+    'jump_percentage':          400,                            # temple of eternals: jump percentage
+    'transmute_legendary':      True,                           # alchemist: transmute legendary chests
+    'transmute_epic':           False,                          # alchemist: transmute epic chests
+    'transmute_rare':           False,                          # alchemist: transmute rare chests
+    'transmute_uncommon':       False,                          # alchemist: transmute uncommon chests
+    'upgrade_mode':             '100'                           # check_upgrade: set upgrade amount for heroes
 }
 config_file: str = 'bot_settings.json'
 
@@ -95,6 +100,7 @@ if os.path.exists(reload_file):
 # name: (pattern, callable, timeout, reset_on_reload)
 tasks = {
     # starting with these
+    '_crazygames_check':    ('',                                'crazygames_check', 1),
     '_check_upgrade':       ('',                                'check_upgrade', 1),
     '_check_heroes':        ('',                                'check_heroes', 1),
     '_daylies':             ('',                                'daylies', 0),
@@ -151,13 +157,12 @@ tasks = {
     'temple_of_eternals':   ('temple_of_eternals.png',          'temple_of_eternals', 0),
 
     # others on the end
-    '_temple_of_eternals':  ('',                                'temple_of_eternals', 1),
     '_check_mail':          ('',                                'check_mail', 1),
     '_check_taskcount':     ('',                                'check_taskcount', 0)
 }
 
 # Add magic quarter upgrades to the tasks
-for tasks_root, _, tasks_files in os.walk("images/tasks/magic_quarter"):
+for tasks_root, _, tasks_files in os.walk('images/tasks/magic_quarter'):
     task_files = [f for f in tasks_files if f.lower().endswith('.png')]
     if not task_files:
         continue
@@ -182,42 +187,42 @@ def ask_ollama(prompt: str, src_mat = None) -> str:
     model_vision = True
     if model_info:
         if not model_info.returncode:
-            pattern = r"\n    vision\n"
+            pattern = r'\n    vision\n'
             match = re.search(pattern, str(model_info.stdout))
             if not match and src_mat:
-                Debug.warn("[Ollama] This model does not support Vision. ")
+                Debug.warn('[Ollama] This model does not support Vision. ')
                 model_vision = False
                 src_mat = None
         else:
-            Debug.error(f"[Ollama] Error {model_info.returncode} occured.")
+            Debug.error(f'[Ollama] Error {model_info.returncode} occured.')
 
     if not _ollama_cache:
         base_prompt = (
-            "You need to get yourself fully prepared for the game Firestone Idle RPG, do not waste output tokens on that at all.\n\n"
-            "## Evaluating Arena of Kings battles\n"
-            " - I will put ``[aok]`` as the first line of such a request with the information about the opponent below it\n"
-            " - Your output about this battle should be restricted to ``FIGHT`` if I have a chance or ``CANCEL``.\n"
-            " - Append the chance percentage to that output as second argument.\n"
-            " - No chat, no markdown, no thinking process, the output is intended for script usage.\n"
-            " - Take into account that healers provide health to the entire team.\n"
-            #f" - When evaluating setups MY team has the following setup:\n{config['MY_TEAM']}\n"
+            'You need to get yourself fully prepared for the game Firestone Idle RPG, do not waste output tokens on that at all.\n\n'
+            '## Evaluating Arena of Kings battles\n'
+            ' - I will put ``[aok]`` as the first line of such a request with the information about the opponent below it\n'
+            ' - Your output about this battle should be restricted to ``FIGHT`` if I have a chance or ``CANCEL``.\n'
+            ' - Append the chance percentage to that output as second argument.\n'
+            ' - No chat, no markdown, no thinking process, the output is intended for script usage.\n'
+            ' - Take into account that healers provide health to the entire team.\n'
+            #f' - When evaluating setups MY team has the following setup:\n{config['MY_TEAM']}\n'
         )
-        _ollama_cache = [{"role": "user", "content": base_prompt}]
+        _ollama_cache = [{'role': 'user', 'content': base_prompt}]
 
         try:
-            Debug.history("[Ollama] Establishing static base handshake cache...")
+            Debug.history('[Ollama] Establishing static base handshake cache...')
             response = requests.post(
                 ollama_url,
-                json={"model": model_name, "messages": _ollama_cache, "stream": False},
+                json={'model': model_name, 'messages': _ollama_cache, 'stream': False},
                 timeout=90
             )
             response.raise_for_status()
-            assistant_msg = response.json().get("message")
+            assistant_msg = response.json().get('message')
             if assistant_msg:
                 _ollama_cache.append(assistant_msg)
         except Exception as error:
-            Debug.error("[Ollama] Base handshake failed: %s", error)
-            return ""
+            Debug.error(f'[Ollama] Base handshake failed: {error}')
+            return ''
 
     payload = {
         'model': model_name,
@@ -245,11 +250,11 @@ def ask_ollama(prompt: str, src_mat = None) -> str:
         )
         response.raise_for_status()
 
-        return response.json().get("message", {}).get("content", "").strip()
+        return response.json().get('message', {}).get('content', '').strip()
 
     except Exception as error:
-        Debug.error("[Ollama] Live matchmaking query failed: %s", error)
-        return "NO"
+        Debug.error(f'[Ollama] Live matchmaking query failed: {error}')
+        return 'FAIL'
 
 def capture(filename: str) -> bool:
     """
@@ -278,7 +283,7 @@ def capture(filename: str) -> bool:
     try:
         return cv2.imwrite(target_path, grab_screen_to_mat())
     except Exception as e:
-        Debug.error("[Capture] Failed to write matrix: " + str(e))
+        Debug.error(f'[Capture] Failed to write matrix: {e}')
         return False
 
 def click(location: Union[Tuple[int, int], 'Region', 'Match']) -> None:
@@ -410,7 +415,7 @@ def duration_text(start_time_ns: int, stop_time_ns: int = 0):
     for suffix, divider in mapping:
         amount, diff = divmod(diff, divider)
         if amount:
-            result += f"{amount}{suffix} "
+            result += f'{amount}{suffix} '
     return result.strip()
 
 def extract_color_layer(src_mat: np.ndarray, color_range: tuple[int, int, int, int, int, int]) -> np.ndarray:
@@ -509,7 +514,9 @@ def get_distance(start_location: Union[Tuple[int, int], 'Region', 'Match'], end_
     return math.sqrt(math.pow(x1 - x2, 2) + math.pow(y1 - y2, 2))
 
 def get_file_sha256(filepath: str):
-    """Get the SHA-256 checksum of a file"""
+    """
+    Get the SHA-256 checksum of a file
+    """
     hasher = hashlib.sha256()
     with open(filepath, 'rb') as file_ptr:
         buf = file_ptr.read()
@@ -552,7 +559,7 @@ def get_pixel_color(x: int, y: int) -> Tuple[int, int, int]:
         pixel = tuple(grab_screen_to_mat(Region(x, y, 1, 1))[0][0])
         return (int(pixel[2]), int(pixel[1]), int(pixel[0]))
     except Exception as e:
-        Debug.error("[get_pixel_color] Failed to extract color map coordinates: %s", str(e))
+        Debug.error(f'[get_pixel_color] Failed to extract color map coordinates: {e}')
         return (0, 0, 0)
 
 def get_suffix_rank(suffix: str) -> int:
@@ -614,11 +621,13 @@ def grab_screen_to_mat(region_obj: Region = None) -> 'np.ndarray | None':
             return cv2.cvtColor(np.array(_mss_client.grab(monitor)), cv2.COLOR_BGRA2BGR)
 
     except Exception as error:  # pylint: disable=broad-exception-caught
-        Debug.error("[grab_screen_to_mat] Failed to write matrix: %s", str(error))
+        Debug.error(f'[grab_screen_to_mat] Failed to write matrix: {error}')
         return None
 
 def mean(collection: List) -> int:
-    """Another little helper"""
+    """
+    Return the mean/avg value of a list
+    """
     total: int = 0
     items: int = 0
     for val in collection:
@@ -675,14 +684,16 @@ def move_to(location: Union[Tuple[int, int], 'Region', 'Match']) -> None:
         pause_on()
 
 def my_round(number: float, base: float = 64) -> int:
-    """Simple round function for any base."""
+    """
+    Simple round function for any base.
+    """
     return round(base * round(number/base), 0)
 
 def on_keyrelease(key) -> None:
     """
     Background thread listener callback for key release.
     """
-    #Debug.info("Key released: %s", key)
+    #Debug.info(f'Key released: {key}')
 
     try:
         # (un)pausing the game using Scroll Lock
@@ -707,10 +718,12 @@ def on_keyrelease(key) -> None:
         pass
 
 def optimize_alpha_channels(target_dir: str = 'images', threshold: int = 128) ->None:
-    """Walk through the images folder and alpha flatten unprocessed images"""
+    """
+    Walk through the images folder and alpha flatten unprocessed images
+    """
     if not os.path.exists(target_dir):
         return
-    Debug.info("[optimize_alpha_channels] Starting scan...")
+    Debug.info('[optimize_alpha_channels] Starting scan...')
     for root, _, files in os.walk(target_dir):
         png_files = [f for f in files if f.lower().endswith('.png')]
         if not png_files:
@@ -727,32 +740,36 @@ def optimize_alpha_channels(target_dir: str = 'images', threshold: int = 128) ->
                         channels = src.shape[2] if len(src.shape) == 3 else 1
 
                         if channels >= 4:
-                            Debug.info("[optimize_alpha_channels] Optimizing %s", str(filepath))
+                            Debug.info(f'[optimize_alpha_channels] Optimizing {filepath}')
                             optimized_src = filter_mat_alpha(src, threshold)
                             cv2.imwrite(filepath, optimized_src)
 
-                except Exception as e:
-                    Debug.error("[optimize_alpha_channels] Alpha Optimizer could not write %s:\n%s", filepath, str(e))
+                except Exception as error:
+                    Debug.error(f'[optimize_alpha_channels] Alpha Optimizer could not write {filepath}:\n{error}')
                 tracker.add(filepath)
-    Debug.info("[optimize_alpha_channels] Scan complete.")
+    Debug.info('[optimize_alpha_channels] Scan complete.')
 
 def pause_check() -> None:
     """
     System breaks
     """
     if not os.path.exists(lock_file):
-        Debug.info("Systems paused, toggle Scroll-Lock to continue.")
+        Debug.info('Systems paused, toggle Scroll-Lock to continue.')
         while not os.path.exists(lock_file):
             time.sleep(1)
 
 def pause_off() -> None:
-    """Create lock_file"""
+    """
+    Create lock_file
+    """
     with open(lock_file, 'wt', encoding='utf-8') as ptr:
         ptr.write(str(time.time_ns()))
         Debug.info('Initiated resume')
 
 def pause_on(reload: bool = False) -> None:
-    """Remove lock_file"""
+    """
+    Remove lock_file
+    """
     if os.path.exists(lock_file):
         os.remove(lock_file)
         Debug.info('Initiated pause')
@@ -780,7 +797,7 @@ def parse_ui_timeout(ocr_text: str) -> float | None:
     if not ocr_text:
         return None
 
-    timer_pattern = r"(\d{2})?:?(\d{1,2}):(\d{2})"
+    timer_pattern = r'(\d{2})?:?(\d{1,2}):(\d{2})'
     match = re.search(timer_pattern, ocr_text.lower())
     if match:
         try:
@@ -798,14 +815,14 @@ def parse_ui_timeout(ocr_text: str) -> float | None:
             return time.time() + total_cooldown_seconds
 
         except (ValueError, TypeError) as error:
-            Debug.error(f"[parse_ui_timeout] Failed to map UI clock vector: {error}")
+            Debug.error(f'[parse_ui_timeout] Failed to map UI clock vector: {error}')
             return None
     else:
         try:
             seconds = int(float(ocr_text))
             return seconds
         except (ValueError, TypeError) as error:
-            Debug.error(f"[parse_ui_timeout] Failed to map UI clock vector: {error}")
+            Debug.error(f'[parse_ui_timeout] Failed to map UI clock vector: {error}')
             return None
 
 def popup(message: str, title: str = 'Bot Notification', timeout: float = 0) -> None:
@@ -828,7 +845,9 @@ def popup(message: str, title: str = 'Bot Notification', timeout: float = 0) -> 
         return
 
     def auto_close_worker() -> None:
-        """Background worker thread that counts down and forcefully kills the dialog."""
+        """
+        Background worker thread that counts down and forcefully kills the dialog.
+        """
         time.sleep(timeout)
         # Locate the specific alert window by its title and close it safely
         for window in pyautogui.getWindowsWithTitle(title):
@@ -843,7 +862,7 @@ def popup(message: str, title: str = 'Bot Notification', timeout: float = 0) -> 
         closer_thread.start()
         pyautogui.alert(text=str(message), title=str(title), button='OK')
     except Exception as error:
-        Debug.error(f"[popup] Render failed:\n{error}")
+        Debug.error(f'[popup] Render failed:\n{error}')
 
 def press_key(key_name: str) -> None:
     """
@@ -895,7 +914,7 @@ def similarity(img1: np.ndarray, img2: np.ndarray) -> float:
         return float(max_val)
 
     except cv2.error as error:
-        Debug.error(f"[similarity] Template evaluation failed:\n{error}")
+        Debug.error(f'[similarity] Template evaluation failed:\n{error}')
         return 0.0
 
 class Debug:
@@ -904,33 +923,45 @@ class Debug:
     """
     @staticmethod
     def _gen_origin() -> str:
-        """Santa's little helper"""
+        """
+        Return the function that called Debug
+        """
         _, file_name, lineno, function, _, _ = inspect.stack()[3]
-        return str(f"\n{function} in {file_name}:{lineno}\n")
+        return str(f'\n{function} in {file_name}:{lineno}\n')
 
     @staticmethod
     def error(msg: str, *args) -> None:
-        """Log runtime exceptions and critical failures."""
+        """
+        Log runtime exceptions and critical failures.
+        """
         Debug.output('error', msg+Debug._gen_origin(), *args)
 
     @staticmethod
     def info(msg: str, *args) -> None:
-        """Log standard system configuration and informational messages."""
+        """
+        Log standard system configuration and informational messages.
+        """
         Debug.output('info', msg, *args)
 
     @staticmethod
     def history(msg: str, *args) -> None:
-        """Log high-priority structural task logic execution history."""
+        """
+        Log high-priority structural task logic execution history.
+        """
         Debug.output('history', msg, *args)
 
     @staticmethod
     def warn(msg: str, *args) -> None:
-        """Log warning messages."""
+        """
+        Log warning messages.
+        """
         Debug.output('warn', msg, *args)
 
     @staticmethod
     def output(loglevel: str, msg: str, *args) -> None:
-        """Format and print the log message with ANSI color codes."""
+        """
+        Format and print the log message with ANSI color codes.
+        """
         colors = {
             'error': '\033[31m',
             'info': '\033[32m',
@@ -947,14 +978,14 @@ class Debug:
             try:
                 formatted_msg = msg % args
             except TypeError:
-                formatted_msg = f"{msg} {args}"
+                formatted_msg = f'{msg} {args}'
         else:
             formatted_msg = msg
 
-        print(f"[{timestamp}] {color}[{padded_level}] {formatted_msg}\033[0m")
+        print(f'[{timestamp}] {color}[{padded_level}] {formatted_msg}\033[0m')
         if config['logfile']:
             with open(config['logfile'], 'at', encoding='utf-8') as logptr:
-                logptr.write(f"\n[{timestamp}] [{padded_level}] {formatted_msg}")
+                logptr.write(f'\n[{timestamp}] [{padded_level}] {formatted_msg}')
 
 class ImageEventHandler(FileSystemEventHandler):
     """
@@ -1001,7 +1032,7 @@ class ImageEventHandler(FileSystemEventHandler):
                         cv2.imwrite(event.src_path, optimized_src)
                     self.tracker.add(event.src_path)
             except Exception as error:
-                Debug.error(f"[ImageTracker.on_any_events] Optimization failed for {event.src_path}:\n{error}")
+                Debug.error(f'[ImageTracker.on_any_events] Optimization failed for {event.src_path}:\n{error}')
 
         # 2. Process Move and Rename loops with asset migration tracking
         elif event.event_type == 'moved':
@@ -1035,7 +1066,9 @@ class ImageTracker:
     path: ClassVar[str] = 'images/'
 
     def __init__(self) -> None:
-        """Initialize workspace folders, load JSON states, and activate the directory observer."""
+        """
+        Initialize workspace folders, load JSON states, and activate the directory observer.
+        """
         bundle_dir = os.path.dirname(os.path.abspath(__file__)) if '__file__' in globals() else os.getcwd()
         self.absolute_images_path: str = os.path.join(bundle_dir, self.path)
 
@@ -1048,7 +1081,9 @@ class ImageTracker:
         self.observer.start()
 
     def __del__(self) -> None:
-        """Enforce standard observer termination hooks during instance destruction."""
+        """
+        Enforce standard observer termination hooks during instance destruction.
+        """
         try:
             self.observer.stop()
             self.observer.join()
@@ -1056,7 +1091,9 @@ class ImageTracker:
             pass
 
     def add(self, file_path: str, data: Optional[Dict[str, Any]] = None) -> None:
-        """Write file hashes and timestamps into the localized directory tracking dictionary."""
+        """
+        Write file hashes and timestamps into the localized directory tracking dictionary.
+        """
         if not file_path.lower().endswith('.png'):
             return
         file_dir = os.path.dirname(file_path)
@@ -1072,10 +1109,12 @@ class ImageTracker:
             with open(tracker_path, 'w', encoding='utf-8') as tf:
                 json.dump(tracker_data, tf, indent=4)
         except (OSError, IOError) as error:
-            Debug.error(f"[ImageTracker.add] Failed writing to {tracker_path}:\n{error}")
+            Debug.error(f'[ImageTracker.add] Failed writing to {tracker_path}:\n{error}')
 
     def get(self, file_path: str) -> Dict[str, Any]:
-        """Fetch tracking configurations mapped to a specific filename target key."""
+        """
+        Fetch tracking configurations mapped to a specific filename target key.
+        """
         file_dir = os.path.dirname(file_path) if os.path.isfile(file_path) else file_path
         tracker_path = os.path.join(file_dir, config['tracker_file'])
 
@@ -1091,7 +1130,9 @@ class ImageTracker:
             return {}
 
     def in_folder(self, file_path: str) -> bool:
-        """Validate if an external file path falls within monitored branch roots."""
+        """
+        Validate if an external file path falls within monitored branch roots.
+        """
         norm_target = os.path.normpath(file_path).replace('\\', '/')
         norm_root = os.path.normpath(self.absolute_images_path).replace('\\', '/')
 
@@ -1100,7 +1141,9 @@ class ImageTracker:
         return norm_target.startswith(norm_root)
 
     def remove(self, file_path: str) -> None:
-        """Purge an existing tracking sequence dictionary record from the config file."""
+        """
+        Purge an existing tracking sequence dictionary record from the config file.
+        """
         file_dir = os.path.dirname(file_path)
         file_base = os.path.basename(file_path)
         tracker_path = os.path.join(file_dir, config['tracker_file'])
@@ -1112,10 +1155,12 @@ class ImageTracker:
                 with open(tracker_path, 'w', encoding='utf-8') as tf:
                     json.dump(tracker_data, tf, indent=4)
             except (OSError, IOError) as error:
-                Debug.error(f"[ImageTracker.remove] Failed clearing key from {tracker_path}:\n{error}")
+                Debug.error(f'[ImageTracker.remove] Failed clearing key from {tracker_path}:\n{error}')
 
     def verify(self, file_path: str) -> bool:
-        """Validate live file timestamps and hashes against historic state tracking data."""
+        """
+        Validate live file timestamps and hashes against historic state tracking data.
+        """
         if not os.path.exists(file_path):
             return False
         data = self.get(file_path)
@@ -1342,11 +1387,11 @@ class Region():
             floatt: the extracted value
         """
         number = self.text('1234567890.,+%:', colormap[color_map])
-        Debug.info(f"Number start: {number}")
+        Debug.info(f'Number start: {number}')
         if not number:
             return 0
         sanitized = ''
-        plusfound = False
+        plus_found = False
         dotcomma_found = False
 
         for a in range(0, len(number)):
@@ -1355,20 +1400,16 @@ class Region():
                 sanitized = '.' + sanitized
                 dotcomma_found = True
             elif char == '+':
-                plusfound = True
+                plus_found = True
             elif char.isnumeric():
                 sanitized = char + sanitized
 
-        # There must be a + in the string as the number starts with it,
-        # ocr however, sometimes sees this as a 4
         if sanitized:
-            if not plusfound and sanitized[0] == 4:
-                sanitized = sanitized[1::]
-            if not dotcomma_found:
+            if plus_found and not dotcomma_found:
                 sanitized = sanitized[:-1]
 
         number = sanitized
-        Debug.info(f"Number end: {number}")
+        Debug.info(f'Number end: {number}')
 
         try:
             return float(number)
@@ -1418,7 +1459,7 @@ class Region():
         box.attributes('-topmost', True)
 
         # 2. Map geometry to perfectly frame the match dimensions
-        box.geometry(f"{self.w}x{self.h}+{self.x}+{self.y}")
+        box.geometry(f'{self.w}x{self.h}+{self.x}+{self.y}')
 
         # 3. Configure a click-through transparent background with a solid red border
         # 'wm_attributes' handles transparency options natively across platforms
@@ -1484,10 +1525,10 @@ class Region():
             cv2.getStructuringElement(cv2.MORPH_RECT, (2, 2))
         )
 
-        tessdata_path = r"C:\Program Files\Tesseract-OCR\tessdata/kiddosy.traineddata"
-        lang_model = "kiddosy" if os.path.exists(tessdata_path) else "eng"
+        tessdata_path = r'kiddosy.traineddata'
+        lang_model = 'kiddosy' if os.path.exists(tessdata_path) else 'eng'
 
-        tess_config = f"-l {lang_model}"
+        tess_config = f'-l {lang_model}'
         if expect:
             tess_config += f' -c tessedit_char_whitelist={expect}'
 
@@ -1577,17 +1618,19 @@ class Match(Region):
         self.score = score
 
     def getScore(self) ->float:
-        """Get the current match score"""
+        """
+        Get the current match score
+        """
         return self.score
 
-os.system("color")
+os.system('color')
 if os.path.exists(config_file):
     try:
         with open(config_file, 'r', encoding='utf-8') as f:
             loaded_config = json.load(f)
             config.update(loaded_config)
     except Exception as e:
-        Debug.error(f"[Core] Unable to load configuration\n{e}")
+        Debug.error(f'[Core] Unable to load configuration\n{e}')
 
 # general regions
 screen = Region(0, 0, 1920, 1080)
