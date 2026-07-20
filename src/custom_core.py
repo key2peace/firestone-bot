@@ -47,7 +47,7 @@ colormap = {
     'green_talents': (100, 135, 150, 255, 0, 25),
     'red': (240, 255, 0, 26, 0, 10),
     'yellow': (240, 255, 157, 255, 0, 100),
-    'white': (230, 255, 230, 255, 230, 255),
+    'white': (200, 255, 200, 255, 200, 255),
     'gamebar': (33, 33, 34, 34, 51, 51)
 }
 
@@ -1386,35 +1386,28 @@ class Region():
         Return:
             floatt: the extracted value
         """
-        number = self.text('1234567890.,+%:', colormap[color_map])
+        number = self.text('1234567890.,+%', colormap[color_map])
         Debug.info(f'Number start: {number}')
-        if not number:
-            return 0
-        sanitized = ''
-        plus_found = False
-        dotcomma_found = False
 
-        for a in range(0, len(number)):
-            char = number[len(number) - 1 - a]
-            if char in [',','.'] and len(str(sanitized)) < 3:
+        if not number:
+            return 0.0
+
+        sanitized = ''
+        comma_found = False
+
+        for char in reversed(number):
+            if char == ',' and not comma_found and len(sanitized) > 0:
                 sanitized = '.' + sanitized
-                dotcomma_found = True
-            elif char == '+':
-                plus_found = True
+                comma_found = True
             elif char.isnumeric():
                 sanitized = char + sanitized
 
-        if sanitized:
-            if plus_found and not dotcomma_found:
-                sanitized = sanitized[:-1]
-
-        number = sanitized
-        Debug.info(f'Number end: {number}')
+        Debug.info(f'Number end: {sanitized}')
 
         try:
-            return float(number)
+            return float(sanitized) if sanitized else 0.0
         except ValueError:
-            return 0
+            return 0.0
 
     def get_w(self) ->int:
         """
@@ -1524,11 +1517,12 @@ class Region():
             cv2.MORPH_CLOSE,
             cv2.getStructuringElement(cv2.MORPH_RECT, (2, 2))
         )
+        
 
-        tessdata_path = r'kiddosy.traineddata'
-        lang_model = 'kiddosy' if os.path.exists(tessdata_path) else 'eng'
-
-        tess_config = f'-l {lang_model}'
+        tess_config = '-l eng'
+        if os.path.exists('kiddosy.traineddata'):
+            os.environ["TESSDATA_PREFIX"] = os.getcwd()
+            tess_config = f'-l kiddosy'
         if expect:
             tess_config += f' -c tessedit_char_whitelist={expect}'
 

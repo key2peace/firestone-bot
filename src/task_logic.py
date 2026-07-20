@@ -342,7 +342,8 @@ def check_heroes(trigger: bool = False) -> int:
     if trigger:
         pass
 
-    while True:
+    inactive_slots: int = 0
+    while inactive_slots < 7:
         inactive_slots = 0
         clicked = False
 
@@ -359,11 +360,7 @@ def check_heroes(trigger: bool = False) -> int:
                 inactive_slots += 1
         if clicked:
             move_to((x_coord, 1080))
-
-        # Break the lifecycle loop once all monitored slots report depletion
-        if inactive_slots == 7:
-            return get_timeout(10)
-    return 0
+    return get_timeout(5)
 
 def check_mail(trigger: bool = False) -> int:
     """
@@ -1216,4 +1213,5 @@ def temple_of_eternals(trigger: bool = False) -> int:
     else:
         Debug.warn(f'[temple_of_eternals] Current percentage: {percentage}%/{jump_require}%')
         _finalize('temple_of_eternals')
-    return get_timeout(1800)
+
+    return 0

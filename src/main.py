@@ -92,7 +92,9 @@ def main() -> None:
                         else:
                             timeouts[task_function_name] = int(timeout_return)
                             timeout_return = duration_text(time.time_ns(), timeout_return*1000000000)
-                            Debug.history(f'[Task] {friendly_name} finished in {duration} (return: {timeout_return})')
+                            Debug.history(f'[Task] {friendly_name} finished in {duration} (timeout: {timeout_return})')
+                    else:
+                        Debug.history(f'[Task] {friendly_name} finished in {duration}')
                 else:
                     Debug.history(f'[Task] {friendly_name} is missing the handler \'{task_function_name}\'')
             #Debug.history(f'[Tasks] Duration {duration_text(start_tasks)}')
