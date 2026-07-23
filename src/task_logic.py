@@ -53,7 +53,7 @@ def _finalize(page:str = '') -> int:
         click((1855, 115))
     elif page in ['character', 'character_talents', 'character_achievements', 'character_statistics', 'character_quests']:
         click((1850, 80))
-    elif page in ['alchemist', 'engineer', 'engineer_garage', 'temple_of_eternals', 'guild_map']:
+    elif page in ['alchemist', 'engineer', 'engineer_garage', 'temple_of_eternals', 'guild_map', 'map_map', 'tavern_tavern_game']:
         click((1840, 55))
     elif page in ['guild_bank', 'guild_hall']:
         click((1670, 50))
@@ -62,48 +62,60 @@ def _finalize(page:str = '') -> int:
     else:
         Debug.error(f'[_finalize] Page:\'{page}\' not being handled.')
 
-def _identify() -> str:
+def _identify(page: str) -> bool:
     """
     Identify a page
     """
-    if Region(330, 20, 190, 46).text().lower() == 'character':
-        tab_selected = (156, 196, 228)
-        if get_pixel_color(320, 40) == tab_selected:
-            return 'character'
-        if get_pixel_color(600, 40) == tab_selected:
-            return 'character_talents'
-        if get_pixel_color(850, 40) == tab_selected:
-            return 'character_achievements'
-        if get_pixel_color(1130, 40) == tab_selected:
-            return 'character_statistics'
-        if get_pixel_color(1400, 40) == tab_selected:
-            return 'character_quests'
+    if re.search(r'^character', page):
+        if Region(330, 20, 190, 46).text().lower() == 'character':
+            tab_selected = (156, 196, 228)
+            if page == 'character' and get_pixel_color(320, 40) == tab_selected:
+                return True
+            if page == 'character_talents' and get_pixel_color(600, 40) == tab_selected:
+                return True
+            if page == 'character_achievements' and get_pixel_color(850, 40) == tab_selected:
+                return True
+            if page == 'character_statistics' and get_pixel_color(1130, 40) == tab_selected:
+                return True
+            if page == 'character_quests' and get_pixel_color(1400, 40) == tab_selected:
+                return True
 
-    text = Region(300, 20, 1300, 56).text('', colormap['white']).lower()
-    if text in ['bank', 'treasury', 'bank log', 'locker']:
-        return 'guild_bank'
-    if text in ['guild', 'guild spirit', 'guild banner', 'guild log']:
-        return 'guild_hall'
+    if page in ['guild_bank', 'guild_hall']:
+        text = Region(300, 20, 1300, 56).text('', colormap['white']).lower()
+        if page == 'guild_bank' and text in ['bank', 'treasury', 'bank log', 'locker']:
+            return True
+        if page == 'guild_hall' and text in ['guild', 'guild spirit', 'guild banner', 'guild log']:
+            return True
 
-    if Region(770, 0, 380, 50).text('', colormap['white']).lower() == 'guild':
-        return 'guild_map'
+    if page in ['guild_map', 'engineer_garage']:
+        text = Region(770, 0, 380, 50).text('', colormap['white']).lower()
+        if page == 'guild_map' and text == 'guild':
+            return True
+        if page == 'engineer_garage' and text == 'garage':
+            return True
 
-    if Region(780, 40, 520, 50).text('', colormap['white']).lower() == 'guild expeditions':
-        return 'guild_expeditions'
+    if page == 'guild_expeditions' and Region(780, 40, 520, 50).text('', colormap['white']).lower() == 'guild expeditions':
+        return True
 
-    if Region(790, 70, 320, 55).text('', colormap['white']).lower() in ['arena of kings']:
-        return 'arena_of_kings'
+    if page == 'arena_of_kings' and Region(790, 70, 320, 55).text('', colormap['white']).lower() in ['arena of kings']:
+        return True
 
-    if Region(1100, 210, 400, 60).text().lower() in ['experiments', 'transmute']:
-        return 'alchemist'
+    if page == 'alchemist' and Region(1100, 210, 400, 60).text().lower() in ['experiments', 'transmute']:
+        return True
 
-    if Region(1120, 145, 500, 60).text().lower() == 'temple of eternals':
-        return 'temple_of_eternals'
+    if page == 'temple_of_eternals' and Region(1120, 145, 500, 60).text().lower() == 'temple of eternals':
+        return True
 
-    if Region(1520, 55, 300, 60).text().lower() in ['inventory', 'scrolls', 'chests', 'currencies']:
-        return 'bag'
+    if page == 'bag' and Region(1520, 55, 300, 60).text().lower() in ['inventory', 'scrolls', 'chests', 'currencies']:
+        return True
 
-    return ''
+    if page == 'map_map' and Region(0, 1020, 370, 48).text().lower().startswith('new missions in:'):
+        return True
+
+    if page == 'engineer' and Region(40, 30, 390, 42).text('', colormap['yellow']).startswith('Engineer level'):
+        return True
+
+    return False
 
 def _wait_page(page: str) -> bool:
     """
@@ -113,7 +125,7 @@ def _wait_page(page: str) -> bool:
         return False
 
     time_start = time.time()
-    while not _identify() == page:
+    while not _identify(page):
         if time.time() - time_start >= config['wait_page']:
             return False
         time.sleep(1)
@@ -132,6 +144,7 @@ def alchemist(trigger: bool = False) -> int:
     if not _wait_page('alchemist'):
         return -1
 
+    # experiments
     coords = {
         'Dragon blood': (850, 800, config['alchemist_dragon_blood']),
         'Strange Dust': (1220, 1180, config['alchemist_strange_dust']),
@@ -143,6 +156,9 @@ def alchemist(trigger: bool = False) -> int:
         if ts == 'Completed':
             Debug.history(f'Completed {name} Experiment')
             click((button_x, 800))
+            time.sleep(1)
+        elif color_at(button_x + 90, 800) == 'yellow':
+            click((button_x + 90, 800))
             time.sleep(1)
         elif re.search(r'(\d{2})?:?(\d{1,2}):(\d{2})', ts.lower()):
             ts = parse_ui_timeout(ts)
@@ -159,24 +175,27 @@ def alchemist(trigger: bool = False) -> int:
                 if ts:
                     timestamps.append(ts)
 
-    click((1400, 170))
-    coords = {
-        'legendary': (420, config['transmute_legendary']),
-        'epic':      (580, config['transmute_epic']),
-        'rare':      (740, config['transmute_rare']),
-        'uncommon':  (900, config['transmute_uncommon'])
-    }
+    # transmute
+    if config['transmute_legendary'] or config['transmute_epic'] or config['transmute_rare'] or config['transmute_uncommon']:
+        click((1400, 170))
+        coords = {
+            'legendary': (420, config['transmute_legendary']),
+            'epic':      (580, config['transmute_epic']),
+            'rare':      (740, config['transmute_rare']),
+            'uncommon':  (900, config['transmute_uncommon'])
+        }
 
-    for name, (y, obtain) in coords.items():
-        if obtain:
-            while color_at(1800, y) == 'green':
-                time.sleep(0.5)
-                Debug.history(f'Transmuting a {name} chest')
-                click((1800, y))
-                move_to((1840, y))
+        for name, (y, obtain) in coords.items():
+            if obtain:
+                while color_at(1800, y) == 'green':
+                    time.sleep(0.5)
+                    Debug.history(f'Transmuting a {name} chest')
+                    click((1800, y))
+                    move_to((1840, y))
+
     _finalize('alchemist')
     if timestamps:
-        return min(timestamps)
+        return min(timestamps) - 180
     return get_timeout(1800)
 
 def arena_of_kings(trigger: bool = False) -> int:
@@ -229,7 +248,7 @@ def bag(trigger: bool = False) -> int:
 
                     time_start = time.time()
                     while time.time() - time_start <= config['wait_page']:
-                        if color_at(1840, 50) == 'white':
+                        if color_at(1840, 55) in ['white', 'white_overlayed']:
                             break
 
                     if color_at(1040, 890) == 'green':
@@ -349,11 +368,11 @@ def check_heroes(trigger: bool = False) -> int:
 
         # Exact horizontal pixel anchors for the hero upgrade triggers
         for x_coord in [120, 620, 820, 1020, 1220, 1420, 1620]:
-            if color_at(x_coord, 930) == 'yellow':
+            if color_at(x_coord, 980) == 'yellow':
                 move_to((x_coord, 980))
                 mouse_down()
-                while color_at(x_coord, 930) == 'yellow':
-                    time.sleep(0.3)
+                while not color_at(x_coord - 10, 980) == 'grey':
+                    pass
                 mouse_up()
                 clicked = True
             else:
@@ -471,7 +490,14 @@ def engineer(trigger: bool = False) -> int:
     global exit anchors to restore primary canvas visibility.
     """
     if trigger:
-        pass
+        press_key('t')
+        time.sleep(2)
+        click((1280, 820))
+        time.sleep(1)
+        click((590, 520))
+
+    if not _wait_page('engineer'):
+        return -1
 
     click((1620, 730))
     _finalize('engineer')
@@ -482,7 +508,14 @@ def engineer_garage(trigger: bool = False) -> int:
     Process the garage page
     """
     if trigger:
-        pass
+        press_key('t')
+        time.sleep(2)
+        click((1280, 820))
+        time.sleep(1)
+        click((940, 520))
+
+    if not _wait_page('engineer_garage'):
+        return -1
 
     _finalize('engineer_garage')
     return get_next_reset()
@@ -971,41 +1004,85 @@ def map_map(trigger: bool = False) -> None:
     icon dimensions. Phase 3 scans and dispatches type-specific campaigns.
     """
     if trigger:
-        pass
+        press_key('m')
+
+    if not _wait_page('map_map'):
+        return -1
 
     _area = Region(140, 60, 1630, 950)
     task_map_zoom = 'images/tasks/map/zoom.png'
     timestamps = []
 
-    base_y = 320
-    while base_y < 1080:
-        if color_at(110, base_y) == 'green':
-            click((110, base_y))
-            time.sleep(0.5)
-            click((950, 650))
-            time.sleep(0.5)
+    clicked = False
+    for base_y in [906, 756, 606, 456, 306]:
+        if color_at(91, base_y) == 'green':
+            click((160, base_y))
+            clicked = True
         else:
-            ts = Region(100, base_y - 20, 60, 32).text('1234567890:', colormap['white'])
-            if ts:
+            ts = Region(85, base_y - 10, 180, 40).text('', colormap['white'])
+            if re.search(r'^[\d:]+$', ts):
                 timeout = parse_ui_timeout(ts)
                 if timeout:
-                    timestamps.append(timeout)
-            base_y += 150
+                    if abs(timeout - time.time()) < 181:
+                        click((160, base_y))
+                        time.sleep(1)
+                        if color_at(1450, 790) == 'yellow':
+                            click((1400, 790))
+                        clicked = True
+                    else:
+                        timestamps.append(timeout)
+
+        if clicked:
+            time.sleep(1)
+            if color_at(1450, 790) == 'yellow':
+                click((1400, 790))
+                time.sleep(0.5)
+            if color_at(1060, 650) == 'green':
+                click((1060, 650))
 
     zoom_match = screen.exists(task_map_zoom)
     if zoom_match:
         drag_drop(zoom_match, (1290, zoom_match.get_y()))
 
-    for mission_type in ['mystery', 'scout', 'adventure',  'war', 'monster', 'dragon', 'naval']:
+    mission_types = {
+        'mystery':  2,
+        'scout': 1,
+        'adventure': 1,
+        'war': 1,
+        'monster': 2,
+        'dragon': 2,
+        'naval': 2
+    }
+
+    current_text = re.search(r'(\d+)/(\d+)', Region(1150, 20, 100, 36).text('1234567890/', colormap['white']))
+    if current_text:
+        available, total = current_text.groups()
+        available: int = int(available)
+        total: int = int(total)
+    else:
+        total: int = 0
+        available: int = 0
+
+    for mission_type in config['map_order'].split(','):
+        mission_type = mission_type.strip()
+        required = mission_types[mission_type]
+
+        if total and available < required:
+            continue
+
         missions = _area.find_all('images/tasks/map/mission/' + mission_type + '.png')
         if missions:
             clicked = []
             for m in missions:
+                if total and available < required:
+                    break
+
                 x = my_round(m.get_x())
                 y = my_round(m.get_y())
                 if [x, y] in clicked:
                     continue
                 clicked.append([x, y])
+
                 m.click()
                 m.wait_vanish()
                 if color_at(1090, 870) == 'green':
@@ -1014,7 +1091,10 @@ def map_map(trigger: bool = False) -> None:
                         timeout = parse_ui_timeout(ts)
                         if timeout:
                             timestamps.append(timeout)
+
                     click((1090, 870))
+                    if total:
+                        available -= required
                     time.sleep(0.5)
                 else:
                     txt = Region(960, 870, 560, 50).text('Youdnthavegsq', colormap['red'])
@@ -1022,9 +1102,9 @@ def map_map(trigger: bool = False) -> None:
                     if txt and len(txt) > 10:
                         break
 
-    click((1840, 55))
-    #if timestamps:
-    #    return min(timestamps)
+    _finalize('map_map')
+    if timestamps:
+        return min(timestamps) - 180
     return 0
 
 def new_hero(trigger: bool = False) -> int:
@@ -1084,24 +1164,6 @@ def shop_signin(trigger: bool = False) -> int:
     click((1840, 55))
     return get_next_reset()
 
-def tavern_pharaos_vault(trigger: bool = False) -> int:
-    """
-    Process Pharao's Vault
-    """
-    if trigger:
-        pass
-
-    while color_at(1010, 1010) == 'green':
-        click((1010,1010))
-        move_to((940, 1010))
-        start_loop = time.time()
-        while time.time() - start_loop < 10 and not color_at(1010, 1010) == 'green':
-            time.sleep(1)
-
-    click((1840, 55))
-    time.sleep(1)
-    return tavern_scarab_game()
-
 def tavern_scarab_game(trigger: bool = False) -> int:
     """
     Play scarab game
@@ -1124,6 +1186,28 @@ def tavern_scarab_game(trigger: bool = False) -> int:
     click((1840, 55))
     return 0
 
+def tavern_scarab_milestone(trigger: bool = False) -> int:
+    """
+    Get daily scarab token
+    """
+    if trigger:
+        pass
+    drag_count = 0
+    while drag_count < 3:
+        for x_coords in range(130, 1700, 20):
+            if color_at(x_coords, 825) == 'green':
+                click((x_coords, 825))
+        drag_drop((1700, 560), (240, 560))
+        drag_count += 1
+
+    if drag_count:
+        for _ in range(1, drag_count):
+            drag_drop((240, 560), (1700, 560))
+
+    click((1800, 200))
+
+    return tavern_pharaos_vault()
+
 def tavern_scarab_token(trigger: bool = False) -> int:
     """
     Get daily scarab token
@@ -1132,6 +1216,24 @@ def tavern_scarab_token(trigger: bool = False) -> int:
         pass
 
     click((610,800))
+    click((1840, 55))
+    time.sleep(1)
+    return tavern_scarab_game()
+
+def tavern_pharaos_vault(trigger: bool = False) -> int:
+    """
+    Process Pharao's Vault
+    """
+    if trigger:
+        pass
+
+    while color_at(1010, 1010) == 'green':
+        click((1010,1010))
+        move_to((940, 1010))
+        start_loop = time.time()
+        while time.time() - start_loop < 10 and not color_at(1010, 1010) == 'green':
+            time.sleep(1)
+
     click((1840, 55))
     time.sleep(1)
     return tavern_scarab_game()
@@ -1164,21 +1266,29 @@ def tavern_tavern_game(trigger: bool = False) -> int:
     Run the tavern game
     """
     if trigger:
-        pass
+        press_key('t')
+        time.sleep(1)
+        click((690, 965))
+        time.sleep(1)
+        click((770, 550))
+        time.sleep(1)
 
     amount = Region(1585, 30, 110, 35).get_number()
+    Debug.info(f'[Tavern] Amount: {amount}')
     if not amount:
-        click((1840, 55))
+        _finalize('tavern_tavern_game')
         return 0
     amount = min(amount, 10)
 
     for _ in range(1, int(amount)):
-        click((960, 1020))
-        time.sleep(1)
-        click((random.choice([660, 960, 1260]) , random.choice([330, 760])))
-        time.sleep(5)
+        if color_at(1060, 1000) == 'green':
+            click((960, 1000))
+            time.sleep(1)
+            click((random.choice([660, 960, 1260]) , random.choice([330, 760])))
+            while not color_at(1060, 1000) in ['green', 'grey']:
+                pass
 
-    click((1840, 55))
+    _finalize('tavern_tavern_game')
     return 0
 
 def temple_of_eternals(trigger: bool = False) -> int:

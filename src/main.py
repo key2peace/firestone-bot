@@ -5,16 +5,19 @@ Acts as the central orchestrator, executing modular gameplay subroutines
 while monitoring the application lifecycle and emergency shutdown signals.
 """
 import os
+import re
 import time
 import task_logic
 
 from custom_core import (
     click,
     color_at,
+    colormap,
     Debug,
     duration_text,
     main_finished,
     pause_check,
+    Region,
     reload_file,
     tasks,
     timeouts
@@ -97,6 +100,14 @@ def main() -> None:
                         Debug.history(f'[Task] {friendly_name} finished in {duration}')
                 else:
                     Debug.history(f'[Task] {friendly_name} is missing the handler \'{task_function_name}\'')
+
+                if color_at(1186, 90) == 'red':
+                    hp = Region(840, 76, 310, 28).text('', colormap['white'])
+                    Debug.info(f'Enemy HP: {hp}')
+                    match = re.search(r'^([\d,]+)([a-zBKMT]+) HP$', hp)
+                    if match:
+                        numeric, suffix = match.groups()
+                        Debug.info(f'Numeric: {numeric} Suffix: {suffix}')
             #Debug.history(f'[Tasks] Duration {duration_text(start_tasks)}')
 
     except KeyboardInterrupt as error:

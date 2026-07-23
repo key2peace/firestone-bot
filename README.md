@@ -23,11 +23,15 @@ But sadly, new OculiX IDE looking shiny on my desktop, getting frustrated by the
 ## Tasks supported
 
 ### Alchemist
-- Experiments
+- Experiments (3 minutes before end for free)
 - Transmute
+
+### Bag
+- Opening chests
 
 ### Character
 - Quests
+- Talents
 
 ### Engineer
 - Engineer:
@@ -71,8 +75,8 @@ But sadly, new OculiX IDE looking shiny on my desktop, getting frustrated by the
 - On (re)start/empower, the upgrade multiplier is enforced to a configurable value
 
 ### Map
-- Claim finished tasks
-- Pick new tasks in the order ``mystery``, ``dragon``, ``monster``, ``war``, ``adventure``, ``scout``
+- Claim finished tasks (3 minutes before end for free)
+- Pick new tasks in the order defined in config
 - Campaign Battles:
   - Pick up the loot
   - Run daily liberation missions
@@ -89,20 +93,18 @@ But sadly, new OculiX IDE looking shiny on my desktop, getting frustrated by the
   - Play the game
   - Pickup scarab token
   - Pickup pharao's vault
+  - Pickup scarab milestones
 - Tavern Game:
   - Play the game (spending a max of 10 tokens per run)
   - Convert beer to tokens
 
 ### Temple of eternals
 - Collect when configurable percentage has been reached
-  (Note: the + can still be seen as a 4, I *AM* trying to evade this...)
 
 ## Tasks not yet supported
 ### Alchemist:
 - Below transmute (not yet unlocked)
 
-### Bag
-- Opening chests
 
 ### Battles
 - Arena of kings

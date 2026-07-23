@@ -14,5 +14,9 @@
     "tavern_pickup.png": {
         "timestamp": 1784043749.2490923,
         "sha256": "95b45f237673c4eb644ac8c52181182c60cf63a9eef91b6669100988117c77f6"
+    },
+    "scarab_milestone.png": {
+        "timestamp": 1784646222.7005148,
+        "sha256": "cba421638b5a462f4985fb5c1ae273c90807a354804d3382757b2e0ed0ef8dbd"
     }
 }

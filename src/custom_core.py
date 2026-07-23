@@ -39,15 +39,18 @@ colormap = {
     'blue': (8, 12, 125, 135, 250, 255),
     'blue_forbidden_knowledge': (20,35,55,65,135,145),
     'blue_liberation_lost': (32, 35, 75, 80, 123, 128),
-    'brown_liberation_won': (192, 197, 143, 146, 99, 103),
-    'lightbrown_research_full': (228, 236, 205, 215, 180, 190),
-    'lightbrown': (239, 239, 218, 218, 189, 189),
     'brown': (80, 88, 37, 41, 14, 18),
+    'brown_liberation_won': (192, 197, 143, 146, 99, 103),
     'green': (0, 24, 140, 255, 0, 32),
     'green_talents': (100, 135, 150, 255, 0, 25),
-    'red': (240, 255, 0, 26, 0, 10),
-    'yellow': (240, 255, 157, 255, 0, 100),
+    'grey': (120, 180, 120, 180, 120, 180),
+    'lightbrown': (239, 239, 218, 218, 189, 189),
+    'lightbrown_research_full': (228, 236, 205, 215, 180, 190),
+    'red': (200, 255, 0, 26, 0, 35),
     'white': (200, 255, 200, 255, 200, 255),
+    'white_overlayed': (125, 130, 124, 126, 100, 105),
+    'yellow': (240, 255, 157, 255, 0, 100),
+
     'gamebar': (33, 33, 34, 34, 51, 51)
 }
 
@@ -69,7 +72,8 @@ config = {
     'guild_bank_donate':        True,                           # donate leftover guild coins to guild bank
     'guild_hall':               True,                           # visit guild hall
     'jump_percentage':          400,                            # temple of eternals: jump percentage
-    'transmute_legendary':      True,                           # alchemist: transmute legendary chests
+    'map_order':                'mystery,scout,adventure,war,monster,dragon,naval', # the order to play map missions
+    'transmute_legendary':      False,                          # alchemist: transmute legendary chests
     'transmute_epic':           False,                          # alchemist: transmute epic chests
     'transmute_rare':           False,                          # alchemist: transmute rare chests
     'transmute_uncommon':       False,                          # alchemist: transmute uncommon chests
@@ -103,12 +107,13 @@ tasks = {
     '_crazygames_check':    ('',                                'crazygames_check', 1),
     '_check_upgrade':       ('',                                'check_upgrade', 1),
     '_check_heroes':        ('',                                'check_heroes', 1),
-    '_daylies':             ('',                                'daylies', 0),
+    #'_daylies':             ('',                                'daylies', 0),
     '_battle_pass':         ('',                                'battle_pass', 1),
     #'new_hero':             ('new_hero.png',                    'new_hero', 1),
 
     # alchemist
-    'alchemist':            ('alchemist/alchemist.png',         'alchemist', 1),
+    'alchemist':            ('alchemist/alchemist.png',         'alchemist', 0),
+    '_alchemist':           ('',                                'alchemist', 0),
 
     # arena of kings
     'arena_of_kings':       ('arena_of_kings.png',              'arena_of_kings', 1),
@@ -140,6 +145,7 @@ tasks = {
     # map
     'campaign':             ('map/campaign.png',                'map_campaign', 1),
     'map':                  ('map/map.png',                     'map_map', 1),
+    '_map':                 ('',                                'map_map', 1),
 
     # pirate ship
     'pirates_price':        ('pirate_ship/pirates_price.png',   'pirates_price', 1),
@@ -150,8 +156,10 @@ tasks = {
     # tavern
     'pharaos_vault':        ('tavern/pharaos_vault.png',        'tavern_pharaos_vault', 1),
     'scarab_game':          ('tavern/scarab_game.png',          'tavern_scarab_game', 1),
+    'scarab_milestone':     ('tavern/scarab_milestone.png',     'tavern_scarab_milestone', 1),
     'scarab_token':         ('tavern/scarab_token.png',         'tavern_scarab_token', 1),
     'tavern_collect':       ('tavern/tavern_pickup.png',        'tavern_tavern_collect', 1),
+    #'_tavern_tavern_game':  ('',                                'tavern_tavern_game', 1),
 
     # temple of eternals
     'temple_of_eternals':   ('temple_of_eternals.png',          'temple_of_eternals', 0),
@@ -797,33 +805,40 @@ def parse_ui_timeout(ocr_text: str) -> float | None:
     if not ocr_text:
         return None
 
-    timer_pattern = r'(\d{2})?:?(\d{1,2}):(\d{2})'
+    timer_pattern = r'^(\d{1,2}):(\d{2}):(\d{2})$'
     match = re.search(timer_pattern, ocr_text.lower())
     if match:
         try:
             # Extract groups and safely default the days to 0 if not present in UI
             hours_str, minutes_str, seconds_str = match.groups()
 
-            hours = int(hours_str) if hours_str else 0
-            minutes = int(minutes_str)
-            seconds = int(seconds_str)
+            # Return the absolute execution boundary timestamp
+            return time.time() + (int(hours_str) * 3600) + (int(minutes_str) * 60) + int(seconds_str)
 
-            # Convert the duration matrix directly into absolute seconds
-            total_cooldown_seconds = (hours * 3600) + (minutes * 60) + seconds
+        except (ValueError, TypeError) as error:
+            Debug.error(f'[parse_ui_timeout] Failed to map UI clock vector: {error}')
+            return None
+
+    timer_pattern = r'^(\d{1,2}):(\d{2})$'
+    match = re.search(timer_pattern, ocr_text.lower())
+    if match:
+        try:
+            # Extract groups and safely default the days to 0 if not present in UI
+            minutes_str, seconds_str = match.groups()
 
             # Return the absolute execution boundary timestamp
-            return time.time() + total_cooldown_seconds
+            return time.time() + (int(minutes_str) * 60) + int(seconds_str)
 
         except (ValueError, TypeError) as error:
             Debug.error(f'[parse_ui_timeout] Failed to map UI clock vector: {error}')
             return None
-    else:
-        try:
-            seconds = int(float(ocr_text))
-            return seconds
-        except (ValueError, TypeError) as error:
-            Debug.error(f'[parse_ui_timeout] Failed to map UI clock vector: {error}')
-            return None
+
+    try:
+        seconds = int(float(ocr_text))
+        return seconds
+    except (ValueError, TypeError) as error:
+        Debug.error(f'[parse_ui_timeout] Failed to map UI clock vector: {error}')
+        return None
 
 def popup(message: str, title: str = 'Bot Notification', timeout: float = 0) -> None:
     """
@@ -1517,7 +1532,7 @@ class Region():
             cv2.MORPH_CLOSE,
             cv2.getStructuringElement(cv2.MORPH_RECT, (2, 2))
         )
-        
+
 
         tess_config = '-l eng'
         if os.path.exists('kiddosy.traineddata'):
@@ -1527,14 +1542,14 @@ class Region():
             tess_config += f' -c tessedit_char_whitelist={expect}'
 
         for psm_mode in [3, 7, 8, 10]:
-            raw_output = str(pytesseract.image_to_string(clean_mat, config=tess_config + f' --psm {psm_mode}')).strip()
+            raw_output = str(pytesseract.image_to_string(clean_mat, config=tess_config + f' --psm {psm_mode}'))
             if raw_output:
                 break
 
         if raw_output and expect:
             clean_output = re.sub(r'[\s\n\r]', '', raw_output.lower())
             if clean_output and re.search(r'[' + expect + r']+', clean_output):
-                return raw_output
+                return raw_output.strip()
 
             clean_mat = cv2.bitwise_not(clean_mat)
             for psm_mode in [3, 7, 8, 10]:
@@ -1545,7 +1560,7 @@ class Region():
             if not clean_output or not re.search(r'[' + expect + r']+', clean_output):
                 return ''
 
-        return raw_output
+        return raw_output.strip()
 
     def wait(self, image_path: str, timeout: float = 3):
         """
