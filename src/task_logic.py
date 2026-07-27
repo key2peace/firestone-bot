@@ -418,7 +418,7 @@ def check_upgrade(trigger: bool = False) -> int:
     # Cycle selector modes inline until text configuration criteria are met
     while target_mode not in main_upgrade.text().lower():
         main_upgrade.click()
-        moveTo((main_upgrade.get_center().get_x, 1080))
+        move_to((main_upgrade.get_center().get_x, 1080))
 
     return time.time() * 2
 
