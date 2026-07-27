@@ -40,28 +40,6 @@ from custom_core import (
 
 flipper: bool = True
 
-def _finalize(page:str = '') -> int:
-    """
-    Finish a running page until main is reached
-    """
-    if not page:
-        page = _identify()
-
-    if page in ['bag']:
-        click((1870, 70))
-    elif page in ['arena_of_kings']:
-        click((1855, 115))
-    elif page in ['character', 'character_talents', 'character_achievements', 'character_statistics', 'character_quests']:
-        click((1850, 80))
-    elif page in ['alchemist', 'engineer', 'engineer_garage', 'temple_of_eternals', 'guild_map', 'map_map', 'tavern_tavern_game']:
-        click((1840, 55))
-    elif page in ['guild_bank', 'guild_hall']:
-        click((1670, 50))
-    elif page in ['guild_expeditions']:
-        click((1510, 70))
-    else:
-        Debug.error(f'[_finalize] Page:\'{page}\' not being handled.')
-
 def _identify(page: str) -> bool:
     """
     Identify a page
@@ -138,7 +116,6 @@ def alchemist(trigger: bool = False) -> int:
     """
     timestamps = []
     if trigger:
-        click((960, 540))
         press_key('a')
 
     if not _wait_page('alchemist'):
@@ -193,7 +170,7 @@ def alchemist(trigger: bool = False) -> int:
                     click((1800, y))
                     move_to((1840, y))
 
-    _finalize('alchemist')
+    click((1840, 55))
     if timestamps:
         return min(timestamps) - 180
     return get_timeout(1800)
@@ -203,14 +180,11 @@ def arena_of_kings(trigger: bool = False) -> int:
     Execute the Arena of Kings navigational cleanup subroutine.
     """
     if trigger:
-        click((960, 540))
         press_key('k')
 
     if not _wait_page('arena_of_kings'):
         return -1
 
-
-    _finalize('arena_of_kings')
     click((1855, 115))
     return 0
 
@@ -257,7 +231,7 @@ def bag(trigger: bool = False) -> int:
 
                     click((1840, 55))
                     time.sleep(2)
-    _finalize('bag')
+    click((1870, 70))
     return get_next_reset()
 
 def battle_pass(trigger: bool = False) -> int:
@@ -290,7 +264,6 @@ def character_quests(trigger: bool = False) -> int:
     claim buttons using fixed index ranges to collect accumulated rewards.
     """
     if trigger:
-        click((960, 540))
         press_key('q')
         time.sleep(2)
         click((1500, 40))
@@ -306,7 +279,7 @@ def character_quests(trigger: bool = False) -> int:
             move_to((1620, 300))
             time.sleep(1)
 
-    _finalize('character_quests')
+    click((1850, 80))
     if trigger:
         return get_timeout(60)
     return 0
@@ -316,7 +289,6 @@ def character_talents(trigger: bool = False) -> int:
     Upgrade talents
     """
     if trigger:
-        click((960, 540))
         press_key('q')
         time.sleep(2)
         click((680, 40))
@@ -348,7 +320,7 @@ def character_talents(trigger: bool = False) -> int:
 
     if clicked:
         click((1650, 980))
-    _finalize('character_talents')
+    click((1850, 80))
     return 0
 
 def check_heroes(trigger: bool = False) -> int:
@@ -446,7 +418,7 @@ def check_upgrade(trigger: bool = False) -> int:
     # Cycle selector modes inline until text configuration criteria are met
     while target_mode not in main_upgrade.text().lower():
         main_upgrade.click()
-        main_upgrade.move_mouse_away()
+        moveTo((main_upgrade.get_center().get_x, 1080))
 
     return time.time() * 2
 
@@ -500,7 +472,7 @@ def engineer(trigger: bool = False) -> int:
         return -1
 
     click((1620, 730))
-    _finalize('engineer')
+    click((1840, 55))
     return get_timeout(21600)
 
 def engineer_garage(trigger: bool = False) -> int:
@@ -517,7 +489,7 @@ def engineer_garage(trigger: bool = False) -> int:
     if not _wait_page('engineer_garage'):
         return -1
 
-    _finalize('engineer_garage')
+    click((1840, 55))
     return get_next_reset()
 
 def engineer_garage_scraper() -> None:
@@ -576,7 +548,6 @@ def guild(trigger: bool = False) -> int:
     if trigger:
         pass
 
-    click((960, 840))       # Center of screen
     click((1860, 430))      # Guild icon on main screen
     if not _wait_page('guild_map'):
         return -1
@@ -594,7 +565,7 @@ def guild(trigger: bool = False) -> int:
         time.sleep(1)
         if color_at(1100, 840) == 'green':
             click((950, 940))   # Claim rewards
-        _finalize('guild_bank')
+        click((1670, 50))
 
     # guild hall
     if config['guild_hall']:
@@ -602,9 +573,9 @@ def guild(trigger: bool = False) -> int:
         if not _wait_page('guild_hall'):
             return -1
         click((180, 800))       # Guild log
-        _finalize('guild_hall')
+        click((1670, 50))
 
-    _finalize('guild_map')
+    click((1840, 55))
     return get_timeout(7200)
 
 def guild_arcanecrystal(trigger: bool = False) -> int:
@@ -658,7 +629,7 @@ def guild_chaos_rift(trigger: bool = False) -> int:
 
     while color_at(1050, 970) == 'green':
         click((1050, 970))
-        move_to((850, 970))
+        move_to((1200, 970))
         start_loop = time.time()
         while time.time() - start_loop < 5 and not color_at(1050, 970) == 'green':
             time.sleep(0.3)
@@ -846,12 +817,12 @@ def library_firestone_research(trigger: bool = False) -> int:
                 break
             available -= 1
         else:
-            drag_drop((1000, 430), (200, 430))
+            drag_drop((800, 430), (200, 430))
             drag_count += 1
 
     if drag_count:
         for _ in range(1, drag_count):
-            drag_drop((200, 430), (1000, 430))
+            drag_drop((200, 430), (800, 430))
 
     click((1840, 55))
     return 0
@@ -875,60 +846,74 @@ def magic_quarter(trigger: bool = False) -> int:
         time.sleep(2)
 
     pos = {
-        'vermilion': (740, 1000),
+        'vermilion': (735, 1000),
         'grace': (890, 1000),
         'ankaa': (1040, 1000),
-        'azhar': (1200, 1000)
+        'azhar': (1190, 1000)
     }
+
+    dust = Region(1595, 20, 110, 36).get_number()
+    evolving = ''
+    tmp = {}
+    for name, (x, y) in pos.items():
+        if not color_at(x - 50, y - 50) == 'grey_magic_quarter':
+            click((x, y))
+            time.sleep(1)
+            text = Region(310, 230, 240,38).text('adelotvyER', colormap['white']).lower()
+            evolving = name if text.startswith('ready') else evolving
+            tmp[name] = (x, y)
 
     while True:
         current = Region(250, 830, 300, 60).text('abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ', colormap['brown']).lower()
         if current and current in pos:
-            del pos[current]
+            del tmp[current]
+
+            if evolving and evolving == current:
+                click((1210, 150)) # Evolution
+                time.sleep(0.3)
+                if color_at(1220, 780) == 'green':
+                    Debug.history(f'Evolving {current}')
+                    click((1220, 780))
 
             click((1050, 150)) # General
             time.sleep(0.3)
             if color_at(1090, 800) == 'green':
                 Debug.history(f'Training {current}')
                 click((1090,800))
-            while color_at(1590, 800) == 'green':
-                click((1590, 800))
-                move_to((1590, 880))
-                time.sleep(0.3)
-
-            click((1210, 150)) # Evolution
-            time.sleep(0.3)
-            while color_at(1220, 780) == 'green':
-                Debug.history(f'Evolving {current}')
-                click((1220, 780))
-                move_to((1100, 880))
-                time.sleep(0.3)
+            if not evolving:
+                while color_at(1590, 800) == 'green':
+                    Debug.history(f'Evolving {current}')
+                    click((1590, 800))
+                    move_to((1590, 900))
+                    time.sleep(0.3)
 
             click((1400, 150)) # Chaos Rift
             time.sleep(0.3)
             while color_at(1630, 775) == 'green':
-                Debug.history(f'Increase holy damage for {current}')
+                Debug.history(f'Increase {current}\'s holy damage')
                 click((1720, 760))
-                move_to((1600, 880))
+                move_to((1720, 660))
                 time.sleep(0.3)
 
             click((1560, 150)) # Guardian rarity
             time.sleep(0.3)
             if color_at(1365, 630) == 'green':
+                Debug.history(f'Increase {current}\'s rarity')
                 click((1365, 630))
         else:
+            # should not trigger anymore
+            Debug.info('old stuff still happening')
             current = Region(690, 120, 540, 40).text('abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ', colormap['white']).lower()
             if current:
                 for name, (_, _) in pos.items():
                     if name in current:
-                        del pos[name]
+                        del tmp[name]
                         click((1500, 160))
                         break
-
-        if not pos:
+        if not tmp:
             break
 
-        for _, (x, y) in pos.items():
+        for _, (x, y) in tmp.items():
             click((x, y))
             break
 
@@ -1102,7 +1087,7 @@ def map_map(trigger: bool = False) -> None:
                     if txt and len(txt) > 10:
                         break
 
-    _finalize('map_map')
+    click((1840, 55))
     if timestamps:
         return min(timestamps) - 180
     return 0
@@ -1192,6 +1177,7 @@ def tavern_scarab_milestone(trigger: bool = False) -> int:
     """
     if trigger:
         pass
+
     drag_count = 0
     while drag_count < 3:
         for x_coords in range(130, 1700, 20):
@@ -1271,12 +1257,12 @@ def tavern_tavern_game(trigger: bool = False) -> int:
         click((690, 965))
         time.sleep(1)
         click((770, 550))
-        time.sleep(1)
 
+    time.sleep(2)
     amount = Region(1585, 30, 110, 35).get_number()
     Debug.info(f'[Tavern] Amount: {amount}')
     if not amount:
-        _finalize('tavern_tavern_game')
+        click((1840, 55))
         return 0
     amount = min(amount, 10)
 
@@ -1288,7 +1274,7 @@ def tavern_tavern_game(trigger: bool = False) -> int:
             while not color_at(1060, 1000) in ['green', 'grey']:
                 pass
 
-    _finalize('tavern_tavern_game')
+    click((1840, 55))
     return 0
 
 def temple_of_eternals(trigger: bool = False) -> int:
@@ -1301,7 +1287,6 @@ def temple_of_eternals(trigger: bool = False) -> int:
     global timeouts
 
     if trigger:
-        click((960, 540))
         press_key('e')
 
     if not _wait_page('temple_of_eternals'):
@@ -1322,6 +1307,6 @@ def temple_of_eternals(trigger: bool = False) -> int:
         click((950, 740))
     else:
         Debug.warn(f'[temple_of_eternals] Current percentage: {percentage}%/{jump_require}%')
-        _finalize('temple_of_eternals')
+        click((1840, 55))
 
     return 0

@@ -8,11 +8,15 @@
         "sha256": "c773584f44b511503029f5e2533f820ad7e8d07d75d5aa7a81dc5a694141e1ff"
     },
     "garage_chaos_rift.png": {
-        "timestamp": 1784462748.144617,
-        "sha256": "cc6551c6ad94de66bcce51d78ba48c8e32b7e3372126b6e5f4fb2e4a0d9db34e"
+        "timestamp": 1784819756.4411316,
+        "sha256": "20f3c825ec50b349968a63b917a8fa71bb1abeba68935af70ef338bb1c04c945"
     },
     "garage_rarity.png": {
         "timestamp": 1784043748.8149183,
         "sha256": "f6b270876537c4e264c5ccd13b152aa1c2b00528568c3984f86825cbe9afa3fd"
+    },
+    "new_warmachine.png": {
+        "timestamp": 1785093871.6334043,
+        "sha256": "7f2835db47f51a92a2117c9b627c3ab5ba6da2e008de631460d48b738d58ce4b"
     }
 }

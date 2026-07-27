@@ -102,9 +102,9 @@ But sadly, new OculiX IDE looking shiny on my desktop, getting frustrated by the
 - Collect when configurable percentage has been reached
 
 ## Tasks not yet supported
+
 ### Alchemist:
 - Below transmute (not yet unlocked)
-
 
 ### Battles
 - Arena of kings
@@ -125,6 +125,13 @@ But sadly, new OculiX IDE looking shiny on my desktop, getting frustrated by the
 
 ### Guild
 - Tree of Life
+
+### Hall of heroes
+- Equipment unlocking
+- Gear enchanting
+- Jewel enchanting
+- Seals of power
+- Hero rarity
 
 ### Library
 - Meteorite Research
@@ -151,7 +158,7 @@ But sadly, new OculiX IDE looking shiny on my desktop, getting frustrated by the
 ## Installation
 - Ensure you have at least [Python 3.10](https://www.python.org/downloads/) installed
 - Install [Tesseract](https://tesseractocr.org/#install)
-- Ensure python and tesseract are in your path
+- Ensure python and tesseract are in your PATH
 - Then:
 ```
 	git clone https://github.com/key2peace/firestone-bot.git
@@ -168,7 +175,6 @@ python main.py
 - Start the game and go full-screen
 - When ready, press the Scroll-Lock key.
 - If things go wrong -> Scroll-Lock
-- Wanna make a screenshot? Press the Print Screen, provide a name, and it will be saved in the capture subfolder
 
 ## License
 This code is released under the MIT License, for more details, see [License](https://github.com/key2peace/firestone-bot/blob/main/LICENSE)

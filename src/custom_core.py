@@ -44,6 +44,7 @@ colormap = {
     'green': (0, 24, 140, 255, 0, 32),
     'green_talents': (100, 135, 150, 255, 0, 25),
     'grey': (120, 180, 120, 180, 120, 180),
+    'grey_magic_quarter': (100, 140, 100, 140, 100, 140),
     'lightbrown': (239, 239, 218, 218, 189, 189),
     'lightbrown_research_full': (228, 236, 205, 215, 180, 190),
     'red': (200, 255, 0, 26, 0, 35),
@@ -127,6 +128,7 @@ tasks = {
     'garage':               ('engineer/garage.png',             'engineer_garage', 1),
     'garage_chaos_rift':    ('engineer/garage_chaos_rift.png',  'engineer_garage', 1),
     'garage_rarity':        ('engineer/garage_rarity.png',      'engineer_garage', 1),
+    'new_warmachine':       ('engineer/new_warmachine.png',     'engineer_garage', 1),
 
     # guild
     'arcane_crystal':       ('guild/arcane_crystal.png',        'guild_arcanecrystal', 1),
@@ -159,7 +161,6 @@ tasks = {
     'scarab_milestone':     ('tavern/scarab_milestone.png',     'tavern_scarab_milestone', 1),
     'scarab_token':         ('tavern/scarab_token.png',         'tavern_scarab_token', 1),
     'tavern_collect':       ('tavern/tavern_pickup.png',        'tavern_tavern_collect', 1),
-    #'_tavern_tavern_game':  ('',                                'tavern_tavern_game', 1),
 
     # temple of eternals
     'temple_of_eternals':   ('temple_of_eternals.png',          'temple_of_eternals', 0),
@@ -382,7 +383,7 @@ def drag_drop(start_location: Union[Tuple[int, int], 'Region', 'Match'],
             return
 
         mouse_controller.moveTo(int(x1), int(y1))
-        delay = get_distance(start_location, end_location) / 150
+        delay = get_distance(start_location, end_location) / 300
         pyautogui.dragTo(int(x2), int(y2), delay, button='left')
     except mouse_controller.FailSafeException:
         pause_on()
@@ -711,17 +712,10 @@ def on_keyrelease(key) -> None:
                 pause_on()
             else:
                 pause_off()
+        # detect possible browser reload(F5) or exiting fullscreen mode (ESCAPE)
         elif key in [keys.f5, keys.esc]:
+            Debug.info(f'{key} press detected. Preparing for web reload.')
             pause_on(True)
-        elif key == keys.print_screen:
-            mat = grab_screen_to_mat()
-            filename = pyautogui.prompt('File name', 'Capture Screen')
-            if filename:
-                if os.path.exists('capture/'+filename):
-                    overwrite = pyautogui.confirm(filename+' exists. Overwrite?', 'Capture Screen')
-                    if overwrite == 'Cancel':
-                        return
-                cv2.imwrite('capture/'+filename, mat)
     except AttributeError:
         pass
 
@@ -772,7 +766,7 @@ def pause_off() -> None:
     """
     with open(lock_file, 'wt', encoding='utf-8') as ptr:
         ptr.write(str(time.time_ns()))
-        Debug.info('Initiated resume')
+        Debug.info('Resuming tasks.')
 
 def pause_on(reload: bool = False) -> None:
     """
@@ -780,14 +774,12 @@ def pause_on(reload: bool = False) -> None:
     """
     if os.path.exists(lock_file):
         os.remove(lock_file)
-        Debug.info('Initiated pause')
+        Debug.info('Disabling interactions. Pausing as soon as current loop finished.')
 
-    if reload:
-        if os.path.exists(reload_file):
-            return
+    if reload and not os.path.exists(reload_file):
         with open(reload_file, 'wt', encoding='utf-8') as ptr:
             ptr.write(str(time.time_ns()))
-            Debug.info('Initiated resume')
+            Debug.info('Web reload prepared.')
 
 def parse_ui_timeout(ocr_text: str) -> float | None:
     """
@@ -1537,7 +1529,7 @@ class Region():
         tess_config = '-l eng'
         if os.path.exists('kiddosy.traineddata'):
             os.environ["TESSDATA_PREFIX"] = os.getcwd()
-            tess_config = f'-l kiddosy'
+            tess_config = '-l kiddosy'
         if expect:
             tess_config += f' -c tessedit_char_whitelist={expect}'
 
