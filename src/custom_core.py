@@ -134,14 +134,15 @@ tasks = {
     'new_warmachine':       ('engineer/new_warmachine.png',     'engineer_garage', 1),
 
     # guild
+    'pickaxe':              ('guild/pickaxe.png',               'guild_pickaxe', 1),
     'arcane_crystal':       ('guild/arcane_crystal.png',        'guild_arcanecrystal', 1),
     'awakening':            ('guild/awakening.png',             'guild_awakening', 1),
-    'chaos_rift':           ('guild/chaos_rift.png',            'guild_chaos_rift', 1),
     'chaos_rift_supplies':  ('guild/chaos_rift_supplies.png',   'guild_chaos_rift_supplies', 1),
+    'chaos_rift':           ('guild/chaos_rift.png',            'guild_chaos_rift', 1),
     'expeditions':          ('guild/expeditions.png',           'guild_expeditions', 1),
     'forbidden_knowledge':  ('guild/forbidden_knowledge.png',   'guild_forbidden_knowledge', 1),
     '_guild':               ('',                                'guild', 0),
-    'pickaxe':              ('guild/pickaxe.png',               'guild_pickaxe', 1),
+    
 
     # library
     'firestone_research':   ('library/firestone_research.png',  'library_firestone_research', 1),
@@ -160,9 +161,9 @@ tasks = {
 
     # tavern
     'pharaos_vault':        ('tavern/pharaos_vault.png',        'tavern_pharaos_vault', 1),
+    'scarab_token':         ('tavern/scarab_token.png',         'tavern_scarab_token', 1),
     'scarab_game':          ('tavern/scarab_game.png',          'tavern_scarab_game', 1),
     'scarab_milestone':     ('tavern/scarab_milestone.png',     'tavern_scarab_milestone', 1),
-    'scarab_token':         ('tavern/scarab_token.png',         'tavern_scarab_token', 1),
     'tavern_collect':       ('tavern/tavern_pickup.png',        'tavern_tavern_collect', 1),
 
     # temple of eternals

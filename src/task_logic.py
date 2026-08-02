@@ -247,14 +247,19 @@ def battle_pass(trigger: bool = False) -> int:
         click((1110, 60))
 
         for x in range(390, 1820, 10):
-            if color_at(x, 1000) == 'green':
+            if color_at(x, 560) == 'green':
+                Debug.history('Picking up golden battle pass reward')
                 time.sleep(0.3)
-                click((x, 850))
+                click((x, 560))
+            if color_at(x, 1000) == 'green':
+                Debug.history('Picking up battle pass reward')
+                time.sleep(0.3)
+                click((x, 1000))
         time.sleep(0.3)
 
         click((1840, 55))
 
-    return 0
+    return get_timeout(3600)
 
 def character_quests(trigger: bool = False) -> int:
     """
@@ -938,34 +943,38 @@ def map_campaign(trigger: bool = False) ->int:
         # Loop through available liberations
         winning = True
         drag_count = 0
-        while winning and drag_count < 6:
-            if  color_at(200, 800) == 'green':
-                Debug.history('[Campaign] Select Liberation')
-                click((200, 800))
+        while winning and drag_count < 3:
+            for x in range(90, 1800, 10):
+                if color_at(x, 800) == 'green':
+                    Debug.history('[Campaign] Select Liberation')
+                    click((x, 800))
 
-                # Liberation moving on, waiting for finish
-                start_ts = time.time_ns()
-                while True:
-                    if color_at(870, 770) == 'green' and color_at(960, 690) == 'brown_liberation_won':
-                        Debug.history(f'[Campaign] Liberation successfully finished in {duration_text(start_ts)}')
-                        click((870, 770))
-                        break
-                    if color_at(870, 770) == 'green' and color_at(960, 720) == 'blue_liberation_lost':
-                        Debug.warn(f'[Campaign] Liberation lost in {duration_text(start_ts)}')
-                        winning = False
-                        click((870, 770))
-                        break
-                    time.sleep(1)
+                    # Liberation moving on, waiting for finish
+                    start_ts = time.time_ns()
+                    while True :
+                        if color_at(870, 770) == 'green' and color_at(960, 690) == 'brown_liberation_won':
+                            Debug.history(f'[Campaign] Liberation successfully finished in {duration_text(start_ts)}')
+                            click((870, 770))
+                            break
+                        if color_at(870, 770) == 'green' and color_at(960, 720) == 'blue_liberation_lost':
+                            Debug.warn(f'[Campaign] Liberation lost in {duration_text(start_ts)}')
+                            winning = False
+                            click((870, 770))
+                            break
+                        time.sleep(1)
+                if not winning:
+                    break
             if winning:
-                #drag the screen 400 pixels to the left
-                drag_drop((1000,430), (600,430))
+                #drag the screen 800 pixels to the left
+                drag_drop((1000,430), (200,430))
                 drag_count += 1
 
         if drag_count:
             #drag the screen back to the beginning
-            for _ in range(1, drag_count):
-                drag_drop((600,430), (1000,430))
+            for _ in range(0, drag_count):
+                drag_drop((200,430), (1000,430))
         click((1820, 70))
+        click((1510, 90))
 
     click((1840, 60))
     if timestamps:
