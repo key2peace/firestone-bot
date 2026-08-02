@@ -25,6 +25,7 @@ import pyautogui
 import pytesseract
 import requests
 
+from ctypes import wintypes, windll, create_unicode_buffer
 from pynput import keyboard
 from watchdog.events import FileSystemEventHandler
 from watchdog.observers import Observer
@@ -40,6 +41,7 @@ colormap = {
     'blue_forbidden_knowledge': (20,35,55,65,135,145),
     'blue_liberation_lost': (32, 35, 75, 80, 123, 128),
     'brown': (80, 88, 37, 41, 14, 18),
+    'brown_forbidden_knowledge': (214, 217, 73, 86, 16, 16),
     'brown_liberation_won': (192, 197, 143, 146, 99, 103),
     'green': (0, 24, 140, 255, 0, 32),
     'green_talents': (100, 135, 150, 255, 0, 25),
@@ -47,7 +49,8 @@ colormap = {
     'grey_magic_quarter': (100, 140, 100, 140, 100, 140),
     'lightbrown': (239, 239, 218, 218, 189, 189),
     'lightbrown_research_full': (228, 236, 205, 215, 180, 190),
-    'red': (200, 255, 0, 26, 0, 35),
+    'lightyellow': (255, 255, 206, 206, 88, 88),
+    'red': (200, 255, 0, 40, 0, 35),
     'white': (200, 255, 200, 255, 200, 255),
     'white_overlayed': (125, 130, 124, 126, 100, 105),
     'yellow': (240, 255, 157, 255, 0, 100),
@@ -632,6 +635,19 @@ def grab_screen_to_mat(region_obj: Region = None) -> 'np.ndarray | None':
     except Exception as error:  # pylint: disable=broad-exception-caught
         Debug.error(f'[grab_screen_to_mat] Failed to write matrix: {error}')
         return None
+
+def get_active_windowtitle() -> Optional[str]:
+    """
+    Get the title of the active window
+    """
+    if os.name == 'nt':
+        hWnd = windll.user32.GetForegroundWindow()
+        length = windll.user32.GetWindowTextLengthW(hWnd)
+        buf = create_unicode_buffer(length + 1)
+        windll.user32.GetWindowTextW(hWnd, buf, length + 1)
+        return buf.value if buf.value else None
+
+    return None
 
 def mean(collection: List) -> int:
     """

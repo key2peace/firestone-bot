@@ -18,5 +18,13 @@
     "vermilion_evo3.png": {
         "timestamp": 1784043749.0458224,
         "sha256": "85090b20eb99a97d7f85d8bc704fd4e67da640ec9e789d57c6e0c1a0979a0ed8"
+    },
+    "evolve.png": {
+        "timestamp": 1785470048.7848654,
+        "sha256": "87179bd82b7b30e890cc8e084b7ea80f17694ad8fa519f3cb1e3a16374fcaaa1"
+    },
+    "vermilion_evo4.png": {
+        "timestamp": 1785577616.631494,
+        "sha256": "316f3d9fffc13c92f7a6412fa45bd74f97d12ba6da2178a1cab37750534b69d6"
     }
 }

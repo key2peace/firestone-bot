@@ -246,7 +246,7 @@ def battle_pass(trigger: bool = False) -> int:
         time.sleep(1)
         click((1110, 60))
 
-        for x in range(390, 1820, 50):
+        for x in range(390, 1820, 10):
             if color_at(x, 1000) == 'green':
                 time.sleep(0.3)
                 click((x, 850))
@@ -254,7 +254,7 @@ def battle_pass(trigger: bool = False) -> int:
 
         click((1840, 55))
 
-    return get_timeout(14400)
+    return 0
 
 def character_quests(trigger: bool = False) -> int:
     """
@@ -309,17 +309,20 @@ def character_talents(trigger: bool = False) -> int:
                 click((1020, 866))
                 move_to((1100, 866))
                 clicked = True
+                time.sleep(1)
             click((1250, 320))
             break
-        drag_drop((950, 990), (950, 188))
-        counter += 1
-        if counter > 10:
-            for _ in range(1, counter):
-                drag_drop((950, 188), (950, 990))
-            break
-
+        else:
+            drag_drop((950, 990), (950, 590))
+            time.sleep(1)
+            counter += 1
+            if counter > 10:
+                for _ in range(1, counter):
+                    drag_drop((950, 590), (950, 990))
+                break
     if clicked:
         click((1650, 980))
+
     click((1850, 80))
     return 0
 
@@ -585,21 +588,18 @@ def guild_arcanecrystal(trigger: bool = False) -> int:
     if trigger:
         pass
 
-    for _ in range(1, 5):
-        if color_at(1050, 970) == 'green':
-            click((1050, 970))
-            move_to((850, 970))
+    amount = Region(1580, 20, 117, 37).get_number()
+    amount = int(min(amount, 5))
+
+    for _ in range(1, amount):
+        if color_at(960, 960) == 'green':
+            click((960, 960))
+            move_to((1120, 960))
             start_loop = time.time()
-            while time.time() - start_loop < 5 and not color_at(1050, 970) == 'green':
+            while time.time() - start_loop < 10 and not color_at(1050, 970) == 'green':
                 time.sleep(1)
         else:
             break
-
-    score = Region(1590, 20, 110, 30).get_number()
-    if score and int(score) > 500:
-        click((1800, 370))
-        time.sleep(1)
-        return guild_awakening()
     click((1840, 55))
     return 0
 
@@ -713,7 +713,7 @@ def guild_forbidden_knowledge(trigger: bool = False) -> int:
                 (780, 295, 'Magic spells'),
                 (460, 900, 'Fist fight')
             ]
-            color = 'brown'
+            color = 'brown_forbidden_knowledge'
         elif name == 'Kramatak': # Square setup
             coords = [
                 (710, 130, 'All main attribute'),
@@ -791,7 +791,7 @@ def library_firestone_research(trigger: bool = False) -> int:
             click((x_coords, 980))
 
     drag_count = 0
-    _area = Region(0, 130, 1690, 770)
+    _area = Region(0, 130, 1600, 770)
     while drag_count <= 3:
         pixels = grab_screen_to_mat(_area)
         found = False
@@ -807,7 +807,7 @@ def library_firestone_research(trigger: bool = False) -> int:
             if found:
                 break
         if found:
-            click((x + 150, y + 150))
+            click((x, y + 130))
             time.sleep(1)
             click((790, 720))
             if color_at(970, 660) == 'lightbrown_research_full':
@@ -900,16 +900,7 @@ def magic_quarter(trigger: bool = False) -> int:
             if color_at(1365, 630) == 'green':
                 Debug.history(f'Increase {current}\'s rarity')
                 click((1365, 630))
-        else:
-            # should not trigger anymore
-            Debug.info('old stuff still happening')
-            current = Region(690, 120, 540, 40).text('abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ', colormap['white']).lower()
-            if current:
-                for name, (_, _) in pos.items():
-                    if name in current:
-                        del tmp[name]
-                        click((1500, 160))
-                        break
+
         if not tmp:
             break
 
@@ -967,14 +958,15 @@ def map_campaign(trigger: bool = False) ->int:
                     time.sleep(1)
             if winning:
                 #drag the screen 400 pixels to the left
-                drag_drop((1000,430), (590,430))
+                drag_drop((1000,430), (600,430))
                 drag_count += 1
 
         if drag_count:
             #drag the screen back to the beginning
             for _ in range(1, drag_count):
-                drag_drop((590,430), (1000,430))
+                drag_drop((600,430), (1000,430))
         click((1820, 70))
+
     click((1840, 60))
     if timestamps:
         return min(timestamps)
@@ -997,6 +989,13 @@ def map_map(trigger: bool = False) -> None:
     _area = Region(140, 60, 1630, 950)
     task_map_zoom = 'images/tasks/map/zoom.png'
     timestamps = []
+
+    # Get new missions time
+    ts = Region(250, 1020, 130, 40).text('', colormap['lightyellow'])
+    if re.search(r'^[\d:]+$', ts):
+        timeout = parse_ui_timeout(ts)
+        if timeout:
+            timestamps.append(timeout)
 
     clicked = False
     for base_y in [906, 756, 606, 456, 306]:

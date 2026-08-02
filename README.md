@@ -62,7 +62,7 @@ But sadly, new OculiX IDE looking shiny on my desktop, getting frustrated by the
   - Supplies
 - Forbidden Knowledge:
   - Perform upgrades and recruiting
-  - Guild expeditions
+- Guild expeditions
 - Guild hall:
     - Guild log
 
