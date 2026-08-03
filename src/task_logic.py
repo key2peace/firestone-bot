@@ -785,7 +785,9 @@ def guild_pickaxe(trigger: bool = False) -> int:
     if trigger:
         pass
 
-    click((690, 660))
+    if color_at(780, 770) == 'green':
+        click((780, 770))
+
     click((1840, 55))
     return 0
 
