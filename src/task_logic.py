@@ -87,7 +87,7 @@ def _identify(page: str) -> bool:
     if page == 'bag' and Region(1520, 55, 300, 60).text().lower() in ['inventory', 'scrolls', 'chests', 'currencies']:
         return True
 
-    if page == 'map_map' and Region(64, 1020, 240, 50).text('', colormap['lightyellow']).lower().startswith('new missions in:'):
+    if page == 'map_map' and Region(64, 1020, 240, 50).text('', colormap['lightyellow']).lower().startswith('new missions'):
         return True
 
     if page == 'engineer' and Region(40, 30, 390, 42).text('', colormap['yellow']).startswith('Engineer level'):
