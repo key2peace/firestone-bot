@@ -66,7 +66,7 @@ def _identify(page: str) -> bool:
             return True
 
     if page in ['guild_map', 'engineer_garage']:
-        text = Region(770, 0, 380, 50).text('', colormap['white']).lower()
+        text = Region(770, 0, 350, 60).text('', colormap['white']).lower()
         if page == 'guild_map' and text == 'guild':
             return True
         if page == 'engineer_garage' and text == 'garage':
@@ -78,7 +78,7 @@ def _identify(page: str) -> bool:
     if page == 'arena_of_kings' and Region(790, 70, 320, 55).text('', colormap['white']).lower() in ['arena of kings']:
         return True
 
-    if page == 'alchemist' and Region(1100, 210, 400, 60).text().lower() in ['experiments', 'transmute']:
+    if page == 'alchemist' and Region(1100, 180, 400, 60).text().lower() in ['experiments', 'transmute']:
         return True
 
     if page == 'temple_of_eternals' and Region(1120, 145, 500, 60).text().lower() == 'temple of eternals':
@@ -87,7 +87,7 @@ def _identify(page: str) -> bool:
     if page == 'bag' and Region(1520, 55, 300, 60).text().lower() in ['inventory', 'scrolls', 'chests', 'currencies']:
         return True
 
-    if page == 'map_map' and Region(0, 1020, 370, 48).text().lower().startswith('new missions in:'):
+    if page == 'map_map' and Region(64, 1020, 240, 50).text('', colormap['lightyellow']).lower().startswith('new missions in:'):
         return True
 
     if page == 'engineer' and Region(40, 30, 390, 42).text('', colormap['yellow']).startswith('Engineer level'):
@@ -123,30 +123,31 @@ def alchemist(trigger: bool = False) -> int:
 
     # experiments
     coords = {
-        'Dragon blood': (850, 800, config['alchemist_dragon_blood']),
-        'Strange Dust': (1220, 1180, config['alchemist_strange_dust']),
-        'Exotic coin': (1600, 1550, config['alchemist_exotic_coin'])
+        'Dragon blood': (800, config['alchemist_dragon_blood']),
+        'Strange Dust': (1170, config['alchemist_strange_dust']),
+        'Exotic coin': (1540, config['alchemist_exotic_coin'])
     }
 
-    for name, (button_x, duration_x, upgrade) in coords.items():
-        ts = Region(duration_x, 690, 280, 30).text('', colormap['white'])
+    for name, (x, upgrade) in coords.items():
+        ts = Region(x, 675, 280, 30).text('', colormap['white'])
         if ts == 'Completed':
             Debug.history(f'Completed {name} Experiment')
-            click((button_x, 800))
+            click((x + 50, 800))
             time.sleep(1)
-        elif color_at(button_x + 90, 800) == 'yellow':
-            click((button_x + 90, 800))
+        elif color_at(x + 50, 780) == 'yellow':
+            Debug.history(f'Completed {name} Experiment for free')
+            click((x + 50, 780))
             time.sleep(1)
         elif re.search(r'(\d{2})?:?(\d{1,2}):(\d{2})', ts.lower()):
             ts = parse_ui_timeout(ts)
             if ts:
                 timestamps.append(ts)
 
-        if upgrade and color_at(button_x, 800) == 'green':
+        if upgrade and color_at(x + 50, 780) == 'green':
             Debug.history(f'Starting {name} Experiment')
-            click((button_x, 800))
+            click((x + 50, 800))
             time.sleep(1)
-            ts = Region(duration_x, 690, 280, 30).text('', colormap['white'])
+            ts = Region(x, 675, 280, 30).text('', colormap['white'])
             if re.search(r'(\d{2})?:?(\d{1,2}):(\d{2})', ts.lower()):
                 ts = parse_ui_timeout(ts)
                 if ts:
@@ -154,12 +155,12 @@ def alchemist(trigger: bool = False) -> int:
 
     # transmute
     if config['transmute_legendary'] or config['transmute_epic'] or config['transmute_rare'] or config['transmute_uncommon']:
-        click((1400, 170))
+        click((1400, 130))
         coords = {
-            'legendary': (420, config['transmute_legendary']),
-            'epic':      (580, config['transmute_epic']),
-            'rare':      (740, config['transmute_rare']),
-            'uncommon':  (900, config['transmute_uncommon'])
+            'legendary': (520, config['transmute_legendary']),
+            'epic':      (680, config['transmute_epic']),
+            'rare':      (840, config['transmute_rare']),
+            'uncommon':  (1000, config['transmute_uncommon'])
         }
 
         for name, (y, obtain) in coords.items():
@@ -207,6 +208,7 @@ def bag(trigger: bool = False) -> int:
                 if get_pixel_color(x, y) == (158, 128, 103):
                     continue
 
+                Debug.history('Opening bag')
                 click((x, y))
                 time.sleep(2)
 
@@ -277,14 +279,19 @@ def character_quests(trigger: bool = False) -> int:
         return -1
 
     for x in [760, 1170]:
+        type = 'daily' if x == 760 else 'weekly'
+        if type == 'weekly' and not color_at(1360, 90) == 'red':
+            break
+
         click((x, 130))
         time.sleep(0.3)
-        while color_at(1380, 300) == 'green':
+        while color_at(1560, 300) == 'green':
+            Debug.history(f'Claiming {type} quest')
             click((1560, 300))
             move_to((1620, 300))
             time.sleep(1)
 
-    click((1850, 80))
+    click((1850, 76))
     if trigger:
         return get_timeout(60)
     return 0
@@ -479,7 +486,9 @@ def engineer(trigger: bool = False) -> int:
     if not _wait_page('engineer'):
         return -1
 
-    click((1620, 730))
+    if color_at(1710, 740) == 'green':
+        click((1710, 740))
+
     click((1840, 55))
     return get_timeout(21600)
 
@@ -496,6 +505,8 @@ def engineer_garage(trigger: bool = False) -> int:
 
     if not _wait_page('engineer_garage'):
         return -1
+
+    # insert logic here
 
     click((1840, 55))
     return get_next_reset()
@@ -561,7 +572,7 @@ def guild(trigger: bool = False) -> int:
         return -1
 
     # guild bank
-    if config['guild_bank']:
+    if config['guild_bank'] and color_at(400, 875) == 'red':
         click((300, 700))       # Bank on guild map
         if not _wait_page('guild_bank'):
             return -1
@@ -576,7 +587,7 @@ def guild(trigger: bool = False) -> int:
         click((1670, 50))
 
     # guild hall
-    if config['guild_hall']:
+    if config['guild_hall'] and color_at(1210, 585) == 'red':
         click((1070, 500))      # Guild hall
         if not _wait_page('guild_hall'):
             return -1
@@ -596,7 +607,7 @@ def guild_arcanecrystal(trigger: bool = False) -> int:
     amount = Region(1580, 20, 117, 37).get_number()
     amount = int(min(amount, 5))
 
-    for _ in range(1, amount):
+    for _ in range(0, amount):
         if color_at(960, 960) == 'green':
             click((960, 960))
             move_to((1120, 960))
@@ -787,13 +798,26 @@ def library_firestone_research(trigger: bool = False) -> int:
     executes screen drag operations to initialize new available projects.
     """
     if trigger:
-        pass
+        press_key('l')
+        time.sleep(2)
+        click((1810, 640))
+        time.sleep(2)
 
     available = 0
-    for x_coords in [1220, 520]:
-        if color_at(x_coords, 980) == 'green':
+    timestamps = []
+
+    for x_coords in [1290, 590]:
+        color = color_at(x_coords, 960)
+        Debug.info(f'research: {color}');
+        if color in ['green', 'yellow']:
             available += 1
             click((x_coords, 980))
+        elif color == 'lightbrown':
+            ts = Region(x_coords - 440, 1000, 300, 32).text('', colormap['white'])
+            if re.search(r'^[\d:]+$', ts):
+                timeout = parse_ui_timeout(ts)
+                if timeout:
+                    timestamps.append(timeout)
 
     drag_count = 0
     _area = Region(0, 130, 1600, 770)
@@ -814,12 +838,20 @@ def library_firestone_research(trigger: bool = False) -> int:
         if found:
             click((x, y + 130))
             time.sleep(1)
+            ts = Region(1050, 610, 300, 32).text('', colormap['green'])
+            timeout = 0
+            if re.search(r'^[\d:]+$', ts):
+                timeout = parse_ui_timeout(ts)
+
             click((790, 720))
             if color_at(970, 660) == 'lightbrown_research_full':
                 Debug.warn('[Firestone Research] Research slots full')
                 click((1400, 350))
                 click((1250, 200))
                 break
+
+            if timeout:
+                timestamps.append(timeout)
             available -= 1
         else:
             drag_drop((800, 430), (200, 430))
@@ -830,14 +862,20 @@ def library_firestone_research(trigger: bool = False) -> int:
             drag_drop((200, 430), (800, 430))
 
     click((1840, 55))
-    return 0
+    if timestamps:
+        return min(timestamps) - 181
+
+    return get_timeout(600)
 
 def library_meteorite_research(trigger: bool = False) -> int:
     """
     Execute the Meteorite Research.
     """
     if trigger:
-        pass
+        press_key('l')
+        time.sleep(2)
+        click((1810, 460))
+        time.sleep(2)
 
     click((1840, 55))
     return 0
@@ -887,7 +925,7 @@ def magic_quarter(trigger: bool = False) -> int:
                 click((1090,800))
             if not evolving:
                 while color_at(1590, 800) == 'green':
-                    Debug.history(f'Evolving {current}')
+                    Debug.history(f'Enlightening {current}')
                     click((1590, 800))
                     move_to((1590, 900))
                     time.sleep(0.3)
@@ -981,7 +1019,7 @@ def map_campaign(trigger: bool = False) ->int:
         return min(timestamps)
     return 0
 
-def map_map(trigger: bool = False) -> None:
+def map_map(trigger: bool = False) -> int:
     """
     Manage world map operations including reward claiming and dynamic deployment.
 
@@ -1000,7 +1038,7 @@ def map_map(trigger: bool = False) -> None:
     timestamps = []
 
     # Get new missions time
-    ts = Region(250, 1020, 130, 40).text('', colormap['lightyellow'])
+    ts = Region(300, 1020, 130, 40).text('', colormap['lightyellow'])
     if re.search(r'^[\d:]+$', ts):
         timeout = parse_ui_timeout(ts)
         if timeout:
@@ -1109,6 +1147,48 @@ def new_hero(trigger: bool = False) -> int:
 
     click((1840, 55))
     return get_timeout(604800)
+
+def oracle(trigger: bool = False) -> int:
+    """
+    Perform oracle tasks
+    """
+    if trigger:
+        press_key('o')
+        time.sleep(2)
+
+    # Rituals
+    if color_at(870, 370) == 'red':
+        click((820, 430))
+        coords = {
+            'harmony': (1270, 500, config['oracle_rituals_harmony']),
+            'serenity': (1700, 500, config['oracle_rituals_serenity']),
+            'unknown':  (1270, 870, config['oracle_rituals_unknown']),
+            'concentration': (1700, 870, config['oracle_rituals_concentration'])
+        }
+
+        for _ in range (0, 2):
+            for name, (x, y, perform) in coords.items():
+                if perform and color_at(x, y) == 'green':
+                    Debug.history(f'Performing/ claiming {name} ritual')
+                    click((x, y))
+
+    # blessings (not there yet)
+
+    click((1840, 55))
+    return 0
+
+def oracle_gift(trigger: bool = False) -> int:
+    """
+    Obtain oracle gift
+    """
+    if trigger:
+        pass
+
+    if color_at(750, 820) == 'green':
+        click((750, 820))
+
+    click((1840, 55))
+    return 0
 
 def pirates_price(trigger: bool = False) -> int:
     """
@@ -1244,7 +1324,7 @@ def tavern_tavern_collect(trigger: bool = False) -> int:
 
 
     while True:
-        if color_at(400, 640) == 'yellow':
+        if color_at(400, 640) == 'green':
             click((400, 640))
             time.sleep(0.5)
         else:

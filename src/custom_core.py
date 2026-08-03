@@ -43,6 +43,7 @@ colormap = {
     'brown': (80, 88, 37, 41, 14, 18),
     'brown_forbidden_knowledge': (214, 217, 73, 86, 16, 16),
     'brown_liberation_won': (192, 197, 143, 146, 99, 103),
+    'brown_firestone_research': (108, 112, 75, 85, 40, 45),
     'green': (0, 24, 140, 255, 0, 32),
     'green_talents': (100, 135, 150, 255, 0, 25),
     'grey': (120, 180, 120, 180, 120, 180),
@@ -61,27 +62,31 @@ colormap = {
 # Config
 config = {
     # System settings
-    'logfile':                  'logs/firestone-bot.log',       # location of the logfile
-    'ollama_url':               'http://localhost:11434',       # url voor ollama
-    'ollama_model':             'llama3.2:latest',              # model to use for ollama, llama3.2(-vision) should be optimal
-    'tracker_file':             'index.json',                   # name of the filetracker index files
-    'wait_page':                10,                             # float or int value for the timeout waiting for a page to appear
+    'logfile':                      'logs/firestone-bot.log',       # location of the logfile
+    'ollama_url':                   'http://localhost:11434',       # url voor ollama
+    'ollama_model':                 'llama3.2:latest',              # model to use for ollama, llama3.2(-vision) should be optimal
+    'tracker_file':                 'index.json',                   # name of the filetracker index files
+    'wait_page':                    10,                             # float or int value for the timeout waiting for a page to appear
 
     # Game settings
-    'alchemist_dragon_blood':   True,                           # alchemist: do dragon blood experiments
-    'alchemist_strange_dust':   False,                          # alchemist: do strange dust experiments
-    'alchemist_exotic_coin':    False,                          # alchemist: do exotic coin experiments
-    'bag_open_chests':          True,                           # bag: open chests
-    'guild_bank':               True,                           # visit guild bank
-    'guild_bank_donate':        True,                           # donate leftover guild coins to guild bank
-    'guild_hall':               True,                           # visit guild hall
-    'jump_percentage':          400,                            # temple of eternals: jump percentage
-    'map_order':                'mystery,scout,adventure,war,monster,dragon,naval', # the order to play map missions
-    'transmute_legendary':      False,                          # alchemist: transmute legendary chests
-    'transmute_epic':           False,                          # alchemist: transmute epic chests
-    'transmute_rare':           False,                          # alchemist: transmute rare chests
-    'transmute_uncommon':       False,                          # alchemist: transmute uncommon chests
-    'upgrade_mode':             '100'                           # check_upgrade: set upgrade amount for heroes
+    'alchemist_dragon_blood':       True,                           # alchemist: do dragon blood experiments
+    'alchemist_strange_dust':       False,                          # alchemist: do strange dust experiments
+    'alchemist_exotic_coin':        False,                          # alchemist: do exotic coin experiments
+    'bag_open_chests':              True,                           # bag: open chests
+    'guild_bank':                   True,                           # visit guild bank
+    'guild_bank_donate':            True,                           # donate leftover guild coins to guild bank
+    'guild_hall':                   True,                           # visit guild hall
+    'jump_percentage':              400,                            # temple of eternals: jump percentage
+    'map_order':                    'mystery,scout,adventure,war,monster,dragon,naval', # the order to play map missions
+    'oracle_rituals_harmony':       True,                           # oracle: perform harmony rituals
+    'oracle_rituals_serenity':      True,                           # oracle: perform serenity rituals
+    'oracle_rituals_unknown':       False,                          # oracle: perform unknown rituals
+    'oracle_rituals_concentration': True,                           # oracle: perform concentration rituals
+    'transmute_legendary':          False,                          # alchemist: transmute legendary chests
+    'transmute_epic':               False,                          # alchemist: transmute epic chests
+    'transmute_rare':               False,                          # alchemist: transmute rare chests
+    'transmute_uncommon':           False,                          # alchemist: transmute uncommon chests
+    'upgrade_mode':                 '100'                           # check_upgrade: set upgrade amount for heroes
 }
 config_file: str = 'bot_settings.json'
 
@@ -112,7 +117,7 @@ tasks = {
     '_check_upgrade':       ('',                                'check_upgrade', 1),
     '_check_heroes':        ('',                                'check_heroes', 1),
     #'_daylies':             ('',                                'daylies', 0),
-    '_battle_pass':         ('',                                'battle_pass', 1),
+    '_battle_pass':         ('',                                'battle_pass', 1), # add golden pass purchase
     #'new_hero':             ('new_hero.png',                    'new_hero', 1),
 
     # alchemist
@@ -142,10 +147,11 @@ tasks = {
     'expeditions':          ('guild/expeditions.png',           'guild_expeditions', 1),
     'forbidden_knowledge':  ('guild/forbidden_knowledge.png',   'guild_forbidden_knowledge', 1),
     '_guild':               ('',                                'guild', 0),
-    
+
 
     # library
     'firestone_research':   ('library/firestone_research.png',  'library_firestone_research', 1),
+    '_firestone_research':  ('',                                'library_firestone_research', 1),
     'meteorite_research':   ('library/meteorite_research.png',  'library_meteorite_research', 1),
 
     # map
@@ -153,8 +159,12 @@ tasks = {
     'map':                  ('map/map.png',                     'map_map', 1),
     '_map':                 ('',                                'map_map', 1),
 
+    # oracle
+    'oracle_gift':          ('oracle/gift.png',                 'oracle_gift', 0),
+    'oracle':               ('oracle/oracle.png',               'oracle', 0),
+
     # pirate ship
-    'pirates_price':        ('pirate_ship/pirates_price.png',   'pirates_price', 1),
+    #'pirates_price':        ('pirate_ship/pirates_price.png',   'pirates_price', 1), #rework pickup method
 
     # shop
     'sign_in':              ('shop/sign_in.png',                'shop_signin', 0),

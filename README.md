@@ -39,7 +39,7 @@ But sadly, new OculiX IDE looking shiny on my desktop, getting frustrated by the
 
 ### Library
 - Firestone research:
-  - Claim finished tasks
+  - Claim finished tasks (3 minutes before end for free)
   - Start new researches
 
 ### Magic quarter
@@ -80,6 +80,10 @@ But sadly, new OculiX IDE looking shiny on my desktop, getting frustrated by the
 - Campaign Battles:
   - Pick up the loot
   - Run daily liberation missions
+
+### Oracle
+- Rituals
+- Obtain oracle gift from shop
 
 ### Pirate ship
 - Pirates price
@@ -144,8 +148,8 @@ But sadly, new OculiX IDE looking shiny on my desktop, getting frustrated by the
 - Campaign:
   - Select battles
 
-### Oracle (not yet unlocked)
-- anything
+### Oracle
+- Blessings
 
 ### Pirate ship
 - Mercenaries
