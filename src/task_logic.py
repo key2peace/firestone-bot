@@ -28,6 +28,7 @@ from custom_core import (
     main_finished,
     main_upgrade,
     mouse_down,
+    mouse_scroll,
     mouse_up,
     move_to,
     my_round,
@@ -279,17 +280,21 @@ def character_quests(trigger: bool = False) -> int:
         return -1
 
     for x in [760, 1170]:
-        type = 'daily' if x == 760 else 'weekly'
-        if type == 'weekly' and not color_at(1360, 90) == 'red':
+        quest_type = 'daily' if x == 760 else 'weekly'
+        Debug.info(f'x:{x} | type:{quest_type}')
+        if quest_type == 'weekly' and not color_at(1360, 90) == 'red':
             break
 
         click((x, 130))
         time.sleep(0.3)
         while color_at(1560, 300) == 'green':
-            Debug.history(f'Claiming {type} quest')
+            Debug.history(f'Claiming {quest_type} quest')
             click((1560, 300))
             move_to((1620, 300))
             time.sleep(1)
+            if color_at(1260, 730) == 'green':
+                click((1260, 730))
+                time.sleep(1)
 
     click((1850, 76))
     if trigger:
@@ -324,14 +329,13 @@ def character_talents(trigger: bool = False) -> int:
                 time.sleep(1)
             click((1250, 320))
             break
-        else:
-            drag_drop((950, 990), (950, 590))
-            time.sleep(1)
-            counter += 1
-            if counter > 10:
-                for _ in range(1, counter):
-                    drag_drop((950, 590), (950, 990))
-                break
+        drag_drop((950, 990), (950, 590))
+        time.sleep(1)
+        counter += 1
+        if counter > 10:
+            for _ in range(1, counter):
+                drag_drop((950, 590), (950, 990))
+            break
     if clicked:
         click((1650, 980))
 
@@ -810,12 +814,14 @@ def library_firestone_research(trigger: bool = False) -> int:
 
     for x_coords in [1290, 590]:
         color = color_at(x_coords, 960)
-        Debug.info(f'research: {color}');
+        Debug.info(f'research: {color}')
         if color in ['green', 'yellow']:
             available += 1
             click((x_coords, 980))
         elif color == 'lightbrown':
-            ts = Region(x_coords - 440, 1000, 300, 32).text('', colormap['white'])
+            ts_area = Region(x_coords - 440, 1000, 300, 32)
+            ts_area.highlight(3)
+            ts = ts_area.text('', colormap['white'])
             if re.search(r'^[\d:]+$', ts):
                 timeout = parse_ui_timeout(ts)
                 if timeout:
@@ -897,15 +903,10 @@ def magic_quarter(trigger: bool = False) -> int:
         'azhar': (1190, 1000)
     }
 
-    dust = Region(1595, 20, 110, 36).get_number()
-    evolving = ''
+    #dust = Region(1595, 20, 110, 36).get_number()
     tmp = {}
     for name, (x, y) in pos.items():
         if not color_at(x - 50, y - 50) == 'grey_magic_quarter':
-            click((x, y))
-            time.sleep(1)
-            text = Region(310, 230, 240,38).text('adelotvyER', colormap['white']).lower()
-            evolving = name if text.startswith('ready') else evolving
             tmp[name] = (x, y)
 
     while True:
@@ -913,34 +914,39 @@ def magic_quarter(trigger: bool = False) -> int:
         if current and current in pos:
             del tmp[current]
 
-            if evolving and evolving == current:
-                click((1210, 150)) # Evolution
-                time.sleep(0.3)
-                if color_at(1220, 780) == 'green':
-                    Debug.history(f'Evolving {current}')
-                    click((1220, 780))
-
-            click((1050, 150)) # General
+            # General
+            click((1050, 150))
             time.sleep(0.3)
             if color_at(1090, 800) == 'green':
                 Debug.history(f'Training {current}')
                 click((1090,800))
-            if not evolving:
-                while color_at(1590, 800) == 'green':
-                    Debug.history(f'Enlightening {current}')
-                    click((1590, 800))
-                    move_to((1590, 900))
-                    time.sleep(0.3)
-
-            click((1400, 150)) # Chaos Rift
-            time.sleep(0.3)
-            while color_at(1630, 775) == 'green':
-                Debug.history(f'Increase {current}\'s holy damage')
-                click((1720, 760))
-                move_to((1720, 660))
+            while config['magic_quarter_enlighten'] and color_at(1590, 800) == 'green':
+                Debug.history(f'Enlightening {current}')
+                click((1590, 800))
+                move_to((1590, 900))
                 time.sleep(0.3)
 
-            click((1560, 150)) # Guardian rarity
+            # Evolution - colorcheck disabled because of bug
+            #if config['magic_quarter_evolve'] and color_at(1265, 100) == 'white':
+            click((1210, 150))
+            time.sleep(0.3)
+            if color_at(1220, 780) == 'green':
+                Debug.history(f'Evolving {current}')
+                click((1220, 780))
+                time.sleep(10)
+
+            # Chaos Rift
+            if color_at(1435, 100) == 'white':
+                click((1400, 150))
+                time.sleep(0.3)
+                while color_at(1630, 775) == 'green':
+                    Debug.history(f'Increase {current}\'s holy damage')
+                    click((1720, 760))
+                    move_to((1720, 660))
+                    time.sleep(0.3)
+
+            # Guardian rarity - red dot?
+            click((1560, 150))
             time.sleep(0.3)
             if color_at(1365, 630) == 'green':
                 Debug.history(f'Increase {current}\'s rarity')
@@ -1036,7 +1042,6 @@ def map_map(trigger: bool = False) -> int:
         return -1
 
     _area = Region(140, 60, 1630, 950)
-    task_map_zoom = 'images/tasks/map/zoom.png'
     timestamps = []
 
     # Get new missions time
@@ -1073,9 +1078,8 @@ def map_map(trigger: bool = False) -> int:
             if color_at(1060, 650) == 'green':
                 click((1060, 650))
 
-    zoom_match = screen.exists(task_map_zoom)
-    if zoom_match:
-        drag_drop(zoom_match, (1290, zoom_match.get_y()))
+    for _ in range(100):
+        mouse_scroll(-50)
 
     mission_types = {
         'mystery':  2,
@@ -1138,7 +1142,7 @@ def map_map(trigger: bool = False) -> int:
     click((1840, 55))
     if timestamps:
         return min(timestamps) - 180
-    return 0
+    return get_timeout(600)
 
 def new_hero(trigger: bool = False) -> int:
     """
@@ -1159,13 +1163,13 @@ def oracle(trigger: bool = False) -> int:
         time.sleep(2)
 
     # Rituals
-    if color_at(870, 370) == 'red':
+    if color_at(885, 360) == 'white':
         click((820, 430))
         coords = {
-            'harmony': (1270, 500, config['oracle_rituals_harmony']),
-            'serenity': (1700, 500, config['oracle_rituals_serenity']),
-            'unknown':  (1270, 870, config['oracle_rituals_unknown']),
-            'concentration': (1700, 870, config['oracle_rituals_concentration'])
+            'harmony': (1280, 500, config['oracle_rituals_harmony']),
+            'serenity': (1710, 500, config['oracle_rituals_serenity']),
+            'unknown':  (1280, 870, config['oracle_rituals_unknown']),
+            'concentration': (1710, 870, config['oracle_rituals_concentration'])
         }
 
         for _ in range (0, 2):
@@ -1175,6 +1179,53 @@ def oracle(trigger: bool = False) -> int:
                     click((x, y))
 
     # blessings (not there yet)
+    if color_at(885, 540) == 'white':
+        click((820, 610))
+        coords = {
+            'Firestone Finder': (0, 0, 0),
+            'Raining gold': (1640, 230, 0),
+            'Mana heroes': (1770, 360, 0),
+            'Rage heroes': (1820, 540, 0),
+            'Energy heroes': (1770, 715, 0),
+            'Tank specialization': (1640, 840, 0),
+            'Healer specialization': (1465, 890, 0),
+            'Damage specialization': (1290, 840, 0),
+            'Fist fight': (1160, 715, 0),
+            'Precision': (1115, 540, 0),
+            'Magic spells': (1160, 360, 0),
+            'Guardian power': (1290, 230, 0),
+            'Fate': (0, 0, 0),
+        }
+
+        # get current values
+        amounts = []
+        for name, (x, y, current) in coords.items():
+            if not x:
+                continue
+            amount = Region(x - 90, y + 90, 64, 32).get_number('white')
+            amounts.append(amount)
+            coords[name] = (x, y, amount)
+
+        for _ in range(3):
+            # now lets see what to upgrade
+            for name, (x, y, current) in coords.items():
+                # skip if we do not have the coordinate or not enabled
+                if not x or color_at(x, y) != 'white':
+                    continue
+                # skip if current is already the highest
+                if  max(amounts) and min(amounts) != max(amounts) and current == max(amounts):
+                    continue
+                # select the item
+                click((x - 60, y + 50))
+                time.sleep(1)
+                # check if we can bless this
+                if color_at(1485, 850) == 'green':
+                    Debug.history(f'Blessing {name}')
+                    click((1485, 850))
+                    coords[name] = (x, y, current + 1)
+                    amounts.append(current + 1)
+                click((1710, 220))
+                time.sleep(1)
 
     click((1840, 55))
     return 0
@@ -1385,12 +1436,16 @@ def temple_of_eternals(trigger: bool = False) -> int:
     percentage = Region(1430, 417, 180, 40).get_number('green')
 
     jump_require = int(config['jump_percentage'])
+    jump_temple_token = int(config['jump_temple_token'])
     if percentage >= jump_require:
         Debug.warn(f'[temple_of_eternals] Time to jump! {percentage}%/{jump_require}%')
         timeouts['check_upgrade'] = 0
         click((1360 ,510))
         time.sleep(0.5)
-        click((960, 660))
+        if percentage >= jump_temple_token and color_at(1050, 990) == 'green':
+            click((1050, 990))
+        else:
+            click((960, 660))
         time.sleep(0.5)
         click((1100, 720))
         time.sleep(5)

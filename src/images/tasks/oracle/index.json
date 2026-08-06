@@ -1,10 +1,14 @@
 {
-    "gift.png": {
-        "timestamp": 1785782889.2859783,
-        "sha256": "3b6266ff11a144e7b31ea443f06616a92321cb4faedeeb465838a11d0b32f976"
+    "blessing.png": {
+        "timestamp": 1785948572.277934,
+        "sha256": "70e7e1e86fd630f7744464667e4b1f20190dce5082fdb8cd2564c7445c3b547c"
     },
-    "oracle.png": {
-        "timestamp": 1785782889.3067434,
-        "sha256": "29d477548697f228b92857b1731de7aa26d366299cb2a2598e34de055915a3a9"
+    "gift.png": {
+        "timestamp": 1785948572.2919343,
+        "sha256": "1b3329f951ffbdfccc32de1d660f84cdd36ced278058e7ec58d44e31ac4368d1"
+    },
+    "rituals.png": {
+        "timestamp": 1785948572.3129346,
+        "sha256": "8ac7e8695a5d71a08706958e6cd17caae550f0e795a064197e2aa14a222d333d"
     }
 }

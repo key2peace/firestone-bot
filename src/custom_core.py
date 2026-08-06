@@ -15,6 +15,7 @@ import time
 import threading
 import tkinter as tk
 
+from ctypes import windll, create_unicode_buffer
 from typing import Any, ClassVar, Dict, List, Optional, Tuple, Union
 
 import cv2
@@ -25,7 +26,6 @@ import pyautogui
 import pytesseract
 import requests
 
-from ctypes import wintypes, windll, create_unicode_buffer
 from pynput import keyboard
 from watchdog.events import FileSystemEventHandler
 from watchdog.observers import Observer
@@ -68,25 +68,43 @@ config = {
     'tracker_file':                 'index.json',                   # name of the filetracker index files
     'wait_page':                    10,                             # float or int value for the timeout waiting for a page to appear
 
-    # Game settings
+    # Alchemist
     'alchemist_dragon_blood':       True,                           # alchemist: do dragon blood experiments
     'alchemist_strange_dust':       False,                          # alchemist: do strange dust experiments
     'alchemist_exotic_coin':        False,                          # alchemist: do exotic coin experiments
-    'bag_open_chests':              True,                           # bag: open chests
-    'guild_bank':                   True,                           # visit guild bank
-    'guild_bank_donate':            True,                           # donate leftover guild coins to guild bank
-    'guild_hall':                   True,                           # visit guild hall
-    'jump_percentage':              400,                            # temple of eternals: jump percentage
-    'map_order':                    'mystery,scout,adventure,war,monster,dragon,naval', # the order to play map missions
-    'oracle_rituals_harmony':       True,                           # oracle: perform harmony rituals
-    'oracle_rituals_serenity':      True,                           # oracle: perform serenity rituals
-    'oracle_rituals_unknown':       False,                          # oracle: perform unknown rituals
-    'oracle_rituals_concentration': True,                           # oracle: perform concentration rituals
     'transmute_legendary':          False,                          # alchemist: transmute legendary chests
     'transmute_epic':               False,                          # alchemist: transmute epic chests
     'transmute_rare':               False,                          # alchemist: transmute rare chests
     'transmute_uncommon':           False,                          # alchemist: transmute uncommon chests
-    'upgrade_mode':                 '100'                           # check_upgrade: set upgrade amount for heroes
+
+    # Battle screen
+    'bag_open_chests':              True,                           # bag: open chests
+    'upgrade_mode':                 '100',                          # check_upgrade: set upgrade amount for heroes
+
+    # Guild
+    'guild_bank':                   True,                           # visit guild bank
+    'guild_bank_donate':            True,                           # donate leftover guild coins to guild bank
+    'guild_hall':                   True,                           # visit guild hall
+
+    # Temple of eternals
+    'jump_percentage':              400,                            # temple of eternals: jump percentage
+    'jump_temple_token':            2000,                           # temple of eternals: percentage to use temple tokens
+
+    # Magic Quarter
+    'magic_quarter_enlighten':      False,                          # enlighten guardians (uses dust)
+    'magic_quarter_evolve':         True,                           # evolve guardians (uses dust)
+    'magic_quarter_chaos_rift':     True,                           # increase guardians holy damage (uses orbs of light)
+
+    # Map
+    'map_order':                    'mystery,scout,adventure,war,monster,dragon,naval', # the order to play map missions
+
+    # Oracle
+    'oracle_rituals_harmony':       True,                           # oracle: perform harmony rituals
+    'oracle_rituals_serenity':      True,                           # oracle: perform serenity rituals
+    'oracle_rituals_unknown':       False,                          # oracle: perform unknown rituals
+    'oracle_rituals_concentration': True,                           # oracle: perform concentration rituals
+
+    'dummy':                        0                               # dummy on the end
 }
 config_file: str = 'bot_settings.json'
 
@@ -134,7 +152,6 @@ tasks = {
     # engineer
     'engineer':             ('engineer/engineer.png',           'engineer', 1),
     'garage':               ('engineer/garage.png',             'engineer_garage', 1),
-    'garage_chaos_rift':    ('engineer/garage_chaos_rift.png',  'engineer_garage', 1),
     'garage_rarity':        ('engineer/garage_rarity.png',      'engineer_garage', 1),
     'new_warmachine':       ('engineer/new_warmachine.png',     'engineer_garage', 1),
 
@@ -161,7 +178,8 @@ tasks = {
 
     # oracle
     'oracle_gift':          ('oracle/gift.png',                 'oracle_gift', 0),
-    'oracle':               ('oracle/oracle.png',               'oracle', 0),
+    'oracle_rituals':       ('oracle/rituals.png',              'oracle', 0),
+    'oracle_blessing':      ('oracle/blessing.png',             'oracle', 0),
 
     # pirate ship
     #'pirates_price':        ('pirate_ship/pirates_price.png',   'pirates_price', 1), #rework pickup method
@@ -689,6 +707,15 @@ def mouse_down(timeout: float=0) -> None:
     except mouse_controller.FailSafeException:
         pause_on()
 
+def mouse_scroll(amount: int) -> None:
+    """
+    Scroll mousewheel up or down
+
+    Args:
+        'amount' (int) the amount to scroll. Positive for up, negative for down
+    """
+    pyautogui.scroll(amount)
+
 def mouse_up() -> None:
     """
     Release mousebutton after mouseDown()
@@ -854,7 +881,7 @@ def parse_ui_timeout(ocr_text: str) -> float | None:
 
     try:
         seconds = int(float(ocr_text))
-        return seconds
+        return time.time() + seconds
     except (ValueError, TypeError) as error:
         Debug.error(f'[parse_ui_timeout] Failed to map UI clock vector: {error}')
         return None
@@ -1662,7 +1689,7 @@ if os.path.exists(config_file):
 
 # general regions
 screen = Region(0, 0, 1920, 1080)
-main_finished = Region(0, 0, 160, 750)
+main_finished = Region(0, 0, 160, 570)
 main_upgrade = Region(1661, 910, 259, 170)
 
 # filetracker

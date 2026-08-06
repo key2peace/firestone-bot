@@ -12,6 +12,7 @@ disable= C0301, # line-too-long
 		 R0912, # too-many-branches
 		 R1702, # too-many-nested-blocks
 		 R0801, # duplicate-code
+		 R0911, # too-many-returns
 		 R0915  # too-many-statements
 
 [REPORTS]

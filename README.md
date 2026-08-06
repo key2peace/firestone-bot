@@ -83,6 +83,7 @@ But sadly, new OculiX IDE looking shiny on my desktop, getting frustrated by the
 
 ### Oracle
 - Rituals
+- Blessings
 - Obtain oracle gift from shop
 
 ### Pirate ship
@@ -104,6 +105,7 @@ But sadly, new OculiX IDE looking shiny on my desktop, getting frustrated by the
 
 ### Temple of eternals
 - Collect when configurable percentage has been reached
+- Use temple tokens at a configurable percentage
 
 ## Tasks not yet supported
 
@@ -147,9 +149,6 @@ But sadly, new OculiX IDE looking shiny on my desktop, getting frustrated by the
 ### Map
 - Campaign:
   - Select battles
-
-### Oracle
-- Blessings
 
 ### Pirate ship
 - Mercenaries
