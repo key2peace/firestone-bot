@@ -37,17 +37,6 @@ But sadly, new OculiX IDE looking shiny on my desktop, getting frustrated by the
 - Engineer:
   - Pick up tools
 
-### Library
-- Firestone research:
-  - Claim finished tasks (3 minutes before end for free)
-  - Start new researches
-
-### Magic quarter
-- Train guardians
-- Enlighten guardians
-- Evolving guardians
-- Chaos of Rift upgrades
-
 ### Guild
 - Arcane Crystal:
   - Spending a maximum of 5 pickaxes per run
@@ -65,6 +54,18 @@ But sadly, new OculiX IDE looking shiny on my desktop, getting frustrated by the
 - Guild expeditions
 - Guild hall:
     - Guild log
+
+### Library
+- Firestone research:
+  - Claim finished tasks (3 minutes before end for free)
+  - Start new researches
+- Meteorite Research
+
+### Magic quarter
+- Train guardians
+- Enlighten guardians
+- Evolving guardians
+- Chaos of Rift upgrades
 
 ### Main
 - Battle pass
@@ -138,9 +139,6 @@ But sadly, new OculiX IDE looking shiny on my desktop, getting frustrated by the
 - Jewel enchanting
 - Seals of power
 - Hero rarity
-
-### Library
-- Meteorite Research
 
 ### Main
 - Events

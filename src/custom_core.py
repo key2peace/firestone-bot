@@ -38,8 +38,9 @@ colormap = {
     # name: r_min, r_max, g_min, g_max, b_min, b_max
     'black': (0, 10, 0, 10, 0, 10),
     'blue': (8, 12, 125, 135, 250, 255),
-    'blue_forbidden_knowledge': (20,35,55,65,135,145),
+    'blue_forbidden_knowledge': (20, 35, 55, 65, 135, 145),
     'blue_liberation_lost': (32, 35, 75, 80, 123, 128),
+    'blue_meteorite_research': (33, 45, 56, 75, 134, 165),
     'brown': (80, 88, 37, 41, 14, 18),
     'brown_forbidden_knowledge': (214, 217, 73, 86, 16, 16),
     'brown_liberation_won': (192, 197, 143, 146, 99, 103),
@@ -101,7 +102,7 @@ config = {
     # Oracle
     'oracle_rituals_harmony':       True,                           # oracle: perform harmony rituals
     'oracle_rituals_serenity':      True,                           # oracle: perform serenity rituals
-    'oracle_rituals_unknown':       False,                          # oracle: perform unknown rituals
+    'oracle_rituals_obedience':       False,                          # oracle: perform obedience rituals
     'oracle_rituals_concentration': True,                           # oracle: perform concentration rituals
 
     'dummy':                        0                               # dummy on the end
@@ -1294,6 +1295,7 @@ class Region():
         if len(template_rgba.shape) == 3 and template_rgba.shape[2] == 4:
             is_matched = min_val <= 0.1
             top_left = min_loc
+            max_val = 1 - min_val
         else:
             is_matched = max_val >= 0.9
             top_left = max_loc
@@ -1672,7 +1674,7 @@ class Match(Region):
         super().__init__(x, y, w, h)
         self.score = score
 
-    def getScore(self) ->float:
+    def get_score(self) ->float:
         """
         Get the current match score
         """

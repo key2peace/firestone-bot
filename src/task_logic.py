@@ -28,7 +28,6 @@ from custom_core import (
     main_finished,
     main_upgrade,
     mouse_down,
-    mouse_scroll,
     mouse_up,
     move_to,
     my_round,
@@ -92,6 +91,12 @@ def _identify(page: str) -> bool:
         return True
 
     if page == 'engineer' and Region(40, 30, 390, 42).text('', colormap['yellow']).startswith('Engineer level'):
+        return True
+
+    if page == 'library_firestone_research' and 'tree' in Region(820, 40, 280, 70).text('', colormap['white']).lower():
+        return True
+
+    if page == 'library_meteorite_research' and 'meteorite' in Region(700, 1020, 520, 56).text('', colormap['white']):
         return True
 
     return False
@@ -809,11 +814,14 @@ def library_firestone_research(trigger: bool = False) -> int:
         click((1810, 640))
         time.sleep(2)
 
+    if not _wait_page('library_firestone_research'):
+        return -1
+
     available = 0
     timestamps = []
 
     for x_coords in [1290, 590]:
-        color = color_at(x_coords, 960)
+        color = color_at(x_coords, 964)
         Debug.info(f'research: {color}')
         if color in ['green', 'yellow']:
             available += 1
@@ -826,6 +834,8 @@ def library_firestone_research(trigger: bool = False) -> int:
                 timeout = parse_ui_timeout(ts)
                 if timeout:
                     timestamps.append(timeout)
+        else:
+            available += 1
 
     drag_count = 0
     _area = Region(0, 130, 1600, 770)
@@ -884,6 +894,22 @@ def library_meteorite_research(trigger: bool = False) -> int:
         time.sleep(2)
         click((1810, 460))
         time.sleep(2)
+
+    if not _wait_page('library_meteorite_research'):
+        return -1
+
+    for y in range(130, 1020, 10):
+        count = 0
+        for x in range(0, 1600, 10):
+            if color_at(x, y) == 'blue_meteorite_research':
+                count += 1
+                if count > 2:
+                    click((x, y))
+                    time.sleep(1)
+                    count = 0
+                    if color_at(1060, 770) == 'green':
+                        click((1060, 770))
+                        click((1260, 280))
 
     click((1840, 55))
     return 0
@@ -1051,8 +1077,10 @@ def map_map(trigger: bool = False) -> int:
         if timeout:
             timestamps.append(timeout)
 
-    clicked = False
-    for base_y in [906, 756, 606, 456, 306]:
+    # Loop through running tasks
+    base_y = 306
+    while base_y < 1080:
+        clicked = False
         if color_at(91, base_y) == 'green':
             click((160, base_y))
             clicked = True
@@ -1077,9 +1105,17 @@ def map_map(trigger: bool = False) -> int:
                 time.sleep(0.5)
             if color_at(1060, 650) == 'green':
                 click((1060, 650))
+        else:
+            base_y += 150
 
-    for _ in range(100):
-        mouse_scroll(-50)
+    # Get available slots
+    available: int = 0
+    current_text = re.search(r'(\d+)/\d+', Region(1150, 20, 100, 36).text('1234567890/', colormap['white']))
+    if current_text:
+        available = int(current_text.groups()[0])
+
+    # Set zoom to minimal
+    click((1337, 1037))
 
     mission_types = {
         'mystery':  2,
@@ -1091,27 +1127,26 @@ def map_map(trigger: bool = False) -> int:
         'naval': 2
     }
 
-    current_text = re.search(r'(\d+)/(\d+)', Region(1150, 20, 100, 36).text('1234567890/', colormap['white']))
-    if current_text:
-        available, total = current_text.groups()
-        available: int = int(available)
-        total: int = int(total)
-    else:
-        total: int = 0
-        available: int = 0
-
     for mission_type in config['map_order'].split(','):
-        mission_type = mission_type.strip()
-        required = mission_types[mission_type]
-
-        if total and available < required:
+        mission_type = mission_type.strip().lower()
+        if not mission_type in mission_types:
+            Debug.warn(f'Unknown mission type \'{mission_type}\' specified')
             continue
 
-        missions = _area.find_all('images/tasks/map/mission/' + mission_type + '.png')
+        required = mission_types[mission_type]
+        if available < required:
+            continue
+
+        filename = 'images/tasks/map/mission/' + mission_type + '.png'
+        if not os.path.exists(filename):
+            Debug.warn(f'{filename} does not exist')
+            continue
+
+        missions = _area.find_all(filename)
         if missions:
             clicked = []
             for m in missions:
-                if total and available < required:
+                if available < required:
                     break
 
                 x = my_round(m.get_x())
@@ -1129,9 +1164,8 @@ def map_map(trigger: bool = False) -> int:
                         if timeout:
                             timestamps.append(timeout)
 
+                    available -= required
                     click((1090, 870))
-                    if total:
-                        available -= required
                     time.sleep(0.5)
                 else:
                     txt = Region(960, 870, 560, 50).text('Youdnthavegsq', colormap['red'])
@@ -1168,7 +1202,7 @@ def oracle(trigger: bool = False) -> int:
         coords = {
             'harmony': (1280, 500, config['oracle_rituals_harmony']),
             'serenity': (1710, 500, config['oracle_rituals_serenity']),
-            'unknown':  (1280, 870, config['oracle_rituals_unknown']),
+            'obedience':  (1280, 870, config['oracle_rituals_obedience']),
             'concentration': (1710, 870, config['oracle_rituals_concentration'])
         }
 

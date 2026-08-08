@@ -73,7 +73,7 @@ def main() -> None:
                     if not match or match_count < 2:
                         continue
 
-                    Debug.history(f'[Tasks] {friendly_name} detected')
+                    Debug.history(f'[Tasks] {friendly_name} detected (Score: {match.get_score()})')
                     match.click()
                     match.move_mouse_away()
                     time.sleep(2)
