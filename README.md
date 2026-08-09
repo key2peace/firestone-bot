@@ -18,6 +18,7 @@ But sadly, new OculiX IDE looking shiny on my desktop, getting frustrated by the
 
 ## Features
 - Auto maximize and disable gamebar on crazygames
+- Crazygames crash dialog detection
 - Caputres F5/Esc keypress in order to pause the bot
 
 ## Tasks supported

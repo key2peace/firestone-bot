@@ -818,8 +818,6 @@ def library_firestone_research(trigger: bool = False) -> int:
                 click((1400, 350))
                 click((1250, 200))
                 break
-            else:
-                available -= 1
 
             if timeout:
                 timestamps.append(timeout)
