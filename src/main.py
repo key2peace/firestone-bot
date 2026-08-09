@@ -19,6 +19,7 @@ from custom_core import (
     pause_check,
     Region,
     reload_file,
+    screen, 
     tasks,
     timeouts
 )
@@ -54,9 +55,13 @@ def main() -> None:
 
                 pause_check()
 
-                if color_at(1777, 87) == 'white':
-                    click((1777, 87))
-                    time.sleep(2)
+                # Ensure we end up on mainscreen
+                while True:
+                    m = screen.exists('images/misc/close.png')
+                    if not m:
+                        break
+                    m.click()
+                    m.wait_vanish()
 
                 if pattern and not color_at(110, 190) == 'red':
                     continue
@@ -101,13 +106,13 @@ def main() -> None:
                 else:
                     Debug.history(f'[Task] {friendly_name} is missing the handler \'{task_function_name}\'')
 
-                if color_at(1186, 90) == 'red':
-                    hp = Region(840, 76, 310, 28).text('', colormap['white'])
-                    Debug.info(f'Enemy HP: {hp}')
-                    match = re.search(r'^([\d,]+)([a-zBKMT]+) HP$', hp)
-                    if match:
-                        numeric, suffix = match.groups()
-                        Debug.info(f'Numeric: {numeric} Suffix: {suffix}')
+            if color_at(1186, 90) == 'red':
+                hp = Region(840, 76, 310, 28).text('', colormap['white'])
+                Debug.info(f'Enemy HP: {hp}')
+                match = re.search(r'^([\d,]+)([a-zBKMT]+) HP$', hp)
+                if match:
+                    numeric, suffix = match.groups()
+                    Debug.info(f'Numeric: {numeric} Suffix: {suffix}')
             #Debug.history(f'[Tasks] Duration {duration_text(start_tasks)}')
 
     except KeyboardInterrupt as error:

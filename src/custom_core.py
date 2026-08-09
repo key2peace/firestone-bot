@@ -50,12 +50,14 @@ colormap = {
     'grey': (120, 180, 120, 180, 120, 180),
     'grey_magic_quarter': (100, 140, 100, 140, 100, 140),
     'lightbrown': (239, 239, 218, 218, 189, 189),
+    'lightbrown_research_nonfree': (140, 150, 104, 105, 55, 57),
     'lightbrown_research_full': (228, 236, 205, 215, 180, 190),
     'lightyellow': (255, 255, 206, 206, 88, 88),
     'red': (200, 255, 0, 40, 0, 35),
     'white': (200, 255, 200, 255, 200, 255),
     'white_overlayed': (125, 130, 124, 126, 100, 105),
     'yellow': (240, 255, 157, 255, 0, 100),
+    'purple': (104, 104, 66, 66, 255, 255), 
 
     'gamebar': (33, 33, 34, 34, 51, 51)
 }
@@ -67,7 +69,8 @@ config = {
     'ollama_url':                   'http://localhost:11434',       # url voor ollama
     'ollama_model':                 'llama3.2:latest',              # model to use for ollama, llama3.2(-vision) should be optimal
     'tracker_file':                 'index.json',                   # name of the filetracker index files
-    'wait_page':                    10,                             # float or int value for the timeout waiting for a page to appear
+    'wait_page':                    5,                              # float or int value for the timeout waiting for a page to appear
+    'min_score':                    0.92,                           # minimal match score
 
     # Alchemist
     'alchemist_dragon_blood':       True,                           # alchemist: do dragon blood experiments
@@ -97,7 +100,7 @@ config = {
     'magic_quarter_chaos_rift':     True,                           # increase guardians holy damage (uses orbs of light)
 
     # Map
-    'map_order':                    'mystery,scout,adventure,war,monster,dragon,naval', # the order to play map missions
+    'map_order':                    'mystery,dragon,scout,adventure,war,monster,naval', # the order to play map missions
 
     # Oracle
     'oracle_rituals_harmony':       True,                           # oracle: perform harmony rituals
@@ -133,6 +136,7 @@ if os.path.exists(reload_file):
 tasks = {
     # starting with these
     '_crazygames_check':    ('',                                'crazygames_check', 1),
+    '_crazygames_error':    ('',                                'crazygames_error', 1),
     '_check_upgrade':       ('',                                'check_upgrade', 1),
     '_check_heroes':        ('',                                'check_heroes', 1),
     #'_daylies':             ('',                                'daylies', 0),
@@ -157,7 +161,7 @@ tasks = {
     'new_warmachine':       ('engineer/new_warmachine.png',     'engineer_garage', 1),
 
     # guild
-    'pickaxe':              ('guild/pickaxe.png',               'guild_pickaxe', 1),
+    'pickaxe':              ('guild/pickaxe.png',               'guild_shop_pickaxe', 1),
     'arcane_crystal':       ('guild/arcane_crystal.png',        'guild_arcanecrystal', 1),
     'awakening':            ('guild/awakening.png',             'guild_awakening', 1),
     'chaos_rift_supplies':  ('guild/chaos_rift_supplies.png',   'guild_chaos_rift_supplies', 1),
@@ -1293,14 +1297,12 @@ class Region():
         min_val, max_val, min_loc, max_loc = cv2.minMaxLoc(res)
 
         if len(template_rgba.shape) == 3 and template_rgba.shape[2] == 4:
-            is_matched = min_val <= 0.1
             top_left = min_loc
             max_val = 1 - min_val
         else:
-            is_matched = max_val >= 0.9
             top_left = max_loc
 
-        if is_matched:
+        if max_val >= config['min_score']:
             abs_x = self.x + top_left[0]
             abs_y = self.y + top_left[1]
             h_size, w_size = template_rgba.shape[:2]

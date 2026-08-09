@@ -32,89 +32,19 @@ from custom_core import (
     move_to,
     my_round,
     parse_ui_timeout,
+    pause_off,
+    pause_on,
     press_key,
     Region,
     screen,
     timeouts
 )
 
+from page_logic import (
+    page_wait
+)
+
 flipper: bool = True
-
-def _identify(page: str) -> bool:
-    """
-    Identify a page
-    """
-    if re.search(r'^character', page):
-        if Region(330, 20, 190, 46).text().lower() == 'character':
-            tab_selected = (156, 196, 228)
-            if page == 'character' and get_pixel_color(320, 40) == tab_selected:
-                return True
-            if page == 'character_talents' and get_pixel_color(600, 40) == tab_selected:
-                return True
-            if page == 'character_achievements' and get_pixel_color(850, 40) == tab_selected:
-                return True
-            if page == 'character_statistics' and get_pixel_color(1130, 40) == tab_selected:
-                return True
-            if page == 'character_quests' and get_pixel_color(1400, 40) == tab_selected:
-                return True
-
-    if page in ['guild_bank', 'guild_hall']:
-        text = Region(300, 20, 1300, 56).text('', colormap['white']).lower()
-        if page == 'guild_bank' and text in ['bank', 'treasury', 'bank log', 'locker']:
-            return True
-        if page == 'guild_hall' and text in ['guild', 'guild spirit', 'guild banner', 'guild log']:
-            return True
-
-    if page in ['guild_map', 'engineer_garage']:
-        text = Region(770, 0, 350, 60).text('', colormap['white']).lower()
-        if page == 'guild_map' and text == 'guild':
-            return True
-        if page == 'engineer_garage' and text == 'garage':
-            return True
-
-    if page == 'guild_expeditions' and Region(780, 40, 520, 50).text('', colormap['white']).lower() == 'guild expeditions':
-        return True
-
-    if page == 'arena_of_kings' and Region(790, 70, 320, 55).text('', colormap['white']).lower() in ['arena of kings']:
-        return True
-
-    if page == 'alchemist' and Region(1100, 180, 400, 60).text().lower() in ['experiments', 'transmute']:
-        return True
-
-    if page == 'temple_of_eternals' and Region(1120, 145, 500, 60).text().lower() == 'temple of eternals':
-        return True
-
-    if page == 'bag' and Region(1520, 55, 300, 60).text().lower() in ['inventory', 'scrolls', 'chests', 'currencies']:
-        return True
-
-    if page == 'map_map' and Region(64, 1020, 240, 50).text('', colormap['lightyellow']).lower().startswith('new missions'):
-        return True
-
-    if page == 'engineer' and Region(40, 30, 390, 42).text('', colormap['yellow']).startswith('Engineer level'):
-        return True
-
-    if page == 'library_firestone_research' and 'tree' in Region(820, 40, 280, 70).text('', colormap['white']).lower():
-        return True
-
-    if page == 'library_meteorite_research' and 'meteorite' in Region(700, 1020, 520, 56).text('', colormap['white']):
-        return True
-
-    return False
-
-def _wait_page(page: str) -> bool:
-    """
-    Wait for a page to appear or return false
-    """
-    if not page:
-        return False
-
-    time_start = time.time()
-    while not _identify(page):
-        if time.time() - time_start >= config['wait_page']:
-            return False
-        time.sleep(1)
-
-    return True
 
 def alchemist(trigger: bool = False) -> int:
     """
@@ -124,7 +54,7 @@ def alchemist(trigger: bool = False) -> int:
     if trigger:
         press_key('a')
 
-    if not _wait_page('alchemist'):
+    if not page_wait('alchemist'):
         return -1
 
     # experiments
@@ -189,7 +119,7 @@ def arena_of_kings(trigger: bool = False) -> int:
     if trigger:
         press_key('k')
 
-    if not _wait_page('arena_of_kings'):
+    if not page_wait('arena_of_kings'):
         return -1
 
     click((1855, 115))
@@ -203,7 +133,7 @@ def bag(trigger: bool = False) -> int:
         pass
 
     press_key('b')
-    if not _wait_page('bag'):
+    if not page_wait('bag'):
         return -1
 
     if config['bag_open_chests']:
@@ -281,7 +211,7 @@ def character_quests(trigger: bool = False) -> int:
         time.sleep(2)
         click((1500, 40))
 
-    if not _wait_page('character_quests'):
+    if not page_wait('character_quests'):
         return -1
 
     for x in [760, 1170]:
@@ -315,7 +245,7 @@ def character_talents(trigger: bool = False) -> int:
         time.sleep(2)
         click((680, 40))
 
-    if not _wait_page('character_talents'):
+    if not page_wait('character_talents'):
         return -1
 
     bubble = 'images/tasks/character/talents_bubble.png'
@@ -467,6 +397,23 @@ def crazygames_check(trigger: bool = False) -> int:
 
     return get_timeout(time.time())
 
+def crazygames_error(trigger: bool = False) -> int:
+    """
+    Check for crazygames error screen
+    """
+    if trigger:
+        pass
+
+    if color_at(1080, 670) == 'purple':
+        if Region(875, 650, 170, 40).text('', colormap['white']) == 'Reload game':
+            Debug.warn('Gamecrash detected. Preparing for web reload.')
+            pause_on(True)
+            press_key('f5')
+            sleep(20)
+            pause_off()
+
+    return get_timeout(300)
+
 def daylies(trigger: bool = False) -> int:
     """
     Run daylie tasks
@@ -492,7 +439,7 @@ def engineer(trigger: bool = False) -> int:
         time.sleep(1)
         click((590, 520))
 
-    if not _wait_page('engineer'):
+    if not page_wait('engineer'):
         return -1
 
     if color_at(1710, 740) == 'green':
@@ -512,7 +459,7 @@ def engineer_garage(trigger: bool = False) -> int:
         time.sleep(1)
         click((940, 520))
 
-    if not _wait_page('engineer_garage'):
+    if not page_wait('engineer_garage'):
         return -1
 
     # insert logic here
@@ -577,13 +524,13 @@ def guild(trigger: bool = False) -> int:
         pass
 
     click((1860, 430))      # Guild icon on main screen
-    if not _wait_page('guild_map'):
+    if not page_wait('guild_map'):
         return -1
 
     # guild bank
     if config['guild_bank'] and color_at(400, 875) == 'red':
         click((300, 700))       # Bank on guild map
-        if not _wait_page('guild_bank'):
+        if not page_wait('guild_bank'):
             return -1
         if config['guild_bank_donate'] and color_at(1200, 750) == 'green':
             click((1130, 750))  # Max donation
@@ -598,7 +545,7 @@ def guild(trigger: bool = False) -> int:
     # guild hall
     if config['guild_hall'] and color_at(1210, 585) == 'red':
         click((1070, 500))      # Guild hall
-        if not _wait_page('guild_hall'):
+        if not page_wait('guild_hall'):
             return -1
         click((180, 800))       # Guild log
         click((1670, 50))
@@ -669,10 +616,13 @@ def guild_chaos_rift_supplies(trigger: bool = False) -> int:
     if trigger:
         pass
 
-    while color_at(560, 820) == 'yellow':
+    while color_at(560, 820) == 'green':
         click((560, 820))
         move_to((480, 820))
-    click((1840, 55))
+        if color_at(1000, 680) == 'green':
+            click((1000, 680))
+            break
+
     click((1840, 55))
     return 0
 
@@ -685,6 +635,9 @@ def guild_expeditions(trigger: bool = False) -> int:
     """
     if trigger:
         pass
+
+    if not page_wait('guild_expeditions'):
+        return -1
 
     timestamps = []
     click((1250,330))
@@ -784,7 +737,7 @@ def guild_forbidden_knowledge(trigger: bool = False) -> int:
     click((1840, 55))
     return 0
 
-def guild_pickaxe(trigger: bool = False) -> int:
+def guild_shop_pickaxe(trigger: bool = False) -> int:
     """
     Execute the Pickaxe tool allocation and interaction routine.
 
@@ -814,21 +767,19 @@ def library_firestone_research(trigger: bool = False) -> int:
         click((1810, 640))
         time.sleep(2)
 
-    if not _wait_page('library_firestone_research'):
+    if not page_wait('library_firestone_research'):
         return -1
 
     available = 0
     timestamps = []
 
-    for x_coords in [1290, 590]:
-        color = color_at(x_coords, 964)
-        Debug.info(f'research: {color}')
+    for x_coords in [1280, 590]:
+        color = color_at(x_coords, 965)
         if color in ['green', 'yellow']:
             available += 1
             click((x_coords, 980))
-        elif color == 'lightbrown':
+        elif color == 'lightbrown_research_nonfree':
             ts_area = Region(x_coords - 440, 1000, 300, 32)
-            ts_area.highlight(3)
             ts = ts_area.text('', colormap['white'])
             if re.search(r'^[\d:]+$', ts):
                 timeout = parse_ui_timeout(ts)
@@ -839,7 +790,7 @@ def library_firestone_research(trigger: bool = False) -> int:
 
     drag_count = 0
     _area = Region(0, 130, 1600, 770)
-    while drag_count <= 3:
+    while drag_count <= 3 and available:
         pixels = grab_screen_to_mat(_area)
         found = False
         for y in range(0, pixels.shape[0], 10):
@@ -867,6 +818,8 @@ def library_firestone_research(trigger: bool = False) -> int:
                 click((1400, 350))
                 click((1250, 200))
                 break
+            else:
+                available -= 1
 
             if timeout:
                 timestamps.append(timeout)
@@ -895,7 +848,7 @@ def library_meteorite_research(trigger: bool = False) -> int:
         click((1810, 460))
         time.sleep(2)
 
-    if not _wait_page('library_meteorite_research'):
+    if not page_wait('library_meteorite_research'):
         return -1
 
     for y in range(130, 1020, 10):
@@ -1064,7 +1017,7 @@ def map_map(trigger: bool = False) -> int:
     if trigger:
         press_key('m')
 
-    if not _wait_page('map_map'):
+    if not page_wait('map_map'):
         return -1
 
     _area = Region(140, 60, 1630, 950)
@@ -1196,6 +1149,9 @@ def oracle(trigger: bool = False) -> int:
         press_key('o')
         time.sleep(2)
 
+    if not page_wait('oracle'):
+        return -1
+
     # Rituals
     if color_at(885, 360) == 'white':
         click((820, 430))
@@ -1270,6 +1226,9 @@ def oracle_gift(trigger: bool = False) -> int:
     """
     if trigger:
         pass
+
+    if not page_wait('oracle_gift'):
+        return -1
 
     if color_at(750, 820) == 'green':
         click((750, 820))
@@ -1464,7 +1423,7 @@ def temple_of_eternals(trigger: bool = False) -> int:
     if trigger:
         press_key('e')
 
-    if not _wait_page('temple_of_eternals'):
+    if not page_wait('temple_of_eternals'):
         return -1
 
     percentage = Region(1430, 417, 180, 40).get_number('green')

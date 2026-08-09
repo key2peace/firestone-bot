@@ -2,5 +2,9 @@
     "gamebar_maximize.png": {
         "timestamp": 1785948571.459177,
         "sha256": "ceed9291b64a9eac3bf7b099257e54d901121eff79abc54085db0f6e8ff715c9"
+    },
+    "close.png": {
+        "timestamp": 1786281779.5700443,
+        "sha256": "72a2455b13fa3818488b99ed17eea61b2abc2469777a72f921b1fc739fe34522"
     }
 }
