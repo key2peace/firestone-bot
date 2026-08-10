@@ -54,10 +54,11 @@ colormap = {
     'lightbrown_research_full': (228, 236, 205, 215, 180, 190),
     'lightyellow': (255, 255, 206, 206, 88, 88),
     'red': (200, 255, 0, 40, 0, 35),
-    'white': (200, 255, 200, 255, 200, 255),
+    'white': (230, 255, 200, 255, 200, 255),
     'white_overlayed': (125, 130, 124, 126, 100, 105),
     'yellow': (240, 255, 157, 255, 0, 100),
-    'purple': (104, 104, 66, 66, 255, 255), 
+    'purple': (104, 104, 66, 66, 255, 255),
+    'silver': (214, 214, 232, 232, 242, 242),
 
     'gamebar': (33, 33, 34, 34, 51, 51)
 }
@@ -91,8 +92,8 @@ config = {
     'guild_hall':                   True,                           # visit guild hall
 
     # Temple of eternals
-    'jump_percentage':              400,                            # temple of eternals: jump percentage
-    'jump_temple_token':            2000,                           # temple of eternals: percentage to use temple tokens
+    'jump_percentage':              1000,                           # temple of eternals: jump percentage
+    'jump_temple_token':            5000,                           # temple of eternals: percentage to use temple tokens
 
     # Magic Quarter
     'magic_quarter_enlighten':      False,                          # enlighten guardians (uses dust)

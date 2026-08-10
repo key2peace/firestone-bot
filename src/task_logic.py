@@ -1027,6 +1027,8 @@ def map_map(trigger: bool = False) -> int:
         timeout = parse_ui_timeout(ts)
         if timeout:
             timestamps.append(timeout)
+        else:
+            timestamps.append(get_timeout(30))
 
     # Loop through running tasks
     base_y = 306
@@ -1048,6 +1050,8 @@ def map_map(trigger: bool = False) -> int:
                         clicked = True
                     else:
                         timestamps.append(timeout)
+                else:
+                    timestamps.append(get_timeout(30))
 
         if clicked:
             time.sleep(1)
@@ -1106,6 +1110,27 @@ def map_map(trigger: bool = False) -> int:
                     continue
                 clicked.append([x, y])
 
+                # check if running (scan for banner)
+                found = False
+                for x in range(m.get_x() - 30, m.get_x()):
+                    if color_at(x, m.get_y()) == 'red':
+                        found = True
+                        break
+                if found:
+                    Debug.info('already finished. skipping')
+                    continue
+
+                # check if silver mission (double requirement)
+                found = False
+                x = m.get_center().get_x()
+                for y in range(m.get_y(), m.get_y() - 30):
+                    if color_at(x, y) == 'silver':
+                        Debug.info('silver mission detected')
+                        found = True
+                        break
+                if found and available < required * 2:
+                    continue
+
                 m.click()
                 m.wait_vanish()
                 if color_at(1090, 870) == 'green':
@@ -1114,6 +1139,8 @@ def map_map(trigger: bool = False) -> int:
                         timeout = parse_ui_timeout(ts)
                         if timeout:
                             timestamps.append(timeout)
+                        else:
+                            timestamps.append(get_timeout(30))
 
                     available -= required
                     click((1090, 870))
