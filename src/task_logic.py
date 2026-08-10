@@ -1004,7 +1004,7 @@ def map_campaign(trigger: bool = False) ->int:
         return min(timestamps)
     return 0
 
-def map_map(trigger: bool = False) -> int:
+def map_map(trigger: bool = False, direction: int = 0) -> int:
     """
     Manage world map operations including reward claiming and dynamic deployment.
 
@@ -1121,14 +1121,14 @@ def map_map(trigger: bool = False) -> int:
                     continue
 
                 # check if silver mission (double requirement)
-                found = False
+                silver = False
                 x = m.get_center().get_x()
                 for y in range(m.get_y(), m.get_y() - 30):
                     if color_at(x, y) == 'silver':
                         Debug.info('silver mission detected')
-                        found = True
+                        silver = True
                         break
-                if found and available < required * 2:
+                if silver and available < required * 2:
                     continue
 
                 m.click()
@@ -1143,6 +1143,9 @@ def map_map(trigger: bool = False) -> int:
                             timestamps.append(get_timeout(30))
 
                     available -= required
+                    if silver:
+                        available -= required
+
                     click((1090, 870))
                     time.sleep(0.5)
                 else:
@@ -1151,7 +1154,24 @@ def map_map(trigger: bool = False) -> int:
                     if txt and len(txt) > 10:
                         break
 
-    click((1840, 55))
+    # we still got squads idling
+    if available:
+        # we started with 0, drag the map up to check the lower part
+        if direction == 0:
+            drag_drop((960, 810), (960, 540))
+            timestamps.append(map_map(False, 1))
+        elif direction == 1:
+            drag_drop((960, 270), (960, 810))
+            timestamps.append(map_map(False, 2))
+            drag_drop((960, 810), (960, 540))
+    else:
+        if direction == 1:
+            drag_drop((960, 270), (960, 540))
+            click((1840, 55))
+
+    if not direction:
+        click((1840, 55))
+
     if timestamps:
         return min(timestamps) - 180
     return get_timeout(600)
