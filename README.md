@@ -79,6 +79,7 @@ But sadly, new OculiX IDE looking shiny on my desktop, getting frustrated by the
 ### Map
 - Claim finished tasks (3 minutes before end for free)
 - Pick new tasks in the order defined in config
+- Experimental support for silver missions (untested)
 - Campaign Battles:
   - Pick up the loot
   - Run daily liberation missions
