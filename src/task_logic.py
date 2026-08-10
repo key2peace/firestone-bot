@@ -370,7 +370,7 @@ def check_upgrade(trigger: bool = False) -> int:
     target_mode = str(config['upgrade_mode']).lower()
 
     # Cycle selector modes inline until text configuration criteria are met
-    while target_mode not in main_upgrade.text().lower():
+    while target_mode not in main_upgrade.text('', colormap['white']).lower():
         main_upgrade.click()
         move_to((main_upgrade.get_center().get_x(), 1080))
 
@@ -1065,9 +1065,18 @@ def map_map(trigger: bool = False, direction: int = 0) -> int:
 
     # Get available slots
     available: int = 0
-    current_text = re.search(r'(\d+)/\d+', Region(1150, 20, 100, 36).text('1234567890/', colormap['white']))
-    if current_text:
-        available = int(current_text.groups()[0])
+    total: int = 0
+    area = Region(1150, 20, 100, 36)
+    while not total:
+        text = area.text('1234567890/', colormap['white'])
+
+        # fix the damn missing 4 in front that simply refuses to be recognized
+        if text.startswith('/'):
+            text = f'4{text}'
+        current_text = re.search(r'(\d+)/(\d+)', text)
+        if current_text:
+            available = int(current_text.groups()[0])
+            total = int(current_text.groups()[1])
 
     # Set zoom to minimal
     click((1337, 1037))

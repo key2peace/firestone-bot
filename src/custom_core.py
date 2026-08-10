@@ -1576,23 +1576,26 @@ class Region():
 
         # 3. Upscale the clean 1-channel binary matrix to expand small font pixels
         clean_mat = cv2.resize(thresh, None, fx=4.0, fy=4.0, interpolation=cv2.INTER_CUBIC)
+        kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (2, 2))
 
-        # 4. Clean up remaining stroke artifact noise using a minimal 2x2 rectangular kernel
-        clean_mat = cv2.morphologyEx(
-            clean_mat,
-            cv2.MORPH_CLOSE,
-            cv2.getStructuringElement(cv2.MORPH_RECT, (2, 2))
-        )
+        clean_mat = cv2.morphologyEx(clean_mat, cv2.MORPH_CLOSE, kernel)
+        clean_mat = cv2.erode(clean_mat, kernel, iterations=1)
 
+        #cv2.imwrite(f'capture/{time.time_ns()}.png', clean_mat)
 
         tess_config = '-l eng'
         if os.path.exists('kiddosy.traineddata'):
             os.environ["TESSDATA_PREFIX"] = os.getcwd()
             tess_config = '-l kiddosy'
-        if expect:
-            tess_config += f' -c tessedit_char_whitelist={expect}'
 
-        for psm_mode in [3, 7, 8, 10]:
+        tess_config += ' -c min_characters_to_try=1'
+
+        if expect:
+            tess_config += f' --oem 3 -c tessedit_char_whitelist={expect}'
+        else:
+            tess_config += '--oem 1'
+
+        for psm_mode in [3, 6, 7, 8, 11]:
             raw_output = str(pytesseract.image_to_string(clean_mat, config=tess_config + f' --psm {psm_mode}'))
             if raw_output:
                 break
@@ -1603,7 +1606,7 @@ class Region():
                 return raw_output.strip()
 
             clean_mat = cv2.bitwise_not(clean_mat)
-            for psm_mode in [3, 7, 8, 10]:
+            for psm_mode in [3, 6, 7, 8, 11]:
                 raw_output = str(pytesseract.image_to_string(clean_mat, config=tess_config + f' --psm {psm_mode}')).strip()
                 if raw_output:
                     break
