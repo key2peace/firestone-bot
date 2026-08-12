@@ -1,0 +1,102 @@
+{
+    "benedictus.png": {
+        "timestamp": 1785948571.711026,
+        "sha256": "28c175b8e863107c46d6631961280bea29382f4ee1e3158eeab91660dedf9461"
+    },
+    "blaze.png": {
+        "timestamp": 1785948571.733027,
+        "sha256": "216e5ef3621dd109f0db7c465273cb8da59ab71ce5e2f4dfd8566e109aada38a"
+    },
+    "boris.png": {
+        "timestamp": 1785948571.7530122,
+        "sha256": "9d39c77c32f2b4e7eb4e3a81d71640cda4e46585a686532810675a2492dd3651"
+    },
+    "burt_ranger.png": {
+        "timestamp": 1785948571.7719135,
+        "sha256": "3ed10747173d76749d770f7f8466a180012288b6e67d059951a26588d5a225fa"
+    },
+    "cirilo.png": {
+        "timestamp": 1785948571.7918534,
+        "sha256": "d0b0cece6f6605a85401174c6e71c04d6ebba3812a63ac2fe9c00eeaab7b7038"
+    },
+    "leo.png": {
+        "timestamp": 1785948571.8118508,
+        "sha256": "219e3d63a822a87969e1d06d87de6fe5abf90c43631f49f6c915c7d703afbda2"
+    },
+    "muriel_invisible.png": {
+        "timestamp": 1785948571.831843,
+        "sha256": "d0ba519879931514f12cfb71107c57769169837e201221714d5adaac7a703150"
+    },
+    "muriel_nurse.png": {
+        "timestamp": 1785948571.8528419,
+        "sha256": "2f02e800fcf841947dd095c6d49b91f43a40f0d387e744487dac51648b72cf12"
+    },
+    "solaine.png": {
+        "timestamp": 1785948571.8737774,
+        "sha256": "2154b0c0b73f560a62e8c9674acbadd1440e33b8e5aeba1d279b85cb06444925"
+    },
+    "talia.png": {
+        "timestamp": 1785948571.8947537,
+        "sha256": "7cffb6b8dd3033304a73461d7dd89b9b1e468b15394f6e7a0aa20107891e3391"
+    },
+    "vermilion_evo1.png": {
+        "timestamp": 1785948571.9148772,
+        "sha256": "c8622812ca3087638b5bc85a7d6ff98c7ff045b162f0d23170e271dcfd778474"
+    },
+    "vermilion_evo3.png": {
+        "timestamp": 1785948571.934855,
+        "sha256": "9b9babaeadb203e05c90d28fa3ec52958d5edb950968631b0914180c2b4abcb0"
+    },
+    "vermilion_evo4.png": {
+        "timestamp": 1786503276.455484,
+        "sha256": "de4696ba18196eb33b3974d644059a498196f20b52c6650fce7dd39dd17b3690"
+    },
+    "astrid.png": {
+        "timestamp": 1786503276.320483,
+        "sha256": "9dfe6efcb7cba7e1e2f9e2cf228ab10b3d664ab15a50ddd4b0a6da408258c0af"
+    },
+    "burt_samurai.png": {
+        "timestamp": 1786503276.3404877,
+        "sha256": "3bbf8648d220620f4d1fbcbd8086e523668b702a5d74076e887efca06d6caf81"
+    },
+    "grace_evo1.png": {
+        "timestamp": 1786503276.3604875,
+        "sha256": "c6d5f8f99bcc17f2a7300f4c22ae43cd7816eda13fba0557e8807f65e68654eb"
+    },
+    "grace_evo2.png": {
+        "timestamp": 1786503276.378483,
+        "sha256": "6754e737b70ba8efc0c35305fe492b2ff20e7325084cfb8fd0d0ce2d1a8fa93c"
+    },
+    "ina.png": {
+        "timestamp": 1786503276.3944857,
+        "sha256": "bc61ddf06bbe5fe96d9df58740539e688d0e741f7695982251e34d6099834b82"
+    },
+    "luana.png": {
+        "timestamp": 1786503276.4154832,
+        "sha256": "b9780d3407c63babdf19cc0c6d1af3ee0e05133c18e3262e69748236c48c4215"
+    },
+    "valerius.png": {
+        "timestamp": 1786503276.4344852,
+        "sha256": "5cd4be78962a6cf43047b926458890694fa08d7aab5a0d6c3034a411e7fe5c33"
+    },
+    "armor.png": {
+        "timestamp": 1786504747.490431,
+        "sha256": "60b58487ea17ec5880fd42a077b3da904c2537746540115a1cd37a19020a4f5a"
+    },
+    "damage.png": {
+        "timestamp": 1786504747.5114305,
+        "sha256": "8aa36c82b765b8f7968592f8d410235e5f86124642a8d478ec292cea63d33fb4"
+    },
+    "gold.png": {
+        "timestamp": 1786504747.5304303,
+        "sha256": "ccc0f614cb62b0324a2570bb382a912513bedadb6e23405ce457c1dfcbecca02"
+    },
+    "guardian.png": {
+        "timestamp": 1786504747.5484314,
+        "sha256": "303a716eee5a4cd8bcbb36605465b63845f415e6f13e8d86eae432605bb35e9d"
+    },
+    "health.png": {
+        "timestamp": 1786504747.5654309,
+        "sha256": "69a59264eaa06574b69783399e3841b633a9d3db54a5069c9c546a7f537c0cc5"
+    }
+}

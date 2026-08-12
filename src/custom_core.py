@@ -1698,6 +1698,7 @@ if os.path.exists(config_file):
 # general regions
 screen = Region(0, 0, 1920, 1080)
 main_finished = Region(0, 0, 160, 570)
+main_heroes = Region(0, 910, 1660, 170)
 main_upgrade = Region(1661, 910, 259, 170)
 
 # filetracker

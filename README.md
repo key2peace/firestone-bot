@@ -30,6 +30,19 @@ But sadly, new OculiX IDE looking shiny on my desktop, getting frustrated by the
 ### Bag
 - Opening chests
 
+### Battle field
+- Heroes level upgrading
+  that is, if they are known, this is in order to facilitate users with less then 7 members in their party.
+  If you do not see them being upgraded, they have not been captured yet,  in that case please submit an issue providing a 1:1 image capture
+  of the area not being upgraded, and I will add them as soon as possible.
+  See [this](https://github.com/key2peace/firestone-bot/tree/main/src/images/heroes) page for the current list of supported heroes
+- Special upgrades
+- Battle pass
+- Mail:
+  - Claiming rewards
+  - Deleting claimed messages
+- On (re)start/empower, the upgrade multiplier is enforced to a configurable value
+
 ### Character
 - Quests
 - Talents
@@ -67,14 +80,6 @@ But sadly, new OculiX IDE looking shiny on my desktop, getting frustrated by the
 - Enlighten guardians
 - Evolving guardians
 - Chaos of Rift upgrades
-
-### Main
-- Battle pass
-- Mail:
-  - Claiming rewards
-  - Deleting claimed messages
-- Upgrade heroes when possible
-- On (re)start/empower, the upgrade multiplier is enforced to a configurable value
 
 ### Map
 - Claim finished tasks (3 minutes before end for free)

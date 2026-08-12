@@ -26,6 +26,7 @@ from custom_core import (
     get_timeout,
     grab_screen_to_mat,
     main_finished,
+    main_heroes,
     main_upgrade,
     mouse_down,
     mouse_up,
@@ -287,24 +288,26 @@ def check_heroes(trigger: bool = False) -> int:
     if trigger:
         pass
 
-    inactive_slots: int = 0
-    while inactive_slots < 7:
-        inactive_slots = 0
-        clicked = False
-
-        # Exact horizontal pixel anchors for the hero upgrade triggers
-        for x_coord in [120, 620, 820, 1020, 1220, 1420, 1620]:
-            if color_at(x_coord, 980) == 'yellow':
-                move_to((x_coord, 980))
+    clicked = False
+    for root, _, files in os.walk('images/heroes'):
+        files = [f for f in files if f.lower().endswith('.png')]
+        if not files:
+            continue
+        for filename in files:
+            filepath = os.path.join(root, filename)
+            m = main_heroes.exists(filepath)
+            if m:
+                x = m.get_x() + m.get_w() + 20
+                if not color_at(x, 980) == 'yellow':
+                    continue
+                move_to((x, 980))
                 mouse_down()
-                while not color_at(x_coord - 10, 980) == 'grey':
+                while not color_at(x - 10, 980) == 'grey':
                     pass
                 mouse_up()
                 clicked = True
-            else:
-                inactive_slots += 1
-        if clicked:
-            move_to((x_coord, 1080))
+    if clicked:
+        move_to((x, 1080))
     return get_timeout(5)
 
 def check_mail(trigger: bool = False) -> int:
