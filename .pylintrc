@@ -25,7 +25,7 @@ ignored-modules=cv2,mss,pyautogui,pytesseract
 [DESIGN]
 max-args=7
 max-attributes=10
-max-locals=20
+max-locals=30
 
 [FORMAT]
 expected-line-ending-format=LF

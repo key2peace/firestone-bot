@@ -57,6 +57,11 @@ But sadly, new OculiX IDE looking shiny on my desktop, getting frustrated by the
 - Engineer:
   - Pick up tools
 
+### Exotic Merchant
+- Sell items
+- Exotic upgrades
+- Emblem market
+
 ### Guild
 - Arcane Crystal:
   - Spending a maximum of 5 pickaxes after welcome sign-in to complete daily
@@ -136,11 +141,6 @@ But sadly, new OculiX IDE looking shiny on my desktop, getting frustrated by the
   - Upgrades
   - Blueprints
   - Rarity
-
-### Exotic Merchant
-- Sell items
-- Exotic upgrades
-- Emblem market
 
 ### Guild
 - Tree of Life

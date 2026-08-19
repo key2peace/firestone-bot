@@ -550,7 +550,7 @@ def events(trigger: bool = False) -> int:
                 continue
 
             text = Region(530, y + 15, 890, 80).text('', colormap['yellow']).lower()
-            if not text in eventlist:
+            if text not in eventlist:
                 Debug.warn(f'\'{text}\' not defined in eventlist')
                 continue
 
@@ -609,7 +609,7 @@ def exotic_merchant(trigger: bool = False) -> int:
                 filepath = os.path.join(root, filename)
                 name = filename[:-4]
                 if not config[f'sell_{name}']:
-                    continue                    
+                    continue
                 m = area.exists(filepath)
                 if not m:
                     continue
@@ -1237,14 +1237,11 @@ def map_map(trigger: bool = False, direction: int = 0) -> int:
     ts_start = time.time()
     while not total and time.time() - ts_start < 10:
         text = area.text('1234567890/', colormap['white'], 3)
-        Debug.info(f'Text {text}')
         if text.startswith('/'):
             text = f'4{text}'
         current_text = re.search(r'(\d+)/(\d+)', text)
         if current_text:
             available = int(current_text.groups()[0])
-            total = int(current_text.groups()[1])
-        Debug.info(f'Result {available}/{total}')
 
     mission_types = {
         'mystery':  2,
@@ -1263,7 +1260,7 @@ def map_map(trigger: bool = False, direction: int = 0) -> int:
             continue
 
         required = mission_types[mission_type]
-        if available < required:
+        if total and available < required:
             continue
 
         filename = 'images/tasks/map/mission/' + mission_type + '.png'
@@ -1275,7 +1272,7 @@ def map_map(trigger: bool = False, direction: int = 0) -> int:
         if missions:
             clicked = []
             for m in missions:
-                if available < required:
+                if total and available < required:
                     break
 
                 x = my_round(m.get_x())
@@ -1301,7 +1298,7 @@ def map_map(trigger: bool = False, direction: int = 0) -> int:
                         Debug.info('silver mission detected')
                         silver = True
                         break
-                if silver and available < required * 2:
+                if silver and total and available < required * 2:
                     continue
 
                 m.click()
@@ -1328,7 +1325,7 @@ def map_map(trigger: bool = False, direction: int = 0) -> int:
                         break
 
     # we still got squads idling
-    if available:
+    if total and available:
         # we started with 0, drag the map up to check the lower part
         if direction == 0:
             drag_drop((960, 810), (960, 540))
@@ -1348,7 +1345,7 @@ def map_map(trigger: bool = False, direction: int = 0) -> int:
 
     if timestamps:
         return min(timestamps) - 180
-    elif direction:
+    if direction:
         return get_timeout(86400)
     return get_timeout(600)
 

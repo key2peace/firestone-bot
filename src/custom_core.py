@@ -203,7 +203,7 @@ tasks = {
 
     # others on the end
     'bag':                  ('',                                'bag', 1),
-    'exotic_merchant':      ('',                                'exotic_merchant', 0),
+    'check_mail':           ('',                                'check_mail', 1),
     'check_taskcount':      ('',                                'check_taskcount', 0)
 }
 
