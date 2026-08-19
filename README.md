@@ -31,6 +31,8 @@ But sadly, new OculiX IDE looking shiny on my desktop, getting frustrated by the
 - Opening chests
 
 ### Battle field
+- Bag:
+  - Opening all chests except the first one (common mostly) in order to open those after sign-in to meet daily requirements
 - Heroes level upgrading
   that is, if they are known, this is in order to facilitate users with less then 7 members in their party.
   If you do not see them being upgraded, they have not been captured yet,  in that case please submit an issue providing a 1:1 image capture
@@ -42,6 +44,10 @@ But sadly, new OculiX IDE looking shiny on my desktop, getting frustrated by the
   - Claiming rewards
   - Deleting claimed messages
 - On (re)start/empower, the upgrade multiplier is enforced to a configurable value
+- Events:
+  - mini events listed on wiki
+  - calendar events listed on wiki
+  Other events(/types) will be added as soon as I see/play them
 
 ### Character
 - Quests
@@ -53,7 +59,7 @@ But sadly, new OculiX IDE looking shiny on my desktop, getting frustrated by the
 
 ### Guild
 - Arcane Crystal:
-  - Spending a maximum of 5 pickaxes per run
+  - Spending a maximum of 5 pickaxes after welcome sign-in to complete daily
 - Awakening
 - Bank:
   - Perform max bank deposit
@@ -83,8 +89,9 @@ But sadly, new OculiX IDE looking shiny on my desktop, getting frustrated by the
 
 ### Map
 - Claim finished tasks (3 minutes before end for free)
+- Refresh for free 3 minutes before end
 - Pick new tasks in the order defined in config
-- Experimental support for silver missions (untested)
+- Experimental support for silver missions (not yet unlocked map level 10 to test)
 - Campaign Battles:
   - Pick up the loot
   - Run daily liberation missions
@@ -107,6 +114,7 @@ But sadly, new OculiX IDE looking shiny on my desktop, getting frustrated by the
   - Pickup scarab token
   - Pickup pharao's vault
   - Pickup scarab milestones
+  - Release beast
 - Tavern Game:
   - Play the game (spending a max of 10 tokens per run)
   - Convert beer to tokens
@@ -115,7 +123,7 @@ But sadly, new OculiX IDE looking shiny on my desktop, getting frustrated by the
 - Collect when configurable percentage has been reached
 - Use temple tokens at a configurable percentage
 
-## Tasks not yet supported
+## Tasks not (yet) supported
 
 ### Alchemist:
 - Below transmute (not yet unlocked)
@@ -124,13 +132,10 @@ But sadly, new OculiX IDE looking shiny on my desktop, getting frustrated by the
 - Arena of kings
 
 ### Engineer
-- Engineer:
-  - Read selected crew setup (for Arena of kings)
 - Garage:
   - Upgrades
   - Blueprints
   - Rarity
-  - Index machines (for Arena of kings)
 
 ### Exotic Merchant
 - Sell items
@@ -147,10 +152,6 @@ But sadly, new OculiX IDE looking shiny on my desktop, getting frustrated by the
 - Seals of power
 - Hero rarity
 
-### Main
-- Events
-- Kill miner/dragons so they disappear quicker
-
 ### Map
 - Campaign:
   - Select battles
@@ -160,6 +161,9 @@ But sadly, new OculiX IDE looking shiny on my desktop, getting frustrated by the
 
 ### Tavern
 - Ancient artifacts:
+  - Upgrade
+  - Rarity
+- Beasts:
   - Upgrade
   - Rarity
 

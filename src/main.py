@@ -10,7 +10,6 @@ import time
 import task_logic
 
 from custom_core import (
-    click,
     color_at,
     colormap,
     Debug,
@@ -19,7 +18,7 @@ from custom_core import (
     pause_check,
     Region,
     reload_file,
-    screen, 
+    screen,
     tasks,
     timeouts
 )
@@ -27,9 +26,6 @@ from custom_core import (
 def main() -> None:
     """
     Execute the primary automation lifecycle loop in local scope.
-
-    Coordinates sequential execution of task routines and ensures safe
-    termination handling when lifecycle interrupt thresholds are breached.
     """
     global tasks, timeouts
 
@@ -43,10 +39,11 @@ def main() -> None:
 
             if os.path.exists(reload_file):
                 os.remove(reload_file)
-                timeout_reinit()
+                for _, (_, task_function_name, reset_on_reload) in tasks.items():
+                    if reset_on_reload and task_function_name in timeouts:
+                        del timeouts[task_function_name]
 
             # loop through tasks
-            #start_tasks = time.time_ns()
             for name, (pattern, task_function_name, _) in tasks.items():
                 friendly_name = name.replace('_', ' ').title()
 
@@ -63,9 +60,6 @@ def main() -> None:
                     m.click()
                     m.wait_vanish()
 
-                if pattern and not color_at(110, 190) == 'red':
-                    continue
-
                 if pattern:
                     match = None
                     match_count = 0
@@ -80,8 +74,8 @@ def main() -> None:
 
                     Debug.history(f'[Tasks] {friendly_name} detected (Score: {match.get_score()})')
                     match.click()
-                    match.move_mouse_away()
-                    time.sleep(2)
+                    match.wait_vanish()
+                    time.sleep(1)
 
                 if hasattr(task_logic, task_function_name):
                     start_task = time.time_ns()
@@ -113,21 +107,9 @@ def main() -> None:
                 if match:
                     numeric, suffix = match.groups()
                     Debug.info(f'Numeric: {numeric} Suffix: {suffix}')
-            #Debug.history(f'[Tasks] Duration {duration_text(start_tasks)}')
 
     except KeyboardInterrupt as error:
         Debug.error(f'Received KeyboardInterrupt\n{error}')
 
-def timeout_reinit() -> None:
-    """
-    Clean some timeouts
-    """
-    global timeouts
-
-    for _, (_, task_function_name, reset_on_reload) in tasks.items():
-        if reset_on_reload and task_function_name in timeouts:
-            del timeouts[task_function_name]
-
 if __name__ == '__main__':
-    # Ensure top-level entry point isolation for compiled binary stability
     main()

@@ -3,12 +3,10 @@ Page Logic Subroutines for Firestone Bot Gameplay Automation.
 
 Provides handlers in regards to page identification.
 """
-import re
 import sys
 import time
 
 from custom_core import (
-    color_at,
     colormap,
     config,
     Debug,
@@ -72,6 +70,16 @@ def is_engineer_garage() -> bool:
     text = Region(770, 0, 350, 60).text('', colormap['white']).lower()
     return text == 'garage'
 
+def is_events() -> bool:
+    """ Events """
+    text = Region(850, 90, 220, 70).text('', colormap['white']).lower()
+    return text == 'events'
+
+def is_exotic_merchant() -> bool:
+    """ Exotic merchant """
+    text = Region(1020, 210, 580, 67).text().lower()
+    return text in ['sell items', 'exotic upgrades', 'emblem market']
+
 # guild_arcane_crystal
 # guild_awakening
 
@@ -112,7 +120,11 @@ def is_library_meteorite_research() -> bool:
     text = Region(700, 1020, 520, 56).text('', colormap['white'])
     return 'meteorite' in text
 
-# magic_quarter
+def is_magic_quarter() -> bool:
+    """ Magic quarter """
+    text = Region(300, 140, 260, 44).text('', colormap['white']).lower()
+    return 'evolution' in text
+
 # map_campaign
 
 def is_map_map() -> bool:
@@ -127,7 +139,9 @@ def is_oracle() -> bool:
 
 def is_oracle_gift() -> bool:
     """ Oracle Gift """
-    return is_oracle()
+    text = Region(560, 215, 250, 50).text('', colormap['white']).lower()
+    Debug.info(text)
+    return text == 'oracle\'s gift'
 
 # pirates_price
 # shop_signin

@@ -1,14 +1,14 @@
 {
     "arena_of_kings.png": {
-        "timestamp": 1785948571.471177,
-        "sha256": "5da8df82155f6087e028cd14bf8040f9a7192db1e734dbcfc41ac8afc51a437f"
+        "timestamp": 1786549091.27866,
+        "sha256": "f3c28c26e96a62479d57658e7ef640b19fa010d6fcea3f6d6c3b710106b04d75"
     },
     "new_hero.png": {
         "timestamp": 1785948571.4831765,
         "sha256": "8f0f51b50b6b91c43a77c33e21f2a7f2848fcb82ef84289f9cf0b338fe5f9a0a"
     },
     "temple_of_eternals.png": {
-        "timestamp": 1785948571.495177,
-        "sha256": "704aabd0140d1a774a34f667e1777c474b734046c0f10ee96b0f0656fb5e38b3"
+        "timestamp": 1786509565.8819776,
+        "sha256": "eb665df7ad444d355f1568575e041c3a06f8c642f6621bc555d795db1b88452a"
     }
 }

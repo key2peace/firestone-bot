@@ -98,5 +98,13 @@
     "health.png": {
         "timestamp": 1786504747.5654309,
         "sha256": "69a59264eaa06574b69783399e3841b633a9d3db54a5069c9c546a7f537c0cc5"
+    },
+    "grace_evo3.png": {
+        "timestamp": 1786563394.1696734,
+        "sha256": "8d8fe91da046ae2eccef7125ae7128d774cc6c7d4cb69cd354fe7260c4250aa0"
+    },
+    "fini.png": {
+        "timestamp": 1786862698.2923908,
+        "sha256": "5c738029c7360cf5a49d156fbc4d1b5c6d909655473b26d130c32736def9dfe8"
     }
 }

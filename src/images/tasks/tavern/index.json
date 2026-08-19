@@ -1,22 +1,26 @@
 {
     "pharaos_vault.png": {
-        "timestamp": 1785948572.331934,
-        "sha256": "6553c9fdad518041633dca64e2c9a9b05ffe22a31ae34bbe618534b49afe9581"
+        "timestamp": 1786549091.4046583,
+        "sha256": "f2c997cef02a65fd0dcffdb45f42ca21249816033bc8c535dea13b34cd5f2d1a"
     },
     "scarab_game.png": {
-        "timestamp": 1785948572.350852,
-        "sha256": "335ab6de753fb00a88d76306fd6716363ecb331c62911e1ae751dd7f2262508e"
+        "timestamp": 1786549091.4226615,
+        "sha256": "e2dce61fec05770273a53e01e198ced04f9b6ac1d83199053e4385e0f2b63b6f"
     },
     "scarab_milestone.png": {
-        "timestamp": 1785948572.362852,
-        "sha256": "756b740a48b578026c31aff57276b299e1f8bfc972034356f4b9ce3d93fbc3da"
+        "timestamp": 1786550770.2956152,
+        "sha256": "b34a5b1fd877454d12bad879764551bcffd0318590db0c4d1cdf3799669aaac2"
     },
     "scarab_token.png": {
-        "timestamp": 1785948572.3768618,
-        "sha256": "6989cf9ea6042bea33962ea1a1b664e5981e513bf64e32ae7886b9da7d62b1ea"
+        "timestamp": 1786549091.4396617,
+        "sha256": "5fa9eff22c97aded805df052fd76228a019f2842f443b479d6fb29a34d3a2c06"
     },
     "tavern_pickup.png": {
-        "timestamp": 1785948572.3898602,
-        "sha256": "3cb374216735c4cb5fb8c695a79ee9f202d49d2ecd0d48693894375577dff019"
+        "timestamp": 1786549658.5299027,
+        "sha256": "a4d840c812231dfcea6a693de2a09c08b33d1a390c3ed4281635f00ba7721ec3"
+    },
+    "scarab_beast.png": {
+        "timestamp": 1786858836.544852,
+        "sha256": "928d465e1f2f346c8c0874423ca4d04bddd490314013dd4e7b7a1fb420947a0b"
     }
 }

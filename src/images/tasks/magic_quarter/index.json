@@ -1,7 +1,7 @@
 {
     "chaos_rift.png": {
-        "timestamp": 1785948571.9980116,
-        "sha256": "cf86eecf5fffe83d04587bb4672eb0ee8304dba90aac5ad7693ea72bfab15ae7"
+        "timestamp": 1786556714.1096704,
+        "sha256": "bc91254835f9f63ecb5080a63ff8bcf86aced3e1ddf9fc0b9ee7b24f6d46bfda"
     },
     "grace_evo1.png": {
         "timestamp": 1785948572.010014,
@@ -30,5 +30,9 @@
     "vermilion_evo4.png": {
         "timestamp": 1785948572.1238077,
         "sha256": "316f3d9fffc13c92f7a6412fa45bd74f97d12ba6da2178a1cab37750534b69d6"
+    },
+    "grace_evo3.png": {
+        "timestamp": 1786563394.200673,
+        "sha256": "0387ce8aac3f076d5f590b203f32f90930c9346f1ce65143cab4a98b884924d5"
     }
 }

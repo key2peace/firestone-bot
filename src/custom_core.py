@@ -71,10 +71,10 @@ config = {
     'ollama_model':                 'llama3.2:latest',              # model to use for ollama, llama3.2(-vision) should be optimal
     'tracker_file':                 'index.json',                   # name of the filetracker index files
     'wait_page':                    5,                              # float or int value for the timeout waiting for a page to appear
-    'min_score':                    0.92,                           # minimal match score
+    'min_score':                    0.95,                           # minimal match score
 
     # Alchemist
-    'alchemist_dragon_blood':       True,                           # alchemist: do dragon blood experiments
+    'alchemist_dragon_blood':       False,                          # alchemist: do dragon blood experiments
     'alchemist_strange_dust':       False,                          # alchemist: do strange dust experiments
     'alchemist_exotic_coin':        False,                          # alchemist: do exotic coin experiments
     'transmute_legendary':          False,                          # alchemist: transmute legendary chests
@@ -85,6 +85,22 @@ config = {
     # Battle screen
     'bag_open_chests':              True,                           # bag: open chests
     'upgrade_mode':                 '100',                          # check_upgrade: set upgrade amount for heroes
+                                                                    #       options: 1,10,100, next, max
+
+    # Exotic Merchant
+    'sell_scroll_of_speed':         True,                           # 80 exotic coins
+    'sell_scroll_of_damage':        True,                           # 80 exotic coins
+    'sell_scroll_of_health':        True,                           # 80 exotic coins
+    'sell_midas_touch':             False,                          # 70 exotic coins
+    'sell_pouch_of_gold':           True,                           # 10 exotic coins
+    'sell_bucket_of_gold':          True,                           # 35 exotic coins
+    'sell_crate_of_gold':           True,                           # 65 exotic coins
+    'sell_barrel_of_gold':          False,                          # 130 exotic coins
+    'sell_drums_of_war':            True,                           # 270 exotic coins
+    'sell_dragon_armor':            True,                           # 180 exotic coins
+    'sell_guardians_rune':          True,                           # 50 exotic coins
+    'sell_totem_of_agony':          True,                           # 150 exotic coins
+    'sell_totem_of_annihilation':   True,                           # 240 exotic coins
 
     # Guild
     'guild_bank':                   True,                           # visit guild bank
@@ -101,29 +117,11 @@ config = {
     'magic_quarter_chaos_rift':     True,                           # increase guardians holy damage (uses orbs of light)
 
     # Map
-    'map_order':                    'mystery,dragon,scout,adventure,war,monster,naval', # the order to play map missions
-
-    # Oracle
-    'oracle_rituals_harmony':       True,                           # oracle: perform harmony rituals
-    'oracle_rituals_serenity':      True,                           # oracle: perform serenity rituals
-    'oracle_rituals_obedience':       False,                          # oracle: perform obedience rituals
-    'oracle_rituals_concentration': True,                           # oracle: perform concentration rituals
+    'map_order':                    'mystery,dragon,monster,naval,scout,war,adventure', # the order to play map missions
 
     'dummy':                        0                               # dummy on the end
 }
 config_file: str = 'bot_settings.json'
-
-# name: (description, reached
-dailies = {
-    'conqueror':    ('Complete 6 Map Missions', False),
-    'collector':    ('Open 4 chests', False),
-    'trainer':      ('Train guardian 2 times', False),
-    'gamer':        ('Play 10x with the cards at the tavern', False),
-    'expeditioner': ('Complete 5 guild expeditions', False),
-    'merchant':     ('Sell 10 items at the excotic merchant', False),
-    'liberator':    ('Complete 2 liberations', False),
-    'miner':        ('Hit the arcane crystal 5 times', 6, 0)
-}
 
 lock_file: str = '.bot_running'
 if os.path.exists(lock_file):
@@ -140,9 +138,8 @@ tasks = {
     '_crazygames_error':    ('',                                'crazygames_error', 1),
     '_check_upgrade':       ('',                                'check_upgrade', 1),
     '_check_heroes':        ('',                                'check_heroes', 1),
-    #'_daylies':             ('',                                'daylies', 0),
     '_battle_pass':         ('',                                'battle_pass', 1), # add golden pass purchase
-    #'new_hero':             ('new_hero.png',                    'new_hero', 1),
+    '_events':              ('',                                'events', 1),
 
     # alchemist
     'alchemist':            ('alchemist/alchemist.png',         'alchemist', 0),
@@ -158,7 +155,7 @@ tasks = {
     # engineer
     'engineer':             ('engineer/engineer.png',           'engineer', 1),
     'garage':               ('engineer/garage.png',             'engineer_garage', 1),
-    'garage_rarity':        ('engineer/garage_rarity.png',      'engineer_garage', 1),
+    #'garage_rarity':        ('engineer/garage_rarity.png',      'engineer_garage', 1),
     'new_warmachine':       ('engineer/new_warmachine.png',     'engineer_garage', 1),
 
     # guild
@@ -188,7 +185,7 @@ tasks = {
     'oracle_blessing':      ('oracle/blessing.png',             'oracle', 0),
 
     # pirate ship
-    #'pirates_price':        ('pirate_ship/pirates_price.png',   'pirates_price', 1), #rework pickup method
+    'pirates_price':        ('pirate_ship/pirates_price.png',   'pirates_price', 1), #rework pickup method
 
     # shop
     'sign_in':              ('shop/sign_in.png',                'shop_signin', 0),
@@ -197,6 +194,7 @@ tasks = {
     'pharaos_vault':        ('tavern/pharaos_vault.png',        'tavern_pharaos_vault', 1),
     'scarab_token':         ('tavern/scarab_token.png',         'tavern_scarab_token', 1),
     'scarab_game':          ('tavern/scarab_game.png',          'tavern_scarab_game', 1),
+    'scarab_beast':         ('tavern/scarab_beast.png',         'tavern_scarab_game', 1),
     'scarab_milestone':     ('tavern/scarab_milestone.png',     'tavern_scarab_milestone', 1),
     'tavern_collect':       ('tavern/tavern_pickup.png',        'tavern_tavern_collect', 1),
 
@@ -204,8 +202,9 @@ tasks = {
     'temple_of_eternals':   ('temple_of_eternals.png',          'temple_of_eternals', 0),
 
     # others on the end
-    '_check_mail':          ('',                                'check_mail', 1),
-    '_check_taskcount':     ('',                                'check_taskcount', 0)
+    'bag':                  ('',                                'bag', 1),
+    'exotic_merchant':      ('',                                'exotic_merchant', 0),
+    'check_taskcount':      ('',                                'check_taskcount', 0)
 }
 
 # Add magic quarter upgrades to the tasks
@@ -375,11 +374,16 @@ def color_at(x: int, y: int) -> str:
         y (int): The absolute Y-coordinate layout pixel anchor.
 
     Returns:
-        str|bool: The designated color name string if a valid match is located,
-            otherwise empty string.
+        str: The designated color name string if a valid match is located,
+             otherwise empty string.
     """
-    red, green, blue = get_pixel_color(x, y)
+    return color_name(get_pixel_color(x, y))
 
+def color_name(color:Tuple[int, int, int]) -> str:
+    """
+    Return the color name for a given RGB color
+    """
+    red, green, blue = color
     for name, (r_min, r_max, g_min, g_max, b_min, b_max) in colormap.items():
         if r_min <= red <= r_max and g_min <= green <= g_max and b_min <= blue <= b_max:
             return name
@@ -1552,7 +1556,7 @@ class Region():
         target_y = self.y + int(self.h / 2)
         move_to((target_x, target_y))
 
-    def text(self, expect: str = None, color_mask: tuple = None) -> str:
+    def text(self, expect: str = None, color_mask: tuple = None, min_chars: int = 1) -> str:
         """
         Extract textual values from the region viewport using custom OCR tuning.
         Supports a custom RGB color mask to isolate specific styled game fonts.
@@ -1579,7 +1583,7 @@ class Region():
         kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (2, 2))
 
         clean_mat = cv2.morphologyEx(clean_mat, cv2.MORPH_CLOSE, kernel)
-        clean_mat = cv2.erode(clean_mat, kernel, iterations=1)
+        #clean_mat = cv2.erode(clean_mat, kernel, iterations=1)
 
         #cv2.imwrite(f'capture/{time.time_ns()}.png', clean_mat)
 
@@ -1588,7 +1592,7 @@ class Region():
             os.environ["TESSDATA_PREFIX"] = os.getcwd()
             tess_config = '-l kiddosy'
 
-        tess_config += ' -c min_characters_to_try=1'
+        tess_config += f' -c min_characters_to_try={min_chars}'
 
         if expect:
             tess_config += f' --oem 3 -c tessedit_char_whitelist={expect}'

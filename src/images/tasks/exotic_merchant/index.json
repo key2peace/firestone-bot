@@ -1,0 +1,54 @@
+{
+    "barrel_of_gold.png": {
+        "timestamp": 1787151112.843099,
+        "sha256": "bdfa2695176decae6e4307a7d786cbf2a1b654f27b1ea2308f0999d6b6fc3b67"
+    },
+    "bucket_of_gold.png": {
+        "timestamp": 1787151349.568665,
+        "sha256": "ce0bd807eac08c6123ad5523ccf7eb2ce80fcba36c6b0a1e55b75c70eb73449e"
+    },
+    "crate_of_gold.png": {
+        "timestamp": 1787151081.3740785,
+        "sha256": "ff5fa723459f27f0b41515328825486c74271bb3c764db18d18f9176675f9282"
+    },
+    "dragon_armor.png": {
+        "timestamp": 1787150783.5545344,
+        "sha256": "12078886fc3a7f145426c01ae43a8403c6782f7cb3cb9b6ffa2843274a3d15b7"
+    },
+    "drums_of_war.png": {
+        "timestamp": 1787151148.0409207,
+        "sha256": "f2e0844855fe13fc729ec69d94bdc6cbfab0eb93ae0a8283a717111c126c13b7"
+    },
+    "guardians_rune.png": {
+        "timestamp": 1787150835.4121015,
+        "sha256": "a68ef7b228cc8c0806fde4a690480fb7854c4fda7b459ad672e696e6a7674292"
+    },
+    "midas_touch.png": {
+        "timestamp": 1787151266.3907158,
+        "sha256": "1c7c1112ee1f34b7a96814bd2b7e7a91fcd2ef5e69284f227f4db38d22ab3a27"
+    },
+    "pouch_of_gold.png": {
+        "timestamp": 1787151313.255793,
+        "sha256": "1dc6854521e851533542d81130744a20308c3ae3f69e10a14b91de2b95bdcd1b"
+    },
+    "scroll_of_damage.png": {
+        "timestamp": 1787151430.9314735,
+        "sha256": "4d92c2dd76eda3852a8acf1564c3e84561002e3910e76dfc8c647f056e35d7cb"
+    },
+    "scroll_of_health.png": {
+        "timestamp": 1787151481.7985556,
+        "sha256": "825c15b59db63351e1196b2b5c84c41e5ef345c87c925c66d1def215ac3cc3fe"
+    },
+    "scroll_of_speed.png": {
+        "timestamp": 1787151384.8773832,
+        "sha256": "f5b093d4aa995001a6d34c1d37e8074f9f2e8974525f99bce4a9962bceda1241"
+    },
+    "totem_of_agony.png": {
+        "timestamp": 1787150900.5245745,
+        "sha256": "b640e135193984a652f536fd88bbcb99d3fcacbb44f54eff72beb9b8e09bd846"
+    },
+    "totem_of_annihilation.png": {
+        "timestamp": 1787150732.874998,
+        "sha256": "f8018085e5772718dfe0faeb253bb49e82731b9cc80de8de808b23018980fed1"
+    }
+}
