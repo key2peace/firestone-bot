@@ -1012,14 +1012,25 @@ def library_meteorite_research(trigger: bool = False) -> int:
     if not page_wait('library_meteorite_research'):
         return -1
 
-    for y in range(130, 1020, 10):
-        for x in range(0, 1600, 10):
-            if color_at(x, y) == 'blue_meteorite_research':
-                click((x, y))
-                time.sleep(1)
-                if color_at(1060, 770) == 'green':
-                    click((1060, 770))
-                    click((1260, 280))
+    _area = Region(0, 130, 1600, 890)
+    while True:
+        pixels = grab_screen_to_mat(_area)
+        found = False
+        for y in range(0, pixels.shape[0], 10):
+            for x in range(0, pixels.shape[1], 10):
+                b_ch, g_ch, r_ch = pixels[y, x]
+                if color_name((r_ch, g_ch, b_ch)) == 'blue_meteorite_research':
+                    found = True
+                    click((x, y))
+                    time.sleep(1)
+                    if color_at(1060, 770) == 'green':
+                        click((1060, 770))
+                        click((1260, 280))
+                    break
+            if found:
+                break
+        if not found:
+            break
 
     click((1840, 55))
     return 0
@@ -1402,14 +1413,14 @@ def oracle(trigger: bool = False) -> int:
             'Precision': (1115, 540),
             'Magic spells': (1160, 360),
             'Guardian power': (1290, 230),
-            'Fate': (0, 0),
+            'Fate': (1480, 520),
         }
 
         # get current values
         amounts = []
         tmp = {}
         for name, (x, y) in coords.items():
-            if not x or color_at(x, y) != 'white':
+            if color_at(x, y) != 'white':
                 continue
             amount = Region(x - 90, y + 90, 64, 32).get_number('white')
             amounts.append(amount)
@@ -1421,7 +1432,7 @@ def oracle(trigger: bool = False) -> int:
                 if not color_at(x, y) == 'white':
                     continue
                 # skip if current is already the highest
-                if  max(amounts) and min(amounts) != max(amounts) and current == max(amounts):
+                if name != 'Fate' and max(amounts) and min(amounts) != max(amounts) and current == max(amounts):
                     continue
                 # select the item
                 click((x - 60, y + 50))
