@@ -143,9 +143,11 @@ But sadly, new OculiX IDE looking shiny on my desktop, getting frustrated by the
 - Prepare for the bi-monthly 'Decorated Heroes' event, saving up needed materials
 
 ### General
+- Walk through the beginning dialogs if you start fresh
 - Settings GUI/Webserver
 - More detailed logging what the bot is doing
 - Improve OCR
+- Finetune timeouts
 - Server reconnect detection
 - Test on other platforms (feel free to share your experience):
   - Operating systems:

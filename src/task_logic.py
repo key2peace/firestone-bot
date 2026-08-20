@@ -1021,7 +1021,7 @@ def library_meteorite_research(trigger: bool = False) -> int:
                 b_ch, g_ch, r_ch = pixels[y, x]
                 if color_name((r_ch, g_ch, b_ch)) == 'blue_meteorite_research':
                     found = True
-                    click((x, y))
+                    click((x, y + 130))
                     time.sleep(1)
                     if color_at(1060, 770) == 'green':
                         click((1060, 770))
