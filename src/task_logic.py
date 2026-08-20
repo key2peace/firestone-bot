@@ -1514,6 +1514,7 @@ def shop_signin(trigger: bool = False) -> int:
     # perfect opportunity to go for dailies
     bag()
     exotic_merchant()
+    tavern_tavern_game(True)
     guild_arcanecrystal(True)
     return get_next_reset()
 
@@ -1637,22 +1638,22 @@ def tavern_tavern_game(trigger: bool = False) -> int:
     """
     Run the tavern game
     """
-    if trigger:
-        press_key('t')
-        time.sleep(1)
-        click((690, 965))
-        time.sleep(1)
-        click((770, 550))
+    if not trigger:
+        # save for dailies
+        click((1840, 55))
+        return 0
 
+    press_key('t')
+    time.sleep(1)
+    click((690, 965))
+    time.sleep(1)
+    click((770, 550))
     time.sleep(2)
     amount = Region(1585, 30, 110, 35).get_number()
     Debug.info(f'[Tavern] Amount: {amount}')
-    if not amount:
-        click((1840, 55))
-        return 0
-    amount = min(amount, 10)
 
-    for _ in range(1, int(amount)):
+    amount = min(int(amount), 10)
+    for _ in range(0, amount):
         if color_at(1060, 1000) == 'green':
             click((960, 1000))
             time.sleep(1)

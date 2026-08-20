@@ -27,14 +27,11 @@ But sadly, new OculiX IDE looking shiny on my desktop, getting frustrated by the
 - Experiments (3 minutes before end for free)
 - Transmute
 
-### Bag
-- Opening chests
-
 ### Battle field
 - Bag:
   - Opening all chests except the first one (common mostly) in order to open those after sign-in to meet daily requirements
 - Heroes level upgrading
-  that is, if they are known, this is in order to facilitate users with less then 7 members in their party.
+  that is, if they are known, this is in order to facilitate users with less then 6 members in their party.
   If you do not see them being upgraded, they have not been captured yet,  in that case please submit an issue providing a 1:1 image capture
   of the area not being upgraded, and I will add them as soon as possible.
   See [this](https://github.com/key2peace/firestone-bot/tree/main/src/images/heroes) page for the current list of supported heroes
@@ -128,7 +125,7 @@ But sadly, new OculiX IDE looking shiny on my desktop, getting frustrated by the
 - Collect when configurable percentage has been reached
 - Use temple tokens at a configurable percentage
 
-## Tasks not (yet) supported
+## Tasks/Features not (yet) supported
 
 ### Alchemist:
 - Below transmute (not yet unlocked)
@@ -141,6 +138,28 @@ But sadly, new OculiX IDE looking shiny on my desktop, getting frustrated by the
   - Upgrades
   - Blueprints
   - Rarity
+
+### Events
+- Prepare for the bi-monthly 'Decorated Heroes' event, saving up needed materials
+
+### General
+- Settings GUI/Webserver
+- More detailed logging what the bot is doing
+- Improve OCR
+- Server reconnect detection
+- Test on other platforms (feel free to share your experience):
+  - Operating systems:
+    - Linux
+    - MacOS
+  - Game enviroments:
+    - ArmorGames
+    - Epic Games (do I really even wanna support that?)
+    - Facebook
+    - Kongregate
+    - Miniplay
+    - R2Games
+    - Steam
+    - Yandex
 
 ### Guild
 - Tree of Life
