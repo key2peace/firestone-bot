@@ -9,7 +9,6 @@ import os
 import random
 import re
 import time
-import cv2
 
 from custom_core import (
     click,
@@ -43,8 +42,7 @@ from custom_core import (
 )
 
 from page_logic import (
-    page_wait,
-    is_library_meteorite_research
+    page_wait
 )
 
 flipper: bool = True
@@ -485,7 +483,7 @@ def engineer_garage(trigger: bool = False) -> int:
         m = area.exists(img)
         if m:
             Debug.info(f'{machine} {m.get_score()}')
-            
+
     click((1840, 55))
     return get_next_reset()
 
@@ -1186,9 +1184,9 @@ def map_map(trigger: bool = False, direction: int = 0) -> int:
                         break
             # all done, nothing to do
             if color_at(280, 980) == 'yellow':
-                    if timestamps:
-                        return min(timestamps) - 180
-                    return 0
+                if timestamps:
+                    return min(timestamps) - 180
+                return 0
 
         while True:
             clicked = False
@@ -1558,7 +1556,7 @@ def tavern_scarab_milestone(trigger: bool = False) -> int:
     if trigger:
         pass
 
-    time,sleep(1)
+    time.sleep(1)
     drag_count = 0
     while drag_count < 3:
         for x_coords in range(130, 1700, 20):
@@ -1612,7 +1610,7 @@ def tavern_pharaos_vault(trigger: bool = False) -> int:
 
 def tavern_tavern_collect(trigger: bool = False) -> int:
     """
-    Convert beer into game tokens 
+    Convert beer into game tokens
     """
     if trigger:
         pass

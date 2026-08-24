@@ -699,7 +699,7 @@ def get_value(value: str) -> Union[int, float]:
         val, suffix = m.groups()
         exp = 15
         for pos in range(len(suffix) -1, -1, -1):
-            exp += (ord(suffix[pos],lower()) - ord('a')) * (26 ** pos)
+            exp += (ord(suffix[pos].lower()) - ord('a')) * (26 ** pos)
         return float(val.replace(',','.')) * (10 ** exp)
 
     return 0
