@@ -43,7 +43,8 @@ from custom_core import (
 )
 
 from page_logic import (
-    page_wait
+    page_wait,
+    is_library_meteorite_research
 )
 
 flipper: bool = True
@@ -140,7 +141,7 @@ def bag(trigger: bool = False) -> int:
 
     if config['bag_open_chests']:
         click((1460, 300)) # Chests
-        time.sleep(2)
+        time.sleep(1)
 
         # save first chests for dailies
         x = 1700 if trigger else 1570
@@ -148,7 +149,7 @@ def bag(trigger: bool = False) -> int:
         while not get_pixel_color(x, 200) == (158, 128, 103):
             Debug.history('Opening bag')
             click((x, 200))
-            time.sleep(2)
+            time.sleep(1)
 
             for x2 in range(1400, 500, -225):
                 if color_at(x2, 850) == 'green':
@@ -160,14 +161,13 @@ def bag(trigger: bool = False) -> int:
 
             while not color_at(1840, 55) in ['white', 'white_overlayed']:
                 pass
-            time.sleep(2)
+            time.sleep(1)
             if color_at(1040, 890) == 'green':
                 Debug.info("Picked up new items in chests")
                 click((1040, 890))
-                time.sleep(1)
 
             click((1840, 55))
-            time.sleep(2)
+            time.sleep(1)
     click((1870, 70))
     return get_timeout(3600)
 
@@ -215,7 +215,6 @@ def character_quests(trigger: bool = False) -> int:
 
     for x in [760, 1170]:
         quest_type = 'daily' if x == 760 else 'weekly'
-        Debug.info(f'x:{x} | type:{quest_type}')
         if quest_type == 'weekly' and not color_at(1360, 90) == 'red':
             break
 
@@ -254,9 +253,11 @@ def character_talents(trigger: bool = False) -> int:
     while True:
         match = _area.exists(bubble)
         if match:
+            Debug.history('Selecting talent')
             match.click()
-            time.sleep(1)
+            match.wait_vanish()
             while color_at(1032, 853) == 'green_talents':
+                Debug.history('Upgrading talent')
                 click((1020, 866))
                 move_to((1100, 866))
                 clicked = True
@@ -300,7 +301,7 @@ def check_heroes(trigger: bool = False) -> int:
                     continue
                 name = filename.split('.')[0].split('_')[0]
                 if name in ['armor', 'damage', 'gold', 'health']:
-                    name = 'special'
+                    name = 'specials'
                 Debug.history(f'Upgrading {name}')
                 move_to((x, 980))
                 mouse_down()
@@ -324,6 +325,7 @@ def check_mail(trigger: bool = False) -> int:
         time.sleep(1)
         while not color_at(1600, 980) == 'lightbrown':
             if color_at(1320, 830) == 'green':
+                Debug.history('Claiming reward from mail')
                 click((1320, 840))
                 time.sleep(0.3)
                 click((1190, 720))
@@ -437,6 +439,7 @@ def engineer(trigger: bool = False) -> int:
         return -1
 
     if color_at(1710, 740) == 'green':
+        Debug.history('Picking up tools')
         click((1710, 740))
 
     click((1840, 55))
@@ -456,59 +459,35 @@ def engineer_garage(trigger: bool = False) -> int:
     if not page_wait('engineer_garage'):
         return -1
 
-    # insert logic here
+    machines = [
+        'fortress',
+        'thunderclap',
+        'firecracker',
+        'aegis',
+        'harvester',
+        'cloudfist',
+        'hunter',
+        'goliath',
+        'judgement',
+        'curator',
+        'sentinel',
+        'talos',
+        'earthshatterer'
+    ]
 
+    area = Region(0, 900, 1920, 180)
+    for machine in machines:
+        if not config[f'wm_{machine}_blueprints'] and not config[f'wm_{machine}_rarity']:
+            continue
+        img = f'images/tasks/engineer/war_machines/{machine}.png'
+        if not os.path.exists(img):
+            continue
+        m = area.exists(img)
+        if m:
+            Debug.info(f'{machine} {m.get_score()}')
+            
     click((1840, 55))
     return get_next_reset()
-
-def engineer_garage_scraper() -> None:
-    """
-    Execute a linear drag_drop carousel scraper within the War Machine Garage.
-
-    Iterates through the vehicle carousel using fixed-distance spatial swipes,
-    capturing visual assets and compiling an inventory database via live OCR.
-    Stops automatically once a duplicate machine name sequence is detected.
-    """
-    Debug.info('Initializing automated Garage asset scraper workflow...')
-    scanned_machines: list[str] = []
-
-    # Calculate static start and end vectors for the horizontal drag_drop timeline
-    start_x, start_y = (450, 850) # Active X/Y anchor of the leftmost icon slot
-    end_x = start_x - 120
-    end_y = start_y
-
-    os.makedirs('capture/war_machines', exist_ok=True)
-
-    while True:
-        time.sleep(0.5)
-
-        # Extract and sanitize the active vehicle name
-        raw_name = Region(800, 150, 300, 50).text() # Viewport framing the text header
-        machine_name = ''.join(c for c in raw_name if c.isalnum()).strip()
-        if not machine_name:
-            machine_name = f'unknown_machine_{int(time.time())}'
-
-        # Loop termination engine: stop once the carousels wrap-around index hits a duplicate
-        if machine_name in scanned_machines:
-            Debug.info(f'Scraper sequence completed. Wrapped to existing target: \'{machine_name}\'')
-            break
-
-        Debug.info(f'Target machine identified: \'{machine_name}\'. Capturing assets...')
-        scanned_machines.append(machine_name)
-
-        # Slice a clean template matrix crop of the current vehicle sprite
-        # Saved unignored to fuel background context validation on subsequent repository pushes
-        output_path = f'capture/war_machines/{machine_name.lower()}.png'
-        machine_region = Region(400, 300, 500, 400) # Bounding box of the central vehicle sprite
-        cv2.imwrite(output_path, grab_screen_to_mat(machine_region))
-
-        # Execute linear shift transition to pull the adjacent asset into focus
-        drag_drop((start_x, start_y), (end_x, end_y))
-
-        # Grant the Unity rendering engine ample headroom to clear scroll inertial animations
-        time.sleep(0.8)
-
-    Debug.info(f'Garage scraper cycle finished cleanly. Total unique assets mapped: {len(scanned_machines)}')
 
 def events(trigger: bool = False) -> int:
     """ Events handler """
@@ -952,13 +931,13 @@ def library_firestone_research(trigger: bool = False) -> int:
             available += 1
 
     drag_count = 0
-    _area = Region(0, 130, 1600, 770)
+    area = Region(0, 130, 1700, 770)
     while drag_count <= 3 and available:
-        pixels = grab_screen_to_mat(_area)
+        pixels = grab_screen_to_mat(area)
         found = False
-        for y in range(0, pixels.shape[0], 10):
+        for x in range(0, pixels.shape[1], 10):
             count = 0
-            for x in range(0, pixels.shape[1], 10):
+            for y in range(0, pixels.shape[0], 10):
                 b_ch, g_ch, r_ch = pixels[y, x]
                 if b_ch == 222 and g_ch == 73 and r_ch == 13:
                     count += 1
@@ -1013,24 +992,21 @@ def library_meteorite_research(trigger: bool = False) -> int:
         return -1
 
     _area = Region(0, 130, 1600, 890)
-    while True:
-        pixels = grab_screen_to_mat(_area)
-        found = False
-        for y in range(0, pixels.shape[0], 10):
-            for x in range(0, pixels.shape[1], 10):
-                b_ch, g_ch, r_ch = pixels[y, x]
-                if color_name((r_ch, g_ch, b_ch)) == 'blue_meteorite_research':
-                    found = True
-                    click((x, y + 130))
-                    time.sleep(1)
-                    if color_at(1060, 770) == 'green':
-                        click((1060, 770))
-                        click((1260, 280))
-                    break
-            if found:
-                break
-        if not found:
-            break
+    clicked = []
+    items = _area.find_all('images/tasks/library/meteorite_circle.png')
+    if items:
+        for m in items:
+            x = my_round(m.get_x())
+            y = my_round(m.get_y())
+            if (x,y) in clicked:
+                continue
+            clicked.append((x,y))
+            m.click()
+            m.wait_vanish()
+            if color_at(1060, 770) == 'green':
+                Debug.history('Performing research')
+                click((1060, 770))
+            click((1260, 280))
 
     click((1840, 55))
     return 0
@@ -1065,28 +1041,29 @@ def magic_quarter(trigger: bool = False) -> int:
             del tmp[current]
 
             # General
-            click((1050, 150))
-            time.sleep(0.3)
-            if color_at(1090, 800) == 'green':
-                Debug.history(f'Training {current}')
-                click((1090,800))
-            while config['magic_quarter_enlighten'] and color_at(1590, 800) == 'green':
-                Debug.history(f'Enlightening {current}')
-                click((1590, 800))
-                move_to((1590, 900))
+            if config[f'guardian_train_{current}'] or config[f'guardian_train_{current}']:
+                click((1050, 150))
                 time.sleep(0.3)
+                if config[f'guardian_train_{current}'] and color_at(1090, 800) == 'green':
+                    Debug.history(f'Training {current}')
+                    click((1090,800))
+                while config[f'guardian_enlighten_{current}'] and color_at(1590, 800) == 'green':
+                    Debug.history(f'Enlightening {current}')
+                    click((1590, 800))
+                    move_to((1590, 900))
+                    time.sleep(0.3)
 
             # Evolution - colorcheck disabled because of bug
-            #if config['magic_quarter_evolve'] and color_at(1265, 100) == 'white':
+            #if config[f'guardian_evolve_{current}'] and color_at(1265, 100) == 'white':
             click((1210, 150))
             time.sleep(0.3)
-            if color_at(1220, 780) == 'green':
+            if config[f'guardian_evolve_{current}'] and color_at(1220, 780) == 'green':
                 Debug.history(f'Evolving {current}')
                 click((1220, 780))
                 time.sleep(10)
 
             # Chaos Rift
-            if color_at(1435, 100) == 'white':
+            if config[f'guardian_chaos_rift_{current}'] and color_at(1435, 100) == 'white':
                 click((1400, 150))
                 time.sleep(0.3)
                 while color_at(1630, 775) == 'green':
@@ -1096,12 +1073,13 @@ def magic_quarter(trigger: bool = False) -> int:
                     time.sleep(0.3)
 
             # Guardian rarity
-            if color_at(1600, 150) == 'white':
+            if color_at(1600, 100) == 'white':
                 click((1560, 150))
                 time.sleep(0.3)
                 if color_at(1365, 630) == 'green':
                     Debug.history(f'Increase {current}\'s rarity')
                     click((1365, 630))
+                    time.sleep(10)
 
         if not tmp:
             break
@@ -1191,21 +1169,26 @@ def map_map(trigger: bool = False, direction: int = 0) -> int:
     timestamps = []
 
     if not direction:
-        # refresh for free
-        if color_at(280, 920) == 'yellow':
+        if color_at(280, 945) == 'yellow':
+            # refresh for free
             click((200, 950))
             time.sleep(3)
         else:
             # Get new missions time
             while True:
-                ts = Region(260, 1020, 150, 40).text('', colormap['lightyellow'])
-                match = re.search(r'in:\s?([\d:]+)$', ts)
+                ts = Region(260, 1020, 150, 40).text('', colormap['lightyellow']).lower()
+                match = re.search(r':\s([\d:]+)$', ts)
                 if match:
                     timeout = parse_ui_timeout(match.groups()[0])
                     if timeout < time.time() + 21600:
-                        if time.time() - timeout > 180:
+                        if timeout - time.time() > 180:
                             timestamps.append(timeout)
                         break
+            # all done, nothing to do
+            if color_at(280, 980) == 'yellow':
+                    if timestamps:
+                        return min(timestamps) - 180
+                    return 0
 
         while True:
             clicked = False
@@ -1245,14 +1228,18 @@ def map_map(trigger: bool = False, direction: int = 0) -> int:
     available: int = 0
     total: int = 0
     area = Region(1150, 20, 100, 36)
-    ts_start = time.time()
-    while not total and time.time() - ts_start < 10:
+    attempts = 0
+    while not total and attempts < 5:
         text = area.text('1234567890/', colormap['white'], 3)
+        Debug.info(f'{text}')
         if text.startswith('/'):
             text = f'4{text}'
         current_text = re.search(r'(\d+)/(\d+)', text)
         if current_text:
             available = int(current_text.groups()[0])
+            total = int(current_text.groups()[1])
+        else:
+            attempts += 1
 
     mission_types = {
         'mystery':  2,
@@ -1294,9 +1281,17 @@ def map_map(trigger: bool = False, direction: int = 0) -> int:
 
                 # check if running (scan for banner)
                 found = False
-                for x in range(m.get_x() - 30, m.get_x()):
-                    if color_at(x, m.get_y()) == 'red':
-                        found = True
+                left = m.get_x()
+                for x in range(left, left - 30, -1):
+                    if color_at(x, m.get_y() + 10) == 'red':
+                        Debug.info('Detected left banner')
+                        right = m.get_x() + m.get_w()
+                        for x in range(right, right + 30):
+                            if color_at(x, m.get_y() + 10) == 'red':
+                                Debug.info('Detected right banner')
+                                found = True
+                                break
+                    if found:
                         break
                 if found:
                     continue
@@ -1333,6 +1328,8 @@ def map_map(trigger: bool = False, direction: int = 0) -> int:
                     txt = Region(960, 870, 560, 50).text('Youdnthavegsq', colormap['red'])
                     click((1530, 220))
                     if txt and len(txt) > 10:
+                        available = 0
+                        total = 1
                         break
 
     # we still got squads idling
@@ -1357,8 +1354,9 @@ def map_map(trigger: bool = False, direction: int = 0) -> int:
     if timestamps:
         return min(timestamps) - 180
     if direction:
+        # return 24 hours in order to not get picked above if nothing was clicked
         return get_timeout(86400)
-    return get_timeout(600)
+    return 0
 
 def new_hero(trigger: bool = False) -> int:
     """
@@ -1560,6 +1558,7 @@ def tavern_scarab_milestone(trigger: bool = False) -> int:
     if trigger:
         pass
 
+    time,sleep(1)
     drag_count = 0
     while drag_count < 3:
         for x_coords in range(130, 1700, 20):
@@ -1613,10 +1612,7 @@ def tavern_pharaos_vault(trigger: bool = False) -> int:
 
 def tavern_tavern_collect(trigger: bool = False) -> int:
     """
-    Manage the tavern dispatch queue and resource accumulation.
-
-    Phase 1 checks for active ready indicators using pixel color validation
-    and deploys available assets. Phase 2 exits the subsystem once depletion holds.
+    Convert beer into game tokens 
     """
     if trigger:
         pass
@@ -1631,8 +1627,8 @@ def tavern_tavern_collect(trigger: bool = False) -> int:
             break
 
     click((1840, 55))
-    time.sleep(1)
-    return tavern_tavern_game()
+    click((1840, 55))
+    return 0
 
 def tavern_tavern_game(trigger: bool = False) -> int:
     """

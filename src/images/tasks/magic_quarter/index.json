@@ -34,5 +34,13 @@
     "grace_evo3.png": {
         "timestamp": 1786563394.200673,
         "sha256": "0387ce8aac3f076d5f590b203f32f90930c9346f1ce65143cab4a98b884924d5"
+    },
+    "rarity.png": {
+        "timestamp": 1787287246.199844,
+        "sha256": "a5ebcc12670874f79966db4ae4849d0782f9c7078bb24f56f97e53dd382c31dd"
+    },
+    "vermilion_evo5.png": {
+        "timestamp": 1787354311.5951395,
+        "sha256": "6d0a2e049ee4784aee3d70fd182576f9a672302c795677696d318cdf7ad8bc57"
     }
 }

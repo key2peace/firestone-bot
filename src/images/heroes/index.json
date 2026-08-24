@@ -106,5 +106,9 @@
     "fini.png": {
         "timestamp": 1786862698.2923908,
         "sha256": "5c738029c7360cf5a49d156fbc4d1b5c6d909655473b26d130c32736def9dfe8"
+    },
+    "vermilion_evo5.png": {
+        "timestamp": 1787287246.176888,
+        "sha256": "d35a789023b82a42292b3af36316890bc0e1e3b28a9165c9040cef5904456aed"
     }
 }

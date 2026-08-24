@@ -66,60 +66,114 @@ colormap = {
 # Config
 config = {
     # System settings
-    'logfile':                      'logs/firestone-bot.log',       # location of the logfile
-    'ollama_url':                   'http://localhost:11434',       # url voor ollama
-    'ollama_model':                 'llama3.2:latest',              # model to use for ollama, llama3.2(-vision) should be optimal
-    'tracker_file':                 'index.json',                   # name of the filetracker index files
-    'wait_page':                    5,                              # float or int value for the timeout waiting for a page to appear
-    'min_score':                    0.95,                           # minimal match score
+    'logfile':                          'logs/firestone-bot.log',   # location of the logfile
+    'ollama_url':                       'http://localhost:11434',   # url voor ollama
+    'ollama_model':                     'llama3.2:latest',          # model to use for ollama, llama3.2(-vision) should be optimal
+    'tracker_file':                     'index.json',               # name of the filetracker index files
+    'wait_page':                        5,                          # float or int value for the timeout waiting for a page to appear
+    'min_score':                        0.95,                       # minimal match score
 
     # Alchemist
-    'alchemist_dragon_blood':       False,                          # alchemist: do dragon blood experiments
-    'alchemist_strange_dust':       False,                          # alchemist: do strange dust experiments
-    'alchemist_exotic_coin':        False,                          # alchemist: do exotic coin experiments
-    'transmute_legendary':          False,                          # alchemist: transmute legendary chests
-    'transmute_epic':               False,                          # alchemist: transmute epic chests
-    'transmute_rare':               False,                          # alchemist: transmute rare chests
-    'transmute_uncommon':           False,                          # alchemist: transmute uncommon chests
+    'alchemist_dragon_blood':           False,                      # alchemist: do dragon blood experiments
+    'alchemist_strange_dust':           False,                      # alchemist: do strange dust experiments
+    'alchemist_exotic_coin':            False,                      # alchemist: do exotic coin experiments
+    'transmute_legendary':              False,                      # alchemist: transmute legendary chests
+    'transmute_epic':                   False,                      # alchemist: transmute epic chests
+    'transmute_rare':                   False,                      # alchemist: transmute rare chests
+    'transmute_uncommon':               False,                      # alchemist: transmute uncommon chests
 
     # Battle screen
-    'bag_open_chests':              True,                           # bag: open chests
-    'upgrade_mode':                 '100',                          # check_upgrade: set upgrade amount for heroes
-                                                                    #       options: 1,10,100, next, max
+    'bag_open_chests':                  True,                       # bag: open chests
+    'upgrade_mode':                     '100',                      # check_upgrade: set upgrade amount for heroes
+                                                                #       options: 1,10,100, next, max
 
     # Exotic Merchant
-    'sell_scroll_of_speed':         True,                           # 80 exotic coins
-    'sell_scroll_of_damage':        True,                           # 80 exotic coins
-    'sell_scroll_of_health':        True,                           # 80 exotic coins
-    'sell_midas_touch':             False,                          # 70 exotic coins
-    'sell_pouch_of_gold':           True,                           # 10 exotic coins
-    'sell_bucket_of_gold':          True,                           # 35 exotic coins
-    'sell_crate_of_gold':           True,                           # 65 exotic coins
-    'sell_barrel_of_gold':          False,                          # 130 exotic coins
-    'sell_drums_of_war':            True,                           # 270 exotic coins
-    'sell_dragon_armor':            True,                           # 180 exotic coins
-    'sell_guardians_rune':          True,                           # 50 exotic coins
-    'sell_totem_of_agony':          True,                           # 150 exotic coins
-    'sell_totem_of_annihilation':   True,                           # 240 exotic coins
+    'sell_scroll_of_speed':             True,                       # 80 exotic coins
+    'sell_scroll_of_damage':            True,                       # 80 exotic coins
+    'sell_scroll_of_health':            True,                       # 80 exotic coins
+    'sell_midas_touch':                 False,                      # 70 exotic coins
+    'sell_pouch_of_gold':               True,                       # 10 exotic coins
+    'sell_bucket_of_gold':              True,                       # 35 exotic coins
+    'sell_crate_of_gold':               True,                       # 65 exotic coins
+    'sell_barrel_of_gold':              False,                      # 130 exotic coins
+    'sell_drums_of_war':                True,                       # 270 exotic coins
+    'sell_dragon_armor':                True,                       # 180 exotic coins
+    'sell_guardians_rune':              True,                       # 50 exotic coins
+    'sell_totem_of_agony':              True,                       # 150 exotic coins
+    'sell_totem_of_annihilation':       True,                       # 240 exotic coins
+
+    # Garage
+    'wm_fortress_upgrade':              True,
+    'wm_fortress_blueprints':           True,
+    'wm_fortress_rarity':               True,
+    'wm_thunderclap_upgrade':           True,
+    'wm_thunderclap_blueprints':        True,
+    'wm_thunderclap_rarity':            True,
+    'wm_firecracker_upgrade':           False,
+    'wm_firecracker_blueprints':        False,
+    'wm_firecracker_rarity':            False,
+    'wm_aegis_upgrade':                 False,
+    'wm_aegis_blueprints':              False,
+    'wm_aegis_rarity':                  False,
+    'wm_harvester_upgrade':             True,
+    'wm_harvester_blueprints':          True,
+    'wm_harvester_rarity':              True,
+    'wm_cloudfist_upgrade':             True,
+    'wm_cloudfist_blueprints':          True,
+    'wm_cloudfist_rarity':              True,
+    'wm_hunter_upgrade':                True,
+    'wm_hunter_blueprints':             True,
+    'wm_hunter_rarity':                 True,
+    'wm_goliath_upgrade':               True,
+    'wm_goliath_blueprints':            True,
+    'wm_goliath_rarity':                True,
+    'wm_judgement_upgrade':             True,
+    'wm_judgement_blueprints':          True,
+    'wm_judgement_rarity':              True,
+    'wm_curator_upgrade':               False,
+    'wm_curator_blueprints':            False,
+    'wm_curator_rarity':                False,
+    'wm_sentinel_upgrade':              False,
+    'wm_sentinel_blueprints':           False,
+    'wm_sentinel_rarity':               False,
+    'wm_talos_upgrade':                 False,
+    'wm_talos_blueprints':              False,
+    'wm_talos_rarity':                  False,
+    'wm_earthshatterer_upgrade':        True,
+    'wm_earthshatterer_blueprints':     True,
+    'wm_earthshatterer_rarity':         True,
 
     # Guild
-    'guild_bank':                   True,                           # visit guild bank
-    'guild_bank_donate':            True,                           # donate leftover guild coins to guild bank
-    'guild_hall':                   True,                           # visit guild hall
+    'guild_bank':                       True,                       # visit guild bank
+    'guild_bank_donate':                True,                       # donate leftover guild coins to guild bank
+    'guild_hall':                       True,                       # visit guild hall
 
     # Temple of eternals
-    'jump_percentage':              1000,                           # temple of eternals: jump percentage
-    'jump_temple_token':            5000,                           # temple of eternals: percentage to use temple tokens
+    'jump_percentage':                  1000,                       # temple of eternals: jump percentage
+    'jump_temple_token':                5000,                       # temple of eternals: percentage to use temple tokens
 
     # Magic Quarter
-    'magic_quarter_enlighten':      False,                          # enlighten guardians (uses dust)
-    'magic_quarter_evolve':         True,                           # evolve guardians (uses dust)
-    'magic_quarter_chaos_rift':     True,                           # increase guardians holy damage (uses orbs of light)
+    'guardian_train_vermilion':         False,                      # enlighten vermilion (uses dust)
+    'guardian_enlighten_vermilion':     False,                      # enlighten vermilion (uses dust)
+    'guardian_evolve_vermilion':        False,                      # evolve vermilion (uses dust)
+    'guardian_chaos_rift_vermilion':    True,                       # increase vermilion holy damage (uses orbs of light)
+    'guardian_train_grace':             True,                       # enlighten grace (uses dust)
+    'guardian_enlighten_grace':         False,                      # enlighten grace (uses dust)
+    'guardian_evolve_grace':            True,                       # evolve grace (uses dust)
+    'guardian_chaos_rift_grace':        True,                       # increase grace holy damage (uses orbs of light)
+    'guardian_train_ankaa':             False,                      # enlighten ankaa (uses dust)
+    'guardian_enlighten_ankaa':         False,                      # enlighten ankaa (uses dust)
+    'guardian_evolve_ankaa':            True,                       # evolve ankaa (uses dust)
+    'guardian_chaos_rift_ankaa':        True,                       # increase ankaa holy damage (uses orbs of light)
+    'guardian_train_azhar':             False,                      # enlighten azhar (uses dust)
+    'guardian_enlighten_azhar':         False,                      # enlighten azhar (uses dust)
+    'guardian_evolve_azhar':            True,                       # evolve azhar (uses dust)
+    'guardian_chaos_rift_azhar':        True,                       # increase azhar holy damage (uses orbs of light)
 
     # Map
-    'map_order':                    'mystery,dragon,monster,naval,scout,war,adventure', # the order to play map missions
+    'map_order':                        'mystery,dragon,monster,naval,scout,war,adventure', # the order to play map missions
 
-    'dummy':                        0                               # dummy on the end
+    'dummy':                            0                           # dummy on the end
 }
 config_file: str = 'bot_settings.json'
 
@@ -168,10 +222,8 @@ tasks = {
     'forbidden_knowledge':  ('guild/forbidden_knowledge.png',   'guild_forbidden_knowledge', 1),
     '_guild':               ('',                                'guild', 0),
 
-
     # library
     'firestone_research':   ('library/firestone_research.png',  'library_firestone_research', 1),
-    '_firestone_research':  ('',                                'library_firestone_research', 1),
     'meteorite_research':   ('library/meteorite_research.png',  'library_meteorite_research', 1),
 
     # map
@@ -202,6 +254,7 @@ tasks = {
     'temple_of_eternals':   ('temple_of_eternals.png',          'temple_of_eternals', 0),
 
     # others on the end
+    '_firestone_research':  ('',                                'library_firestone_research', 1),
     'bag':                  ('',                                'bag', 1),
     'check_mail':           ('',                                'check_mail', 1),
     'check_taskcount':      ('',                                'check_taskcount', 0)
@@ -613,29 +666,41 @@ def get_pixel_color(x: int, y: int) -> Tuple[int, int, int]:
         Debug.error(f'[get_pixel_color] Failed to extract color map coordinates: {e}')
         return (0, 0, 0)
 
-def get_suffix_rank(suffix: str) -> int:
+def get_value(value: str) -> Union[int, float]:
     """
     Convert game-style exponential alpha suffixes to a relative numerical rank.
 
-    Evaluates both standard single-character abbreviations (K-T) and dynamic
-    double-character notations (aa-zz) using sequential ASCII offsets to
-    determine absolute chronological upgrade priorities.
-
     Args:
-        suffix (str): The alphanumeric exponential string (e.g., 'K', 'aa').
+        value (str): The string containing the value.
 
     Returns:
-        int: The computed chronological index rank. Returns 0 if unmatched.
+        int, float: The computed true numeric value.
     """
-    if len(suffix) == 1:
-        mapping = {'K': 1, 'M': 2, 'B': 3, 'T': 4}
-        return mapping.get(suffix.upper(), 0)
+    # Simple numbers
+    m = re.search(r'^[\d\.]+$', value)
+    if m:
+        return float(value)
 
-    if len(suffix) == 2:
-        char1_value = ord(suffix[0].lower()) - ord('a')
-        char2_value = ord(suffix[1].lower()) - ord('a')
-        # Calculates base-26 offsets shifted past the four initial K-T ranks
-        return 5 + (char1_value * 26) + char2_value
+    # Scientific notation
+    m = re.search(r'^([\d,]+)e(\d+)$', value)
+    if m:
+        val, suffix = m.groups()
+        return float(val.replace(',','.')) * (10 ** suffix)
+
+    # Game notation
+    m = re.search(r'^([\d,]+)([KMBT]{1})$', value)
+    if m:
+        mapping = {'K': 3, 'M': 6, 'B': 9, 'T': 12}
+        val, suffix = m.groups()
+        return float(val.replace(',','.')) * (10 ** mapping[suffix])
+
+    m = re.search(r'^([\d,]+)([a-z]+)$', value)
+    if m:
+        val, suffix = m.groups()
+        exp = 15
+        for pos in range(len(suffix) -1, -1, -1):
+            exp += (ord(suffix[pos],lower()) - ord('a')) * (26 ** pos)
+        return float(val.replace(',','.')) * (10 ** exp)
 
     return 0
 
@@ -1572,14 +1637,18 @@ class Region():
 
             # 2. Extract only the Alpha channel (matched text pixels are 255, background is 0)
             # We must invert this alpha channel to make the text black on a white background
-            _, thresh = cv2.threshold(rgba_layer[:, :, 3], 0, 255, cv2.THRESH_BINARY_INV)
+            _, clean_mat = cv2.threshold(rgba_layer[:, :, 3], 0, 255, cv2.THRESH_BINARY_INV)
         else:
             # Standard pipeline: Convert raw background to grayscale and apply OTSU binarization
             gray = cv2.cvtColor(src_mat, cv2.COLOR_BGR2GRAY)
-            _, thresh = cv2.threshold(gray, 0, 255, cv2.THRESH_BINARY_INV + cv2.THRESH_OTSU)
+            _, clean_mat = cv2.threshold(gray, 0, 255, cv2.THRESH_BINARY_INV + cv2.THRESH_OTSU)
 
         # 3. Upscale the clean 1-channel binary matrix to expand small font pixels
-        clean_mat = cv2.resize(thresh, None, fx=4.0, fy=4.0, interpolation=cv2.INTER_CUBIC)
+        height = clean_mat.shape[0]
+        min_height = 120
+        if height < min_height:
+            scale = min_height / height
+            clean_mat = cv2.resize(clean_mat, None, fx=scale, fy=scale, interpolation=cv2.INTER_CUBIC)
         kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (2, 2))
 
         clean_mat = cv2.morphologyEx(clean_mat, cv2.MORPH_CLOSE, kernel)

@@ -1,0 +1,30 @@
+{
+    "aegis.png": {
+        "timestamp": 1787393082.75299,
+        "sha256": "430dec5eace37212083e8ace8b38e6e8e6f1f8f8cbd3fa6038ad687725c81764"
+    },
+    "cloudfist.png": {
+        "timestamp": 1787393082.7739208,
+        "sha256": "59319468c701a5fd6d1f68c53e075de2c696a61fee6b3960aa3490354b1a4adf"
+    },
+    "firecracker.png": {
+        "timestamp": 1787393082.792923,
+        "sha256": "bffbfbfac67bae59687dd601f90a6348a86f1a350ac1092221e6c0bc3714a398"
+    },
+    "fortress.png": {
+        "timestamp": 1787393082.8119147,
+        "sha256": "8447741bc2a51b0219cfacda593d24ff3a2707b3f058f7a71f0062a89ce3fc71"
+    },
+    "harvester.png": {
+        "timestamp": 1787393082.83086,
+        "sha256": "c5732b819e5998a79c9ff6626a9f169df72198c40b3c293b35448888415ef63e"
+    },
+    "hunter.png": {
+        "timestamp": 1787393082.8508613,
+        "sha256": "f4033b0365887aa9c966b143fb353f54c014e3be41bfe64a865f23732322fd0c"
+    },
+    "thunderclap.png": {
+        "timestamp": 1787393082.8684464,
+        "sha256": "9e834ad953e9bca5ea6edd3d4a06bd0ff3a3a876b0cb48f204ca755e31e5bf5d"
+    }
+}

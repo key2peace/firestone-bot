@@ -46,9 +46,11 @@ def main() -> None:
             # loop through tasks
             for name, (pattern, task_function_name, _) in tasks.items():
                 friendly_name = name.replace('_', ' ').title()
-
+                
+                
                 if task_function_name in timeouts and timeouts[task_function_name] >= time.time():
-                    continue
+                    if not pattern or (pattern and name not in ['alchemist', 'firestone_research', 'map']):
+                        continue
 
                 pause_check()
 
