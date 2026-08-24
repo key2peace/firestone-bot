@@ -26,8 +26,6 @@ from custom_core import (
     get_timeout,
     grab_screen_to_mat,
     main_finished,
-    main_heroes,
-    main_upgrade,
     mouse_down,
     mouse_up,
     move_to,
@@ -46,6 +44,7 @@ from page_logic import (
 )
 
 flipper: bool = True
+party_coords = {}
 
 def alchemist(trigger: bool = False) -> int:
     """
@@ -277,36 +276,22 @@ def character_talents(trigger: bool = False) -> int:
 
 def check_heroes(trigger: bool = False) -> int:
     """
-    Execute sequential hero upgrades based on real-time RAM pixel color scans.
-
-    Evaluates specific coordinate anchors across the character bar for active
-    gold indicators and fires hardware clicks on available slots dynamically.
+    Execute sequential hero upgrades
     """
     if trigger:
         pass
 
     clicked = False
-    for root, _, files in os.walk('images/heroes'):
-        files = [f for f in files if f.lower().endswith('.png')]
-        if not files:
+    for name, (x, y) in party_coords.items():
+        if name == 'upgrade' or color_at(x, y + 60) != 'yellow':
             continue
-        for filename in files:
-            filepath = os.path.join(root, filename)
-            m = main_heroes.exists(filepath)
-            if m:
-                x = m.get_x() + m.get_w() + 20
-                if not color_at(x, 980) == 'yellow':
-                    continue
-                name = filename.split('.')[0].split('_')[0]
-                if name in ['armor', 'damage', 'gold', 'health']:
-                    name = 'specials'
-                Debug.history(f'Upgrading {name}')
-                move_to((x, 980))
-                mouse_down()
-                while not color_at(x - 10, 980) == 'grey':
-                    pass
-                mouse_up()
-                clicked = True
+        Debug.history(f'Upgrading {name}')
+        move_to((x, y + 70))
+        mouse_down()
+        while color_at(x, y + 60) != 'grey':
+            pass
+        mouse_up()
+        clicked = True
     if clicked:
         move_to((x, 1080))
     return get_timeout(5)
@@ -333,6 +318,41 @@ def check_mail(trigger: bool = False) -> int:
         click((1650, 40))
 
     return get_timeout(300)
+
+def check_party(trigger: bool = False) -> int:
+    """
+    Check the setup of the party
+    """
+    global party_coords
+
+    if trigger:
+        pass
+
+    area = Region(10, 910, 1900, 160)
+    max_x: int = 0
+    party_coords = {}
+
+    for root, _, files in os.walk('images/heroes'):
+        files = [f for f in files if f.lower().endswith('.png')]
+        if not files:
+            continue
+        for filename in files:
+            filepath = os.path.join(root, filename)
+            name = filename.split('.')[0].split('_')[0]
+            if name in ['armor', 'damage', 'gold', 'health']:
+                name = 'specials'
+            elif name in ['ankaa', 'azhar', 'grace', 'vermilion']:
+                name = 'guardian'
+            m = area.exists(filepath)
+            if m:
+                x = m.get_x() + m.get_w() + 10
+                y = m.get_y()
+                max_x = x if x > max_x else max_x
+                party_coords[name] = (x, y)
+
+    party_coords['upgrade'] = (max_x + 80, y)
+    Debug.info(f'{party_coords}')
+    return time.time() * 2
 
 def check_taskcount(trigger: bool = False) -> int:
     """
@@ -373,11 +393,13 @@ def check_upgrade(trigger: bool = False) -> int:
         pass
 
     target_mode = str(config['upgrade_mode']).lower()
+    x, y = party_coords['upgrade']
+    area = Region(x, y, 250, 160)
 
     # Cycle selector modes inline until text configuration criteria are met
-    while target_mode not in main_upgrade.text('', colormap['white']).lower():
-        main_upgrade.click()
-        move_to((main_upgrade.get_center().get_x(), 1080))
+    while target_mode not in area.text('', colormap['white']).lower():
+        area.click()
+        move_to((area.get_center().get_x(), 1080))
 
     return time.time() * 2
 
@@ -965,6 +987,7 @@ def library_firestone_research(trigger: bool = False) -> int:
         else:
             drag_drop((800, 430), (200, 430))
             drag_count += 1
+            time.sleep(1)
 
     if drag_count:
         for _ in range(1, drag_count):
@@ -1282,11 +1305,9 @@ def map_map(trigger: bool = False, direction: int = 0) -> int:
                 left = m.get_x()
                 for x in range(left, left - 30, -1):
                     if color_at(x, m.get_y() + 10) == 'red':
-                        Debug.info('Detected left banner')
                         right = m.get_x() + m.get_w()
                         for x in range(right, right + 30):
                             if color_at(x, m.get_y() + 10) == 'red':
-                                Debug.info('Detected right banner')
                                 found = True
                                 break
                     if found:
@@ -1331,7 +1352,7 @@ def map_map(trigger: bool = False, direction: int = 0) -> int:
                         break
 
     # we still got squads idling
-    if total and available:
+    if total and available and color_at(640, 1020) == 'white':
         # we started with 0, drag the map up to check the lower part
         if direction == 0:
             drag_drop((960, 810), (960, 540))

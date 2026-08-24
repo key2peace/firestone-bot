@@ -149,8 +149,8 @@ config = {
     'guild_hall':                       True,                       # visit guild hall
 
     # Temple of eternals
-    'jump_percentage':                  1000,                       # temple of eternals: jump percentage
-    'jump_temple_token':                5000,                       # temple of eternals: percentage to use temple tokens
+    'jump_percentage':                  10000,                       # temple of eternals: jump percentage
+    'jump_temple_token':                15000,                       # temple of eternals: percentage to use temple tokens
 
     # Magic Quarter
     'guardian_train_vermilion':         False,                      # enlighten vermilion (uses dust)
@@ -190,46 +190,47 @@ tasks = {
     # starting with these
     '_crazygames_check':    ('',                                'crazygames_check', 1),
     '_crazygames_error':    ('',                                'crazygames_error', 1),
+    '_check_party':         ('',                                'check_party', 1),
     '_check_upgrade':       ('',                                'check_upgrade', 1),
     '_check_heroes':        ('',                                'check_heroes', 1),
     '_battle_pass':         ('',                                'battle_pass', 1), # add golden pass purchase
-    '_events':              ('',                                'events', 1),
+    '_events':              ('',                                'events', 0),
 
     # alchemist
     'alchemist':            ('alchemist/alchemist.png',         'alchemist', 0),
     '_alchemist':           ('',                                'alchemist', 0),
 
     # arena of kings
-    'arena_of_kings':       ('arena_of_kings.png',              'arena_of_kings', 1),
+    'arena_of_kings':       ('arena_of_kings.png',              'arena_of_kings', 0),
 
     #character
-    'quests':               ('character/quests.png',            'character_quests', 1),
-    'talents':              ('character/talents_upgrade.png',   'character_talents', 1),
+    'quests':               ('character/quests.png',            'character_quests', 0),
+    'talents':              ('character/talents_upgrade.png',   'character_talents', 0),
 
     # engineer
-    'engineer':             ('engineer/engineer.png',           'engineer', 1),
-    'garage':               ('engineer/garage.png',             'engineer_garage', 1),
-    #'garage_rarity':        ('engineer/garage_rarity.png',      'engineer_garage', 1),
-    'new_warmachine':       ('engineer/new_warmachine.png',     'engineer_garage', 1),
+    'engineer':             ('engineer/engineer.png',           'engineer', 0),
+    'garage':               ('engineer/garage.png',             'engineer_garage', 0),
+    #'garage_rarity':        ('engineer/garage_rarity.png',      'engineer_garage', 0),
+    'new_warmachine':       ('engineer/new_warmachine.png',     'engineer_garage', 0),
 
     # guild
-    'pickaxe':              ('guild/pickaxe.png',               'guild_shop_pickaxe', 1),
-    'arcane_crystal':       ('guild/arcane_crystal.png',        'guild_arcanecrystal', 1),
-    'awakening':            ('guild/awakening.png',             'guild_awakening', 1),
-    'chaos_rift_supplies':  ('guild/chaos_rift_supplies.png',   'guild_chaos_rift_supplies', 1),
-    'chaos_rift':           ('guild/chaos_rift.png',            'guild_chaos_rift', 1),
-    'expeditions':          ('guild/expeditions.png',           'guild_expeditions', 1),
-    'forbidden_knowledge':  ('guild/forbidden_knowledge.png',   'guild_forbidden_knowledge', 1),
+    'pickaxe':              ('guild/pickaxe.png',               'guild_shop_pickaxe', 0),
+    'arcane_crystal':       ('guild/arcane_crystal.png',        'guild_arcanecrystal', 0),
+    'awakening':            ('guild/awakening.png',             'guild_awakening', 0),
+    'chaos_rift_supplies':  ('guild/chaos_rift_supplies.png',   'guild_chaos_rift_supplies', 0),
+    'chaos_rift':           ('guild/chaos_rift.png',            'guild_chaos_rift', 0),
+    'expeditions':          ('guild/expeditions.png',           'guild_expeditions', 0),
+    'forbidden_knowledge':  ('guild/forbidden_knowledge.png',   'guild_forbidden_knowledge', 0),
     '_guild':               ('',                                'guild', 0),
 
     # library
-    'firestone_research':   ('library/firestone_research.png',  'library_firestone_research', 1),
-    'meteorite_research':   ('library/meteorite_research.png',  'library_meteorite_research', 1),
+    'firestone_research':   ('library/firestone_research.png',  'library_firestone_research', 0),
+    'meteorite_research':   ('library/meteorite_research.png',  'library_meteorite_research', 0),
 
     # map
-    'campaign':             ('map/campaign.png',                'map_campaign', 1),
-    'map':                  ('map/map.png',                     'map_map', 1),
-    '_map':                 ('',                                'map_map', 1),
+    'campaign':             ('map/campaign.png',                'map_campaign', 0),
+    'map':                  ('map/map.png',                     'map_map', 0),
+    '_map':                 ('',                                'map_map', 0),
 
     # oracle
     'oracle_gift':          ('oracle/gift.png',                 'oracle_gift', 0),
@@ -237,26 +238,26 @@ tasks = {
     'oracle_blessing':      ('oracle/blessing.png',             'oracle', 0),
 
     # pirate ship
-    'pirates_price':        ('pirate_ship/pirates_price.png',   'pirates_price', 1), #rework pickup method
+    'pirates_price':        ('pirate_ship/pirates_price.png',   'pirates_price', 0), #rework pickup method
 
     # shop
     'sign_in':              ('shop/sign_in.png',                'shop_signin', 0),
 
     # tavern
-    'pharaos_vault':        ('tavern/pharaos_vault.png',        'tavern_pharaos_vault', 1),
-    'scarab_token':         ('tavern/scarab_token.png',         'tavern_scarab_token', 1),
-    'scarab_game':          ('tavern/scarab_game.png',          'tavern_scarab_game', 1),
-    'scarab_beast':         ('tavern/scarab_beast.png',         'tavern_scarab_game', 1),
-    'scarab_milestone':     ('tavern/scarab_milestone.png',     'tavern_scarab_milestone', 1),
-    'tavern_collect':       ('tavern/tavern_pickup.png',        'tavern_tavern_collect', 1),
+    'pharaos_vault':        ('tavern/pharaos_vault.png',        'tavern_pharaos_vault', 0),
+    'scarab_token':         ('tavern/scarab_token.png',         'tavern_scarab_token', 0),
+    'scarab_game':          ('tavern/scarab_game.png',          'tavern_scarab_game', 0),
+    'scarab_beast':         ('tavern/scarab_beast.png',         'tavern_scarab_game', 0),
+    'scarab_milestone':     ('tavern/scarab_milestone.png',     'tavern_scarab_milestone', 0),
+    'tavern_collect':       ('tavern/tavern_pickup.png',        'tavern_tavern_collect', 0),
 
     # temple of eternals
     'temple_of_eternals':   ('temple_of_eternals.png',          'temple_of_eternals', 0),
 
     # others on the end
-    '_firestone_research':  ('',                                'library_firestone_research', 1),
-    'bag':                  ('',                                'bag', 1),
-    'check_mail':           ('',                                'check_mail', 1),
+    '_firestone_research':  ('',                                'library_firestone_research', 0),
+    'bag':                  ('',                                'bag', 0),
+    'check_mail':           ('',                                'check_mail', 0),
     'check_taskcount':      ('',                                'check_taskcount', 0)
 }
 

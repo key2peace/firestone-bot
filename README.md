@@ -35,6 +35,7 @@ But sadly, new OculiX IDE looking shiny on my desktop, getting frustrated by the
   If you do not see them being upgraded, they have not been captured yet,  in that case please submit an issue providing a 1:1 image capture
   of the area not being upgraded, and I will add them as soon as possible.
   See [this](https://github.com/key2peace/firestone-bot/tree/main/src/images/heroes) page for the current list of supported heroes
+  **NOTE: IF YOU CHANGE YOUR PARTY SIZE, PRESS ESC OR F5 IN ORDER TO INITIALIZE A RELOAD OF THE PARTY CHECKER!**
 - Special upgrades
 - Battle pass
 - Mail:
