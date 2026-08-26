@@ -495,16 +495,48 @@ def engineer_garage(trigger: bool = False) -> int:
         'earthshatterer'
     ]
 
+    items = {
+        # name      x, amount
+        'upgrade': (1290, 0),
+        'blueprints': (1450, 0),
+        'rarity': (1620, 0)
+    }
+
+    for item, (x, _) in items.items():
+        for machine in machines:
+            if config[f'wm_{machine}_{item}']:
+                click((x, 150))
+                time.sleep(1)
+                amount = Region(1580, 20, 116, 36).get_number()
+                if amount:
+                    items[item] = (x, amount)
+                    break
+
+    Debug.info(f'{items}')
+
     area = Region(0, 900, 1920, 180)
+    tmp = {}
+    min_level = 999
     for machine in machines:
-        if not config[f'wm_{machine}_blueprints'] and not config[f'wm_{machine}_rarity']:
+        found = False
+        for item, (_, _) in items.items():
+            if config[f'wm_{machine}_{item}']:
+                found = True
+                break
+        if not found:
             continue
+
         img = f'images/tasks/engineer/war_machines/{machine}.png'
         if not os.path.exists(img):
             continue
         m = area.exists(img)
         if m:
-            Debug.info(f'{machine} {m.get_score()}')
+            level = Region(m.get_x() + 70, m.get_y() + m.get_h(), 64, 32).get_number()
+            min_level = level if level < min_level else min_level
+            Debug.info(f'{machine} ({level}) {m.get_score()}')
+            tmp[machine] = level
+
+    Debug.info(f'{tmp}')
 
     click((1840, 55))
     return get_next_reset()
@@ -591,7 +623,7 @@ def exotic_merchant(trigger: bool = False) -> int:
     if not page_wait('exotic_merchant'):
         return -1
 
-    area = Region(790, 280, 1000, 760)
+    area = Region(790, 280, 1000, 795)
 
     # Sell items
     click((1120, 160))
@@ -703,6 +735,10 @@ def guild(trigger: bool = False) -> int:
         click((1070, 500))      # Guild hall
         if not page_wait('guild_hall'):
             return -1
+
+        #guild_level = Region(400, 160, 300, 36).text('', colormap['white'])
+        #members = Region(400, 260, 300, 36).text('', colormap['white'])
+
         click((180, 800))       # Guild log
         click((1670, 50))
 

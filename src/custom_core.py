@@ -74,28 +74,28 @@ config = {
     'min_score':                        0.95,                       # minimal match score
 
     # Alchemist
-    'alchemist_dragon_blood':           False,                      # alchemist: do dragon blood experiments
-    'alchemist_strange_dust':           False,                      # alchemist: do strange dust experiments
-    'alchemist_exotic_coin':            False,                      # alchemist: do exotic coin experiments
-    'transmute_legendary':              False,                      # alchemist: transmute legendary chests
-    'transmute_epic':                   False,                      # alchemist: transmute epic chests
-    'transmute_rare':                   False,                      # alchemist: transmute rare chests
-    'transmute_uncommon':               False,                      # alchemist: transmute uncommon chests
+    'alchemist_dragon_blood':           True,                       # alchemist: do dragon blood experiments
+    'alchemist_strange_dust':           True,                       # alchemist: do strange dust experiments
+    'alchemist_exotic_coin':            True,                       # alchemist: do exotic coin experiments
+    'transmute_legendary':              True,                       # alchemist: transmute legendary chests
+    'transmute_epic':                   True,                       # alchemist: transmute epic chests
+    'transmute_rare':                   True,                       # alchemist: transmute rare chests
+    'transmute_uncommon':               True,                       # alchemist: transmute uncommon chests
 
     # Battle screen
     'bag_open_chests':                  True,                       # bag: open chests
     'upgrade_mode':                     '100',                      # check_upgrade: set upgrade amount for heroes
-                                                                #       options: 1,10,100, next, max
+                                                                    #       options: 1,10,100, next, max
 
     # Exotic Merchant
     'sell_scroll_of_speed':             True,                       # 80 exotic coins
     'sell_scroll_of_damage':            True,                       # 80 exotic coins
     'sell_scroll_of_health':            True,                       # 80 exotic coins
-    'sell_midas_touch':                 False,                      # 70 exotic coins
+    'sell_midas_touch':                 True,                       # 70 exotic coins
     'sell_pouch_of_gold':               True,                       # 10 exotic coins
     'sell_bucket_of_gold':              True,                       # 35 exotic coins
     'sell_crate_of_gold':               True,                       # 65 exotic coins
-    'sell_barrel_of_gold':              False,                      # 130 exotic coins
+    'sell_barrel_of_gold':              True,                       # 130 exotic coins
     'sell_drums_of_war':                True,                       # 270 exotic coins
     'sell_dragon_armor':                True,                       # 180 exotic coins
     'sell_guardians_rune':              True,                       # 50 exotic coins
@@ -109,12 +109,12 @@ config = {
     'wm_thunderclap_upgrade':           True,
     'wm_thunderclap_blueprints':        True,
     'wm_thunderclap_rarity':            True,
-    'wm_firecracker_upgrade':           False,
-    'wm_firecracker_blueprints':        False,
-    'wm_firecracker_rarity':            False,
-    'wm_aegis_upgrade':                 False,
-    'wm_aegis_blueprints':              False,
-    'wm_aegis_rarity':                  False,
+    'wm_firecracker_upgrade':           True,
+    'wm_firecracker_blueprints':        True,
+    'wm_firecracker_rarity':            True,
+    'wm_aegis_upgrade':                 True,
+    'wm_aegis_blueprints':              True,
+    'wm_aegis_rarity':                  True,
     'wm_harvester_upgrade':             True,
     'wm_harvester_blueprints':          True,
     'wm_harvester_rarity':              True,
@@ -130,15 +130,15 @@ config = {
     'wm_judgement_upgrade':             True,
     'wm_judgement_blueprints':          True,
     'wm_judgement_rarity':              True,
-    'wm_curator_upgrade':               False,
-    'wm_curator_blueprints':            False,
-    'wm_curator_rarity':                False,
-    'wm_sentinel_upgrade':              False,
-    'wm_sentinel_blueprints':           False,
-    'wm_sentinel_rarity':               False,
-    'wm_talos_upgrade':                 False,
-    'wm_talos_blueprints':              False,
-    'wm_talos_rarity':                  False,
+    'wm_curator_upgrade':               True,
+    'wm_curator_blueprints':            True,
+    'wm_curator_rarity':                True,
+    'wm_sentinel_upgrade':              True,
+    'wm_sentinel_blueprints':           True,
+    'wm_sentinel_rarity':               True,
+    'wm_talos_upgrade':                 True,
+    'wm_talos_blueprints':              True,
+    'wm_talos_rarity':                  True,
     'wm_earthshatterer_upgrade':        True,
     'wm_earthshatterer_blueprints':     True,
     'wm_earthshatterer_rarity':         True,
@@ -149,24 +149,24 @@ config = {
     'guild_hall':                       True,                       # visit guild hall
 
     # Temple of eternals
-    'jump_percentage':                  10000,                       # temple of eternals: jump percentage
-    'jump_temple_token':                15000,                       # temple of eternals: percentage to use temple tokens
+    'jump_percentage':                  400,                        # temple of eternals: jump percentage
+    'jump_temple_token':                800,                        # temple of eternals: percentage to use temple tokens
 
     # Magic Quarter
-    'guardian_train_vermilion':         False,                      # enlighten vermilion (uses dust)
-    'guardian_enlighten_vermilion':     False,                      # enlighten vermilion (uses dust)
-    'guardian_evolve_vermilion':        False,                      # evolve vermilion (uses dust)
+    'guardian_train_vermilion':         True,                       # enlighten vermilion (uses dust)
+    'guardian_enlighten_vermilion':     True,                       # enlighten vermilion (uses dust)
+    'guardian_evolve_vermilion':        True,                       # evolve vermilion (uses dust)
     'guardian_chaos_rift_vermilion':    True,                       # increase vermilion holy damage (uses orbs of light)
     'guardian_train_grace':             True,                       # enlighten grace (uses dust)
-    'guardian_enlighten_grace':         False,                      # enlighten grace (uses dust)
+    'guardian_enlighten_grace':         True,                       # enlighten grace (uses dust)
     'guardian_evolve_grace':            True,                       # evolve grace (uses dust)
     'guardian_chaos_rift_grace':        True,                       # increase grace holy damage (uses orbs of light)
-    'guardian_train_ankaa':             False,                      # enlighten ankaa (uses dust)
-    'guardian_enlighten_ankaa':         False,                      # enlighten ankaa (uses dust)
+    'guardian_train_ankaa':             True,                       # enlighten ankaa (uses dust)
+    'guardian_enlighten_ankaa':         True,                       # enlighten ankaa (uses dust)
     'guardian_evolve_ankaa':            True,                       # evolve ankaa (uses dust)
     'guardian_chaos_rift_ankaa':        True,                       # increase ankaa holy damage (uses orbs of light)
-    'guardian_train_azhar':             False,                      # enlighten azhar (uses dust)
-    'guardian_enlighten_azhar':         False,                      # enlighten azhar (uses dust)
+    'guardian_train_azhar':             True,                       # enlighten azhar (uses dust)
+    'guardian_enlighten_azhar':         True,                       # enlighten azhar (uses dust)
     'guardian_evolve_azhar':            True,                       # evolve azhar (uses dust)
     'guardian_chaos_rift_azhar':        True,                       # increase azhar holy damage (uses orbs of light)
 
@@ -669,7 +669,7 @@ def get_pixel_color(x: int, y: int) -> Tuple[int, int, int]:
 
 def get_value(value: str) -> Union[int, float]:
     """
-    Convert game-style exponential alpha suffixes to a relative numerical rank.
+    Convert game-style exponential alpha suffixes and roman to a numerical rank.
 
     Args:
         value (str): The string containing the value.
@@ -702,6 +702,24 @@ def get_value(value: str) -> Union[int, float]:
         for pos in range(len(suffix) -1, -1, -1):
             exp += (ord(suffix[pos].lower()) - ord('a')) * (26 ** pos)
         return float(val.replace(',','.')) * (10 ** exp)
+
+    # Roman notation
+    m = re.search(r'^([IVXLCDM)$', value).upper()
+    if m:
+        roman = {'I':1, 'V':5, 'X':10, 'L':50, 'C':100, 'D':500, 'M':1000}
+        res: int = 0
+        for i in range(0, len(value)):
+            s1 = roman[value[i]]
+            if i + 1 < len(value) - 1:
+                s2 = roman[value[i+1]]
+                if s1 >= s2:
+                    res += s1
+                else:
+                    res += s2 - s1
+                    i += 1
+            else:
+                res += s1
+        return res
 
     return 0
 
@@ -1768,6 +1786,12 @@ if os.path.exists(config_file):
             config.update(loaded_config)
     except Exception as e:
         Debug.error(f'[Core] Unable to load configuration\n{e}')
+else:
+    try:
+        with open(config_file, 'w', encoding='utf-8') as f:
+            f.write(json.dumps(config, indent=4))
+    except Exception as e:
+        Debug.error(f'[Core] Unable to write configuration\n{e}')
 
 # general regions
 screen = Region(0, 0, 1920, 1080)
