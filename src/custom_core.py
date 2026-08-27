@@ -686,7 +686,7 @@ def get_value(value: str) -> Union[int, float]:
     m = re.search(r'^([\d,]+)e(\d+)$', value)
     if m:
         val, suffix = m.groups()
-        return float(val.replace(',','.')) * (10 ** suffix)
+        return float(val.replace(',','.')) * (10 ** int(suffix))
 
     # Game notation
     m = re.search(r'^([\d,]+)([KMBT]{1})$', value)
@@ -698,27 +698,29 @@ def get_value(value: str) -> Union[int, float]:
     m = re.search(r'^([\d,]+)([a-z]+)$', value)
     if m:
         val, suffix = m.groups()
-        exp = 15
-        for pos in range(len(suffix) -1, -1, -1):
-            exp += (ord(suffix[pos].lower()) - ord('a')) * (26 ** pos)
+        exp: int = 15
+        for pos, char in enumerate(reversed(suffix)):
+            exp += (ord(char) - ord("A")) * (26 ** pos)
         return float(val.replace(',','.')) * (10 ** exp)
 
     # Roman notation
-    m = re.search(r'^([IVXLCDM)$', value).upper()
+    m = re.search(r'^([IVXLCDM]+)$', value).upper()
     if m:
-        roman = {'I':1, 'V':5, 'X':10, 'L':50, 'C':100, 'D':500, 'M':1000}
+        roman_map: dict[str, int] = {'I':1, 'V':5, 'X':10, 'L':50, 'C':100, 'D':500, 'M':1000}
         res: int = 0
-        for i in range(0, len(value)):
-            s1 = roman[value[i]]
-            if i + 1 < len(value) - 1:
-                s2 = roman[value[i+1]]
-                if s1 >= s2:
-                    res += s1
+        clean_val: str = match.group(1)
+        length: int = len(clean_val)
+
+        for i, char in enumerate(clean_val):
+            current_val = roman_map[char]
+            if i + 1 < length:
+                next_val = roman_map[clean_val[i + 1]]
+                if current_val < next_val:
+                    res -= current_val
                 else:
-                    res += s2 - s1
-                    i += 1
+                    res += current_val
             else:
-                res += s1
+                res += current_val
         return res
 
     return 0

@@ -281,7 +281,8 @@ def check_heroes(trigger: bool = False) -> int:
     if trigger:
         pass
 
-    clicked = False
+    clicked: bool = False
+    x: int = 960
     for name, (x, y) in party_coords.items():
         if name == 'upgrade' or color_at(x, y + 60) != 'yellow':
             continue
@@ -1095,7 +1096,8 @@ def magic_quarter(trigger: bool = False) -> int:
     while True:
         current = Region(250, 830, 300, 60).text('abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ', colormap['brown']).lower()
         if current and current in pos:
-            del tmp[current]
+            if current in tmp:
+                del tmp[current]
 
             # General
             if config[f'guardian_train_{current}'] or config[f'guardian_train_{current}']:
