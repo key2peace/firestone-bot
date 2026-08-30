@@ -73,6 +73,7 @@ config = {
     'tracker_file':                     'index.json',               # name of the filetracker index files
     'wait_page':                        5,                          # float or int value for the timeout waiting for a page to appear
     'min_score':                        0.95,                       # minimal match score
+    'monitor':                          1,                          # monitor to use for capturing
 
     # Alchemist
     'alchemist_dragon_blood':           True,                       # alchemist: do dragon blood experiments
@@ -496,47 +497,53 @@ def config_load() -> None:
     else:
         config_save()
 
-def _config_checkbox(tab, text, row, varname) -> None:
+def _config_checkbox(tab, text, row, varname, column_start:int = 0) -> None:
     global config_panel_vars
 
-    tk.Label(tab, text=text, bg='black', fg='white', ).grid(row=row, column=0, pady=2, sticky='nsew', ipadx=5)
-    config_panel_vars[varname] = tk.IntVar(value=config[varname])
-    tk.Checkbutton(tab, variable=config_panel_vars[varname], onvalue=True, offvalue=False).grid(row=row, column=1, padx=5, pady=2, sticky='nsw')
+    tk.Label(tab, text=text, bg='black', fg='white', ).grid(row=row, column=column_start, pady=2, sticky='nsew', ipadx=5)
+    config_panel_vars.update({varname: tk.IntVar(value=config[varname])})
+    tk.Checkbutton(tab, variable=config_panel_vars[varname], onvalue=True, offvalue=False).grid(row=row, column=column_start + 1, padx=5, pady=2, sticky='nsw')
 
 def _config_numeric(tab, text, row, varname, min_val, max_val) -> None:
     global config_panel_vars
 
     tk.Label(tab, text=text, bg='black', fg='white', ).grid(row=row, column=0, pady=2, sticky='nsew', ipadx=5)
-    config_panel_vars[varname] = tk.DoubleVar(value=config[varname])
+    config_panel_vars.update({varname: tk.DoubleVar(value=config[varname])})
     tk.Spinbox(tab, from_=min_val, to=max_val, increment=0.1, textvariable=config_panel_vars[varname], width=6).grid(row=row, column=1, padx=5, pady=2, sticky='nsw')
 
 def _config_slider(tab, text, row, varname, min_val, max_val) -> None:
     global config_panel_vars
 
     tk.Label(tab, text=text, bg='black', fg='white').grid(row=row, column=0, pady=2, sticky='nsew', ipadx=5)
-    config_panel_vars[varname] = tk.DoubleVar(value=config[varname])
+    config_panel_vars.update({varname: tk.DoubleVar(value=config[varname])})
     tk.Scale(tab, from_=min_val, to=max_val, orient=tk.HORIZONTAL, resolution=0.01, variable=config_panel_vars[varname]).grid(row=row, column=1, padx=5, pady=2, sticky='nsew')
 
 def _config_text(tab, text, row, varname) -> None:
     global config_panel_vars
 
     tk.Label(tab, text=text, bg='black', fg='white').grid(row=row, column=0, pady=2, sticky=tk.N+tk.E+tk.S+tk.W, ipadx=5)
-    config_panel_vars[varname] = tk.StringVar(value=config[varname])
+    config_panel_vars.update({varname: tk.StringVar(value=config[varname])})
     tk.Entry(tab, textvariable=config_panel_vars[varname]).grid(row=row, column=1, padx=5, pady=2, sticky=tk.N+tk.E+tk.S+tk.W)
 
 def _config_listevent(event, item, action, varname) -> None:
     global config_panel_vars
 
+    if event:
+        pass
+
     idx = item.curselection()
-    if not idx: return
+    if not idx:
+        return
     idx = idx[0]
 
     if action == 'dblclick':
         color = 'red' if item.itemcget(idx, 'fg') == 'green' else 'green'
         item.itemconfig(idx, fg=color)
     elif action in ['down', 'up']:
-        if action == 'down' and idx == item.size() -1: return
-        if action == 'up' and not idx: return
+        if action == 'down' and idx == item.size() -1:
+            return
+        if action == 'up' and not idx:
+            return
         color = item.itemcget(idx, 'fg')
         text = item.get(idx)
         new_idx = idx - 1 if action == 'up' else idx + 1
@@ -545,7 +552,15 @@ def _config_listevent(event, item, action, varname) -> None:
         item.itemconfig(new_idx, fg=color)
         item.selection_set(new_idx)
 
-    config_panel_vars[varname] = tk.StringVar(value=','.join([item.get(i) for i in range(item.size()) if item.itemcget(i, 'fg') == 'green']))
+    config_panel_vars.update({varname: tk.StringVar(value=','.join([item.get(i) for i in range(item.size()) if item.itemcget(i, 'fg') == 'green']))})
+
+def _config_comboevent(event, item, varname) -> None:
+    global config_panel_vars
+
+    if event:
+        pass
+
+    config_panel_vars.update({varname: tk.IntVar(value=item.current() + 1)})
 
 def config_page() -> None:
     """
@@ -588,19 +603,35 @@ def config_page() -> None:
     _config_text(tab1, 'Tracker file', 3, 'tracker_file')
     _config_numeric(tab1, 'Page Wait Time', 4, 'wait_page', 1, 30)
     _config_slider(tab1, 'Min match score', 5, 'min_score', 0.8, 1)
+    tk.Label(tab1, text='Monitor', bg='black', fg='white').grid(row=6, column=0, pady=5, sticky='nsew', ipadx=5)
+    config_panel_vars.update({'monitor': tk.IntVar(value=config['monitor'])})
+    values = []
+    monitors = mss.MSS().monitors[1::]
+    for idx, monitor in enumerate(monitors):
+        text = f'[Display {idx + 1}] {monitor['name']} @ {monitor['width']}x{monitor['height']}'
+        if monitor['is_primary']:
+            text += ' (primary)'
+        values.append(text)
+    monitor_list = ttk.Combobox(tab1, state='readonly', values=values)
+    monitor_list.grid(row=6, column=1, padx=5, pady=5, sticky='nsew', ipadx=5)
+    monitor_list.current(config['monitor'] - 1)
+    monitor_list.bind('<<ComboboxSelected>>', lambda e: _config_comboevent(e, monitor_list, 'monitor'))
 
     tabs.add(tab2, text='Alchemist')
-    _config_checkbox(tab2, 'Dragon Blood Experiments', 0,'alchemist_dragon_blood')
-    _config_checkbox(tab2, 'Strange Dust Experiments', 1,'alchemist_strange_dust')
-    _config_checkbox(tab2, 'Exotic Coin Experiments', 2,'alchemist_exotic_coin')
-    _config_checkbox(tab2, 'Transmute Legendary Chests', 3,'transmute_legendary')
-    _config_checkbox(tab2, 'Transmute Epic Chests', 4,'transmute_epic')
-    _config_checkbox(tab2, 'Transmute Rare Chests', 5,'transmute_rare')
-    _config_checkbox(tab2, 'Transmute Uncommon Chests', 6,'transmute_uncommon')
+    tk.Label(tab2, text='Experiments', bg='black', fg='white').grid(row=0, column=0, columnspan=6, pady=5, sticky='nsew', ipadx=5)
+    _config_checkbox(tab2, 'Dragon Blood', 1,'alchemist_dragon_blood')
+    _config_checkbox(tab2, 'Strange Dust', 1,'alchemist_strange_dust', 2)
+    _config_checkbox(tab2, 'Exotic Coin', 1,'alchemist_exotic_coin', 4)
+
+    tk.Label(tab2, text='Transmute Chests', bg='black', fg='white').grid(row=2, column=0, columnspan=6, pady=5, sticky='nsew', ipadx=5)
+    _config_checkbox(tab2, 'Legendary', 3,'transmute_legendary')
+    _config_checkbox(tab2, 'Epic', 3,'transmute_epic', 2)
+    _config_checkbox(tab2, 'Rare', 3,'transmute_rare', 4)
+    _config_checkbox(tab2, 'Uncommon', 3,'transmute_uncommon', 8)
 
     tabs.add(tab3, text='Battle Screen')
-    tk.Label(tab3, text='Upgrade mode', bg='black', fg='white').grid(row=0, column=0, pady=2, sticky='nsew', ipadx=5)
-    config_panel_vars['upgrade_mode'] = tk.StringVar(value=config['upgrade_mode'])
+    tk.Label(tab3, text='Upgrade mode', bg='black', fg='white').grid(row=0, column=0, pady=2, sticky='nsew')
+    config_panel_vars.update({'upgrade_mode': tk.StringVar(value=config['upgrade_mode'])})
     tk.Radiobutton(tab3, text='x1', variable=config_panel_vars['upgrade_mode'], value='1').grid(row=0, column=1, padx=5, pady=2, sticky='nsw')
     tk.Radiobutton(tab3, text='x10', variable=config_panel_vars['upgrade_mode'], value='10').grid(row=0, column=2, padx=5, pady=2, sticky='nsw')
     tk.Radiobutton(tab3, text='x100', variable=config_panel_vars['upgrade_mode'], value='100').grid(row=0, column=3, padx=5, pady=2, sticky='nsw')
@@ -612,22 +643,25 @@ def config_page() -> None:
 
     tabs.add(tab4, text='Exotic Merchant')
     idx = 0
+    offset = 0
     for name, _ in config.items():
         if name.startswith('sell_'):
             text = name.replace('_', ' ').capitalize()
-            _config_checkbox(tab4, text, idx, name)
-            idx += 1
+            _config_checkbox(tab4, text, idx, name, offset)
+            offset += 2
+            if offset == 6:
+                idx += 1
+                offset = 0
 
     tabs.add(tab5, text='Garage')
     machines = ['aegis', 'cloudfist', 'curator', 'earthshatterer', 'firecracker', 'fortress', 'goliath', 'harvester', 'hunter', 'judgement', 'sentinel', 'talos', 'thunderclap']
     for idx, machine in enumerate(machines):
         tk.Label(tab5, text=machine.capitalize(), bg='black', fg='white').grid(row=idx, column=0, pady=2, sticky='nsew', ipadx=5)
-        config_panel_vars[f'wm_{machine}_upgrade'] = tk.IntVar(value=config[f'wm_{machine}_upgrade'])
-        tk.Checkbutton(tab5, text='Upgrade', variable=config_panel_vars[f'wm_{machine}_upgrade'], onvalue=True, offvalue=False).grid(row=idx, column=1, padx=5, pady=2, sticky='nsw')
-        config_panel_vars[f'wm_{machine}_blueprints'] = tk.IntVar(value=config[f'wm_{machine}_blueprints'])
-        tk.Checkbutton(tab5, text='Blueprints', variable=config_panel_vars[f'wm_{machine}_blueprints'], onvalue=True, offvalue=False).grid(row=idx, column=2, padx=5, pady=2, sticky='nsw')
-        config_panel_vars[f'wm_{machine}_rarity'] = tk.IntVar(value=config[f'wm_{machine}_rarity'])
-        tk.Checkbutton(tab5, text='Rarity', variable=config_panel_vars[f'wm_{machine}_rarity'], onvalue=True, offvalue=False).grid(row=idx, column=3, padx=5, pady=2, sticky='nsw')
+        for offset, item in enumerate(['upgrade', 'blueprints', 'rarity']):
+            varname = f'wm_{machine}_{item}'
+            value = tk.IntVar(value=config[varname])
+            config_panel_vars.update({varname: value})
+            tk.Checkbutton(tab5, text=item.capitalize(), variable=config_panel_vars[varname], onvalue=1, offvalue=0).grid(row=idx, column=1+offset, padx=5, pady=2, sticky='nsw')
 
     tabs.add(tab6, text='Guild')
     _config_checkbox(tab6, 'Visit guild bank', 0, 'guild_bank')
@@ -638,16 +672,13 @@ def config_page() -> None:
     guardians = ['vermilion', 'grace', 'ankaa', 'azhar']
     for idx, guardian in enumerate(guardians):
         tk.Label(tab7, text=guardian.capitalize(), bg='black', fg='white').grid(row=idx, column=0, pady=2, sticky='nsew', ipadx=5)
-        config_panel_vars[f'guardian_{guardian}_train'] = tk.IntVar(value=config[f'guardian_{guardian}_train'])
-        tk.Checkbutton(tab7, text='Train', variable=config_panel_vars[f'guardian_{guardian}_train'], onvalue=True, offvalue=False).grid(row=idx, column=1, padx=5, pady=2, sticky='nsw')
-        config_panel_vars[f'guardian_{guardian}_enlighten'] = tk.IntVar(value=config[f'guardian_{guardian}_enlighten'])
-        tk.Checkbutton(tab7, text='Enlighten', variable=config_panel_vars[f'guardian_{guardian}_enlighten'], onvalue=True, offvalue=False).grid(row=idx, column=2, padx=5, pady=2, sticky='nsw')
-        config_panel_vars[f'guardian_{guardian}_evolve'] = tk.IntVar(value=config[f'guardian_{guardian}_evolve'])
-        tk.Checkbutton(tab7, text='Evolve', variable=config_panel_vars[f'guardian_{guardian}_evolve'], onvalue=True, offvalue=False).grid(row=idx, column=3, padx=5, pady=2, sticky='nsw')
-        config_panel_vars[f'guardian_{guardian}_chaosrift'] = tk.IntVar(value=config[f'guardian_{guardian}_chaosrift'])
-        tk.Checkbutton(tab7, text='Chaos Rift', variable=config_panel_vars[f'guardian_{guardian}_chaosrift'], onvalue=True, offvalue=False).grid(row=idx, column=4, padx=5, pady=2, sticky='nsw')
-        config_panel_vars[f'guardian_{guardian}_rarity'] = tk.IntVar(value=config[f'guardian_{guardian}_rarity'])
-        tk.Checkbutton(tab7, text='Rarity', variable=config_panel_vars[f'guardian_{guardian}_rarity'], onvalue=True, offvalue=False).grid(row=idx, column=5, padx=5, pady=2, sticky='nsw')
+        for offset, item in enumerate(['train', 'enlighten', 'evolve', 'chaosrift', 'rarity']):
+            varname = f'guardian_{guardian}_{item}'
+            value = tk.IntVar(value=config[varname])
+            config_panel_vars.update({varname: value})
+            item = 'chaos rift' if item=='chaosrift' else item
+            config_panel_vars.update({varname: value})
+            tk.Checkbutton(tab7, text=item.capitalize(), variable=config_panel_vars[varname], onvalue=1, offvalue=0).grid(row=idx, column=1+offset, padx=5, pady=2, sticky='nsw')
 
     tabs.add(tab8, text='Map')
     mission_types = ['adventure', 'dragon', 'monster', 'mystery', 'naval', 'scout', 'titan', 'war']
@@ -676,11 +707,15 @@ def config_page() -> None:
 
     tabs.add(tab9, text='Shop')
     idx = 0
+    offset = 0
     for name, _ in config.items():
         if name.startswith('buy_'):
-            text = name.replace('_', ' ').capitalize()
-            _config_checkbox(tab9, text, idx, name)
-            idx += 1
+            text = name[3::].replace('_', ' ').strip().capitalize()
+            _config_checkbox(tab9, text, idx, name, offset)
+            offset += 2
+            if offset == 6:
+                idx += 1
+                offset = 0
 
     tabs.add(tab10, text='Temple of eternals')
     _config_numeric(tab10, 'Jump percentage', 0, 'jump_percentage', 100, 100000000000)
@@ -695,7 +730,7 @@ def config_save() -> None:
     try:
         if config_panel_vars:
             for name, value in config_panel_vars.items():
-                config[name] = value.get()
+                config.update({name: value.get()})
 
         with open(config_file, 'w', encoding='utf-8') as f:
             f.write(json.dumps(config, indent=4))
@@ -711,12 +746,15 @@ def get_coords(location: Union[Tuple[int, int], 'Region', 'Match']) -> Tuple[int
         x, y = location.get_x(), location.get_y()
     except AttributeError:
         try:
-            x, y = location.get_center().get_x(), location.get_center().get_y()
+            x, y = location
         except AttributeError:
-            try:
-                x, y = location
-            except AttributeError:
-                return (-1, -1)
+            return (-1, -1)
+
+    with mss.MSS() as _mss_client:
+        monitor = _mss_client.monitors[config['monitor']]
+        x +=  monitor['left']
+        y +=  monitor['top']
+
     return (x, y)
 
 def drag_drop(start_location: Union[Tuple[int, int], 'Region', 'Match'],
@@ -995,7 +1033,7 @@ def get_timeout(seconds: float) -> int:
     """
     return int(time.time()+seconds)
 
-def grab_screen_to_mat(region_obj: Region = None) -> 'np.ndarray | None':
+def grab_screen_to_mat(region_obj: Union[Match, Region] = None) -> 'np.ndarray | None':
     """
     Capture the active screen region and extract it as a clean NumPy NDArray.
     Guarantees structural integer parameters during memory slicing to eliminate
@@ -1004,13 +1042,13 @@ def grab_screen_to_mat(region_obj: Region = None) -> 'np.ndarray | None':
     try:
         with mss.MSS() as _mss_client:
             # Define the exact bounding box required by mss
-            monitor = _mss_client.monitors[1]
+            monitor = _mss_client.monitors[config['monitor']]
             if region_obj:
                 monitor = {
-                    'top': monitor['top'] + int(region_obj.y),
-                    'left': monitor['left'] + int(region_obj.x),
-                    'width': int(region_obj.w),
-                    'height': int(region_obj.h)
+                    'top': monitor['top'] + int(region_obj.get_y()),
+                    'left': monitor['left'] + int(region_obj.get_x()),
+                    'width': int(region_obj.get_w()),
+                    'height': int(region_obj.get_h())
                 }
             # Grab the targeted pixels directly from the main screen buffer
             return cv2.cvtColor(np.array(_mss_client.grab(monitor)), cv2.COLOR_BGRA2BGR)
@@ -1624,7 +1662,6 @@ class Region():
         self.y = y
         self.w = w
         self.h = h
-        self.cache = []
 
     def click(self) -> None:
         """
@@ -1729,7 +1766,7 @@ class Region():
             min_val, _, min_loc, _ = cv2.minMaxLoc(res)
 
             # Halt the loop if the match confidence drops below 90% (threshold > 0.1)
-            if min_val > 0.1:
+            if min_val > 1 - config['min_score']:
                 break
 
             abs_x = self.x + min_loc[0]

@@ -37,6 +37,9 @@ class SequentialTaskTimeout:
         sys.settrace(None)
 
     def _trace_callback(self, frame, event, arg):
+        if frame or arg:
+            pass
+
         if event == "line":
             if time.time() > self.deadline:
                 raise TimeoutError("Task time limit exceeded")
@@ -54,7 +57,7 @@ def main() -> None:
     stats_fp = False
     try:
         stats_file = '.bot-stats'
-        stats_fp = open(stats_file, mode='at', encoding='utf-8')
+        stats_fp = open(stats_file, mode='at', encoding='utf-8') # pylint: disable=consider-using-with
         if not os.path.isfile(stats_file):
             stats_fp.write('Timestamp\tFunction\tDuration\n')
     except OSError as e:

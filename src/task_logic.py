@@ -1609,7 +1609,7 @@ def shop(trigger: bool = False) -> int:
         current_keys = Region(790, 1010, 120, 44).get_number()
         current_gems = Region(1040, 1010, 120, 44).get_number()
         if (keys and  current_keys >= 20) or (gems and current_gems >= 2000):
-            Debug.history(f'[shop] Obtaining {name.replace('_', ' ').capitalize}')
+            Debug.history(f'[shop] Obtaining {name.replace('_', ' ').capitalize()}')
             click((1330, 800))
             sleep(1)
             if color_at(1060, 780) == 'green':
