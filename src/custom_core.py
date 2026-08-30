@@ -472,30 +472,53 @@ def config_load() -> None:
 def _config_checkbox(tab, text, row, varname) -> None:
     global config_panel_vars
 
-    tk.Label(tab, text=text, bg='black', fg='white', ).grid(row=row, column=0, pady=2, sticky=tk.N+tk.E+tk.S+tk.W, ipadx=5)
+    tk.Label(tab, text=text, bg='black', fg='white', ).grid(row=row, column=0, pady=2, sticky='nsew', ipadx=5)
     config_panel_vars[varname] = tk.IntVar(value=config[varname])
-    tk.Checkbutton(tab, variable=config_panel_vars[varname], onvalue=True, offvalue=False).grid(row=row, column=1, columnspan=2, padx=5, pady=2, sticky=tk.N+tk.S+tk.W)
+    tk.Checkbutton(tab, variable=config_panel_vars[varname], onvalue=True, offvalue=False).grid(row=row, column=1, padx=5, pady=2, sticky='nsw')
 
 def _config_numeric(tab, text, row, varname, min_val, max_val) -> None:
     global config_panel_vars
 
-    tk.Label(tab, text=text, bg='black', fg='white', ).grid(row=row, column=0, pady=2, sticky=tk.N+tk.E+tk.S+tk.W, ipadx=5)
+    tk.Label(tab, text=text, bg='black', fg='white', ).grid(row=row, column=0, pady=2, sticky='nsew', ipadx=5)
     config_panel_vars[varname] = tk.DoubleVar(value=config[varname])
-    tk.Spinbox(tab, from_=min_val, to=max_val, increment=0.1, textvariable=config_panel_vars[varname], width=6).grid(row=row, column=1, columnspan=2, padx=5, pady=2, sticky=tk.N+tk.S+tk.W)
+    tk.Spinbox(tab, from_=min_val, to=max_val, increment=0.1, textvariable=config_panel_vars[varname], width=6).grid(row=row, column=1, padx=5, pady=2, sticky='nsw')
 
 def _config_slider(tab, text, row, varname, min_val, max_val) -> None:
     global config_panel_vars
 
-    tk.Label(tab, text=text, bg='black', fg='white').grid(row=row, column=0, pady=2, sticky=tk.N+tk.E+tk.S+tk.W, ipadx=5)
+    tk.Label(tab, text=text, bg='black', fg='white').grid(row=row, column=0, pady=2, sticky='nsew', ipadx=5)
     config_panel_vars[varname] = tk.DoubleVar(value=config[varname])
-    tk.Scale(tab, from_=min_val, to=max_val, orient=tk.HORIZONTAL, resolution=0.01, variable=config_panel_vars[varname], length=500).grid(row=row, column=1, columnspan=2, padx=5, pady=2, sticky=tk.N+tk.S+tk.E+tk.W)
+    tk.Scale(tab, from_=min_val, to=max_val, orient=tk.HORIZONTAL, resolution=0.01, variable=config_panel_vars[varname]).grid(row=row, column=1, padx=5, pady=2, sticky='nsew')
 
 def _config_text(tab, text, row, varname) -> None:
     global config_panel_vars
 
     tk.Label(tab, text=text, bg='black', fg='white').grid(row=row, column=0, pady=2, sticky=tk.N+tk.E+tk.S+tk.W, ipadx=5)
     config_panel_vars[varname] = tk.StringVar(value=config[varname])
-    tk.Entry(tab, textvariable=config_panel_vars[varname], width=70).grid(row=row, column=1, columnspan=2, padx=5, pady=2, sticky=tk.N+tk.E+tk.S+tk.W)
+    tk.Entry(tab, textvariable=config_panel_vars[varname]).grid(row=row, column=1, padx=5, pady=2, sticky=tk.N+tk.E+tk.S+tk.W)
+
+def _config_listevent(event, item, action, varname) -> None:
+    global config_panel_vars
+
+    idx = item.curselection()
+    if not idx: return
+    idx = idx[0]
+
+    if action == 'dblclick':
+        color = 'red' if item.itemcget(idx, 'fg') == 'green' else 'green'
+        item.itemconfig(idx, fg=color)
+    elif action in ['down', 'up']:
+        if action == 'down' and idx == item.size() -1: return
+        if action == 'up' and not idx: return
+        color = item.itemcget(idx, 'fg')
+        text = item.get(idx)
+        new_idx = idx - 1 if action == 'up' else idx + 1
+        item.delete(idx)
+        item.insert(new_idx, text)
+        item.itemconfig(new_idx, fg=color)
+        item.selection_set(new_idx)
+
+    config_panel_vars[varname] = tk.StringVar(value=','.join([item.get(i) for i in range(item.size()) if item.itemcget(i, 'fg') == 'green']))
 
 def config_page() -> None:
     """
@@ -505,7 +528,6 @@ def config_page() -> None:
 
     c = tk.Tk()
     c.title('Firestone Bot Configuration')
-    c.geometry('870x600')
     style = ttk.Style()
     style.configure('LeftTabs.TNotebook', tabposition='wn')
     style.configure('LeftTabs.TNotebook.Tab', width=-25, anchor='w', padding=(10, 8))
@@ -531,6 +553,7 @@ def config_page() -> None:
     tab9 = ttk.Frame(tabs, padding=10)
 
     tabs.add(tab1, text='System')
+    tab1.grid_columnconfigure(1, minsize=400, weight=0)
     _config_text(tab1, 'Logfile', 0, 'logfile')
     _config_text(tab1, 'Ollama URL', 1, 'ollama_url')
     _config_text(tab1, 'Ollama Model', 2, 'ollama_model')
@@ -548,13 +571,13 @@ def config_page() -> None:
     _config_checkbox(tab2, 'Transmute Uncommon Chests', 6,'transmute_uncommon')
 
     tabs.add(tab3, text='Battle Screen')
-    tk.Label(tab3, text='Upgrade mode', bg='black', fg='white').grid(row=0, column=0, pady=2, sticky=tk.N+tk.E+tk.S+tk.W, ipadx=5)
+    tk.Label(tab3, text='Upgrade mode', bg='black', fg='white').grid(row=0, column=0, pady=2, sticky='nsew', ipadx=5)
     config_panel_vars['upgrade_mode'] = tk.StringVar(value=config['upgrade_mode'])
-    tk.Radiobutton(tab3, text='x1', variable=config_panel_vars['upgrade_mode'], value='1').grid(row=0, column=1, padx=5, pady=2, sticky=tk.N+tk.S+tk.W)
-    tk.Radiobutton(tab3, text='x10', variable=config_panel_vars['upgrade_mode'], value='10').grid(row=0, column=2, padx=5, pady=2, sticky=tk.N+tk.S+tk.W)
-    tk.Radiobutton(tab3, text='x100', variable=config_panel_vars['upgrade_mode'], value='100').grid(row=0, column=3, padx=5, pady=2, sticky=tk.N+tk.S+tk.W)
-    tk.Radiobutton(tab3, text='next', variable=config_panel_vars['upgrade_mode'], value='next').grid(row=0, column=4, padx=5, pady=2, sticky=tk.N+tk.S+tk.W)
-    tk.Radiobutton(tab3, text='max', variable=config_panel_vars['upgrade_mode'], value='max').grid(row=0, column=5, padx=5, pady=2, sticky=tk.N+tk.S+tk.W)
+    tk.Radiobutton(tab3, text='x1', variable=config_panel_vars['upgrade_mode'], value='1').grid(row=0, column=1, padx=5, pady=2, sticky='nsw')
+    tk.Radiobutton(tab3, text='x10', variable=config_panel_vars['upgrade_mode'], value='10').grid(row=0, column=2, padx=5, pady=2, sticky='nsw')
+    tk.Radiobutton(tab3, text='x100', variable=config_panel_vars['upgrade_mode'], value='100').grid(row=0, column=3, padx=5, pady=2, sticky='nsw')
+    tk.Radiobutton(tab3, text='next', variable=config_panel_vars['upgrade_mode'], value='next').grid(row=0, column=4, padx=5, pady=2, sticky='nsw')
+    tk.Radiobutton(tab3, text='max', variable=config_panel_vars['upgrade_mode'], value='max').grid(row=0, column=5, padx=5, pady=2, sticky='nsw')
     for idx, name in enumerate(['upgrade_slot1', 'upgrade_slot2', 'upgrade_slot3', 'upgrade_slot4', 'upgrade_slot5', 'upgrade_guardian', 'upgrade_specials', 'bag_open_chests']):
         text = name.replace('_', ' ').capitalize()
         _config_checkbox(tab3, text, idx + 1, name)
@@ -570,13 +593,13 @@ def config_page() -> None:
     tabs.add(tab5, text='Garage')
     machines = ['aegis', 'cloudfist', 'curator', 'earthshatterer', 'firecracker', 'fortress', 'goliath', 'harvester', 'hunter', 'judgement', 'sentinel', 'talos', 'thunderclap']
     for idx, machine in enumerate(machines):
-        tk.Label(tab5, text=machine.capitalize(), bg='black', fg='white').grid(row=idx, column=0, pady=2, sticky=tk.N+tk.E+tk.S+tk.W, ipadx=5)
+        tk.Label(tab5, text=machine.capitalize(), bg='black', fg='white').grid(row=idx, column=0, pady=2, sticky='nsew', ipadx=5)
         config_panel_vars[f'wm_{machine}_upgrade'] = tk.IntVar(value=config[f'wm_{machine}_upgrade'])
-        tk.Checkbutton(tab5, text='Upgrade', variable=config_panel_vars[f'wm_{machine}_upgrade'], onvalue=True, offvalue=False).grid(row=idx, column=1, padx=5, pady=2, sticky=tk.N+tk.S+tk.W)
+        tk.Checkbutton(tab5, text='Upgrade', variable=config_panel_vars[f'wm_{machine}_upgrade'], onvalue=True, offvalue=False).grid(row=idx, column=1, padx=5, pady=2, sticky='nsw')
         config_panel_vars[f'wm_{machine}_blueprints'] = tk.IntVar(value=config[f'wm_{machine}_blueprints'])
-        tk.Checkbutton(tab5, text='Blueprints', variable=config_panel_vars[f'wm_{machine}_blueprints'], onvalue=True, offvalue=False).grid(row=idx, column=2, padx=5, pady=2, sticky=tk.N+tk.S+tk.W)
+        tk.Checkbutton(tab5, text='Blueprints', variable=config_panel_vars[f'wm_{machine}_blueprints'], onvalue=True, offvalue=False).grid(row=idx, column=2, padx=5, pady=2, sticky='nsw')
         config_panel_vars[f'wm_{machine}_rarity'] = tk.IntVar(value=config[f'wm_{machine}_rarity'])
-        tk.Checkbutton(tab5, text='Rarity', variable=config_panel_vars[f'wm_{machine}_rarity'], onvalue=True, offvalue=False).grid(row=idx, column=3, padx=5, pady=2, sticky=tk.N+tk.S+tk.W)
+        tk.Checkbutton(tab5, text='Rarity', variable=config_panel_vars[f'wm_{machine}_rarity'], onvalue=True, offvalue=False).grid(row=idx, column=3, padx=5, pady=2, sticky='nsw')
 
     tabs.add(tab6, text='Guild')
     _config_checkbox(tab6, 'Visit guild bank', 0, 'guild_bank')
@@ -586,21 +609,43 @@ def config_page() -> None:
     tabs.add(tab7, text='Magic Quarter')
     guardians = ['vermilion', 'grace', 'ankaa', 'azhar']
     for idx, guardian in enumerate(guardians):
-        tk.Label(tab7, text=guardian.capitalize(), bg='black', fg='white').grid(row=idx, column=0, pady=2, sticky=tk.N+tk.E+tk.S+tk.W, ipadx=5)
+        tk.Label(tab7, text=guardian.capitalize(), bg='black', fg='white').grid(row=idx, column=0, pady=2, sticky='nsew', ipadx=5)
         config_panel_vars[f'guardian_{guardian}_train'] = tk.IntVar(value=config[f'guardian_{guardian}_train'])
-        tk.Checkbutton(tab7, text='Train', variable=config_panel_vars[f'guardian_{guardian}_train'], onvalue=True, offvalue=False).grid(row=idx, column=1, padx=5, pady=2, sticky=tk.N+tk.S+tk.W)
+        tk.Checkbutton(tab7, text='Train', variable=config_panel_vars[f'guardian_{guardian}_train'], onvalue=True, offvalue=False).grid(row=idx, column=1, padx=5, pady=2, sticky='nsw')
         config_panel_vars[f'guardian_{guardian}_enlighten'] = tk.IntVar(value=config[f'guardian_{guardian}_enlighten'])
-        tk.Checkbutton(tab7, text='Enlighten', variable=config_panel_vars[f'guardian_{guardian}_enlighten'], onvalue=True, offvalue=False).grid(row=idx, column=2, padx=5, pady=2, sticky=tk.N+tk.S+tk.W)
+        tk.Checkbutton(tab7, text='Enlighten', variable=config_panel_vars[f'guardian_{guardian}_enlighten'], onvalue=True, offvalue=False).grid(row=idx, column=2, padx=5, pady=2, sticky='nsw')
         config_panel_vars[f'guardian_{guardian}_evolve'] = tk.IntVar(value=config[f'guardian_{guardian}_evolve'])
-        tk.Checkbutton(tab7, text='Evolve', variable=config_panel_vars[f'guardian_{guardian}_evolve'], onvalue=True, offvalue=False).grid(row=idx, column=3, padx=5, pady=2, sticky=tk.N+tk.S+tk.W)
+        tk.Checkbutton(tab7, text='Evolve', variable=config_panel_vars[f'guardian_{guardian}_evolve'], onvalue=True, offvalue=False).grid(row=idx, column=3, padx=5, pady=2, sticky='nsw')
         config_panel_vars[f'guardian_{guardian}_chaosrift'] = tk.IntVar(value=config[f'guardian_{guardian}_chaosrift'])
-        tk.Checkbutton(tab7, text='Chaos Rift', variable=config_panel_vars[f'guardian_{guardian}_chaosrift'], onvalue=True, offvalue=False).grid(row=idx, column=4, padx=5, pady=2, sticky=tk.N+tk.S+tk.W)
+        tk.Checkbutton(tab7, text='Chaos Rift', variable=config_panel_vars[f'guardian_{guardian}_chaosrift'], onvalue=True, offvalue=False).grid(row=idx, column=4, padx=5, pady=2, sticky='nsw')
         config_panel_vars[f'guardian_{guardian}_rarity'] = tk.IntVar(value=config[f'guardian_{guardian}_rarity'])
-        tk.Checkbutton(tab7, text='Rarity', variable=config_panel_vars[f'guardian_{guardian}_rarity'], onvalue=True, offvalue=False).grid(row=idx, column=5, padx=5, pady=2, sticky=tk.N+tk.S+tk.W)
+        tk.Checkbutton(tab7, text='Rarity', variable=config_panel_vars[f'guardian_{guardian}_rarity'], onvalue=True, offvalue=False).grid(row=idx, column=5, padx=5, pady=2, sticky='nsw')
 
     tabs.add(tab8, text='Map')
-    _config_text(tab8, 'Mission order', 0, 'map_order')
+    mission_types = ['adventure', 'dragon', 'monster', 'mystery', 'naval', 'scout', 'titan', 'war']
+    missions_current = config['map_order'].split(',')
+    tk.Label(tab8, text='Mission map order', bg='black', fg='white').grid(row=0, column=0, pady=2, sticky='nsew', ipadx=5)
+    tk.Button(tab8, text="▲ Up     ", command=lambda: _config_listevent(None, map_list, 'up', 'map_order')).grid(row=3, column=0, padx=5, pady=2, sticky='nsew')
+    tk.Button(tab8, text="🌓 Toggle", command=lambda: _config_listevent(None, map_list, 'dblclick', 'map_order')).grid(row=4, column=0, padx=5, pady=2, sticky='nsew')
+    tk.Button(tab8, text="▼ Down   ", command=lambda: _config_listevent(None, map_list, 'down', 'map_order')).grid(row=5, column=0, padx=5, pady=2, sticky='nsew')
 
+    map_list = tk.Listbox(tab8, selectmode=tk.SINGLE, activestyle='none', exportselection=0, height=len(mission_types))
+    map_list.grid(row=0, column=1, rowspan=len(mission_types), padx=5, pady=2, sticky='nsw')
+    idx = 0
+    for m in missions_current:
+        name = m.strip().lower()
+        if name not in mission_types:
+            continue
+        mission_types.remove(name)
+        map_list.insert(idx, name)
+        map_list.itemconfig(idx, fg='green')
+        idx += 1
+    for mission in mission_types:
+        map_list.insert(idx, mission)
+        map_list.itemconfig(idx, fg='red')
+        idx += 1
+    map_list.bind("<Double-1>", lambda e: _config_listevent(e, map_list, 'dblclick', 'map_order'))
+    
     tabs.add(tab9, text='Temple of eternals')
     _config_numeric(tab9, 'Jump percentage', 0, 'jump_percentage', 100, 100000000000)
     _config_numeric(tab9, 'Use temple token at', 1, 'jump_temple_token', 100, 100000000000)
