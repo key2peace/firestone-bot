@@ -181,6 +181,33 @@ config = {
     # Map
     'map_order':                        'mystery,dragon,monster,naval,scout,war,adventure', # the order to play map missions
 
+    # Shop
+    'buy_amulet_of_conquest':           False,
+    'buy_amulet_of_the_sky':            False,
+    'buy_amulet_of_knowledge':          False,
+    'buy_amulet_of_war':                False,
+    'buy_amulet_of_power':              False,
+    'buy_amulet_of_midas':              False,
+    'buy_amulet_of_alchemy':            False,
+    'buy_amulet_of_cartography':        False,
+    'buy_amulet_of_exploration':        False,
+    'buy_amulet_of_greed':              False,
+    'buy_amulet_of_the_quartermaster':  False,
+    'buy_amulet_of_the_pioneers':       False,
+    'buy_amulet_of_liberation':         False,
+    'buy_amulet_of_production':         False,
+    'buy_amulet_of_clarity':            False,
+    'buy_amulet_of_astrology':          False,
+    'buy_amulet_of_the_seven':          False,
+    'buy_amulet_of_tinkering':          False,
+    'buy_amulet_of_insight':            False,
+    'buy_amulet_of_luck':               False,
+    'buy_amulet_of_the_king':           False,
+    'buy_amulet_of_the_queen':          False,
+    'buy_amulet_of_speed':              False,
+    'buy_amulet_of_damage':             False,
+    'buy_amulet_of_health':             False,
+
     # Temple of eternals
     'jump_percentage':                  400,                        # temple of eternals: jump percentage
     'jump_temple_token':                800,                        # temple of eternals: percentage to use temple tokens
@@ -254,7 +281,7 @@ tasks = {
     'pirates_price':        ('pirate_ship/pirates_price.png',   'pirates_price', 0, 0), #rework pickup method
 
     # shop
-    'sign_in':              ('shop/sign_in.png',                'shop_signin', 0, 300),
+    'sign_in':              ('shop/sign_in.png',                'shop', 0, 300),
 
     # tavern
     'pharaos_vault':        ('tavern/pharaos_vault.png',        'tavern_pharaos_vault', 0, 0),
@@ -551,6 +578,7 @@ def config_page() -> None:
     tab7 = ttk.Frame(tabs, padding=10)
     tab8 = ttk.Frame(tabs, padding=10)
     tab9 = ttk.Frame(tabs, padding=10)
+    tab10 = ttk.Frame(tabs, padding=10)
 
     tabs.add(tab1, text='System')
     tab1.grid_columnconfigure(1, minsize=400, weight=0)
@@ -645,10 +673,18 @@ def config_page() -> None:
         map_list.itemconfig(idx, fg='red')
         idx += 1
     map_list.bind("<Double-1>", lambda e: _config_listevent(e, map_list, 'dblclick', 'map_order'))
-    
-    tabs.add(tab9, text='Temple of eternals')
-    _config_numeric(tab9, 'Jump percentage', 0, 'jump_percentage', 100, 100000000000)
-    _config_numeric(tab9, 'Use temple token at', 1, 'jump_temple_token', 100, 100000000000)
+
+    tabs.add(tab9, text='Shop')
+    idx = 0
+    for name, _ in config.items():
+        if name.startswith('buy_'):
+            text = name.replace('_', ' ').capitalize()
+            _config_checkbox(tab9, text, idx, name)
+            idx += 1
+
+    tabs.add(tab10, text='Temple of eternals')
+    _config_numeric(tab10, 'Jump percentage', 0, 'jump_percentage', 100, 100000000000)
+    _config_numeric(tab10, 'Use temple token at', 1, 'jump_temple_token', 100, 100000000000)
 
     c.mainloop()
 
@@ -1133,7 +1169,7 @@ def pause_check() -> None:
     if not os.path.exists(lock_file):
         Debug.info('Systems paused, toggle Scroll-Lock to continue. Home to configure.')
         while not os.path.exists(lock_file):
-            sleep(1)
+            pass
 
 def pause_off() -> None:
     """
@@ -1777,7 +1813,7 @@ class Region():
             floatt: the extracted value
         """
         number = self.text('1234567890.,+%', colormap[color_map])
-        Debug.info(f'Number start: {number}')
+        # Debug.info(f'Number start: {number}')
 
         if not number:
             return 0.0
@@ -1792,7 +1828,7 @@ class Region():
             elif char.isnumeric():
                 sanitized = char + sanitized
 
-        Debug.info(f'Number end: {sanitized}')
+        # Debug.info(f'Number end: {sanitized}')
 
         try:
             return float(sanitized) if sanitized else 0.0
@@ -1961,7 +1997,6 @@ class Region():
             match = self.exists(image_path)
             if match:
                 return match
-            sleep(0.2)
         return False
 
     def wait_vanish(self, image_path: str = None, timeout:  float = 3):
@@ -1977,13 +2012,14 @@ class Region():
         Returns:
             bool: True if the pattern vanished or was omitted, False on timeout evaluation.
         """
+        if image_path is None:
+            return True
+
         start_time = time.time()
         while (time.time() - start_time) < timeout:
-            if image_path is None:
-                return True
             if not self.exists(image_path):
                 return True
-            sleep(0.2)
+
         return False
 
 class Match(Region):
@@ -2020,8 +2056,6 @@ config_load()
 # general regions
 screen = Region(0, 0, 1920, 1080)
 main_finished = Region(0, 0, 160, 570)
-main_heroes = Region(0, 910, 1660, 170)
-main_upgrade = Region(1661, 910, 259, 170)
 
 # filetracker
 tracker = ImageTracker()

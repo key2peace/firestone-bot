@@ -145,7 +145,7 @@ def bag(trigger: bool = False) -> int:
         x = 1700 if trigger else 1570
 
         while not get_pixel_color(x, 200) == (158, 128, 103):
-            Debug.history('Opening bag')
+            Debug.history('Opening chest')
             click((x, 200))
             sleep(1)
 
@@ -161,7 +161,7 @@ def bag(trigger: bool = False) -> int:
                 pass
             sleep(1)
             if color_at(1040, 890) == 'green':
-                Debug.info("Picked up new items in chests")
+                Debug.history("Picked up new items in chests")
                 click((1040, 890))
 
             click((1840, 55))
@@ -372,7 +372,6 @@ def check_party(trigger: bool = False) -> int:
 
     coords['upgrade'] = (max_x + 80, y)
     party_coords = dict(sorted(coords.items(), key=lambda item: item[1][0]))
-    Debug.info(f'{party_coords}')
     return time.time() * 2
 
 def check_taskcount(trigger: bool = False) -> int:
@@ -533,8 +532,6 @@ def engineer_garage(trigger: bool = False) -> int:
                     items[item] = (x, amount)
                     break
 
-    Debug.info(f'{items}')
-
     area = Region(0, 900, 1920, 180)
     tmp = {}
     min_level = 999
@@ -554,10 +551,7 @@ def engineer_garage(trigger: bool = False) -> int:
         if m:
             level = Region(m.get_x() + 70, m.get_y() + m.get_h(), 64, 32).get_number()
             min_level = level if level < min_level else min_level
-            Debug.info(f'{machine} ({level}) {m.get_score()}')
-            tmp[machine] = level
-
-    Debug.info(f'{tmp}')
+            tmp[machine] = int(level)
 
     click((1840, 55))
     return get_next_reset()
@@ -644,7 +638,7 @@ def exotic_merchant(trigger: bool = False) -> int:
     if not page_wait('exotic_merchant'):
         return -1
 
-    area = Region(790, 280, 1000, 795)
+    area = Region(790, 280, 1000, 800)
 
     # Sell items
     click((1120, 160))
@@ -768,7 +762,7 @@ def guild(trigger: bool = False) -> int:
 
 def guild_arcanecrystal(trigger: bool = False) -> int:
     """
-    Execute the Arcane Crystal interface routing subroutine.
+    Execute the Arcane Crystal.
     """
     if trigger:
         click((1860, 430))      # Guild icon on main screen
@@ -787,7 +781,7 @@ def guild_arcanecrystal(trigger: bool = False) -> int:
                 move_to((1120, 960))
                 start_loop = time.time()
                 while time.time() - start_loop < 10 and not color_at(1050, 970) == 'green':
-                    sleep(1)
+                    pass
             else:
                 break
 
@@ -808,8 +802,8 @@ def guild_awakening(trigger: bool = False) -> int:
         click((1800, 600))
         move_to((1880, 600))
         time_start = time.time()
-        while time.time() - time_start < 6 and not color_at(1600, 600) == 'yellow':
-            sleep(0.5)
+        while time.time() - time_start < 10 and not color_at(1600, 600) == 'yellow':
+            pass
 
     click((1840, 55))
     return 0
@@ -1310,7 +1304,6 @@ def map_map(trigger: bool = False, direction: int = 0) -> int:
     attempts = 0
     while not total and attempts < 5:
         text = area.text('1234567890/', colormap['white'], 3)
-        Debug.info(f'{text}')
         if text.startswith('/'):
             text = f'4{text}'
         current_text = re.search(r'(\d+)/(\d+)', text)
@@ -1399,6 +1392,8 @@ def map_map(trigger: bool = False, direction: int = 0) -> int:
                     if silver:
                         available -= required
 
+                    mtype = f'silver {mission_type}' if silver else mission_type
+                    Debug.history(f'Starting {mtype} mission')
                     click((1090, 870))
                     sleep(0.5)
                 else:
@@ -1565,7 +1560,7 @@ def pirates_price(trigger: bool = False) -> int:
     click((1840, 55))
     return 0
 
-def shop_signin(trigger: bool = False) -> int:
+def shop(trigger: bool = False) -> int:
     """
     Collect Sign-In Bonus
     """
@@ -1576,11 +1571,55 @@ def shop_signin(trigger: bool = False) -> int:
     for y_coords in [870, 920]:
         click((1360, y_coords))
 
-    # Check for the mystery box while here
+    # Amulet of the day
+    click((1050, 100))
+    sleep(1)
+    amulets = {
+        #name   (keys, gems)
+        'amulet_of_conquest': (0, 1),
+        'amulet_of_the_sky': (0, 1),
+        'amulet_of_knowledge': (0, 1),
+        'amulet_of_war': (0, 1),
+        'amulet_of_power': (0, 1),
+        'amulet_of_midas': (0, 1),
+        'amulet_of_alchemy': (0, 1),
+        'amulet_of_cartography': (0, 1),
+        'amulet_of_exploration': (0, 1),
+        'amulet_of_greed': (0, 1),
+        'amulet_of_the_quartermaster': (0, 1),
+        'amulet_of_the_pioneers': (0, 1),
+        'amulet_of_liberation': (0, 1),
+        'amulet_of_production': (0, 1),
+        'amulet_of_clarity': (0, 1),
+        'amulet_of_astrology': (0, 1),
+        'amulet_of_the_seven': (0, 1),
+        'amulet_of_tinkering': (0, 1),
+        'amulet_of_insight': (0, 1),
+        'amulet_of_luck': (1, 0),
+        'amulet_of_the_king': (1, 0),
+        'amulet_of_the_queen': (1, 0),
+        'amulet_of_speed': (1, 0),
+        'amulet_of_damage': (1, 0),
+        'amulet_of_health': (1, 0)
+    }
+
+    current = Region(710, 360, 840, 56).get_text('', colormap['white']).strip().lower()
+    if current in amulets and config[f'buy_{current}']:
+        name, (keys, gems) = amulets[current]
+        current_keys = Region(790, 1010, 120, 44).get_number()
+        current_gems = Region(1040, 1010, 120, 44).get_number()
+        if (keys and  current_keys >= 20) or (gems and current_gems >= 2000):
+            Debug.history(f'[shop] Obtaining {name.replace('_', ' ').capitalize}')
+            click((1330, 800))
+            sleep(1)
+            if color_at(1060, 780) == 'green':
+                click((1060, 780))
+
+    # Check for the mystery box
     click((620, 100))
     sleep(1)
     if color_at(740, 900) == 'green':
-        Debug.history('[shop_signin] Picked up mystery box')
+        Debug.history('[shop] Picked up mystery box')
         click((600, 900))
 
     sleep(1)
@@ -1612,7 +1651,7 @@ def tavern_scarab_game(trigger: bool = False) -> int:
         move_to((800, 1000))
         start_loop = time.time()
         while time.time() - start_loop < 5 and not color_at(1024, 1000) == 'green':
-            sleep(1)
+            pass
 
     # pharao's vault
     if color_at(1880, 180) == 'white':
@@ -1676,7 +1715,7 @@ def tavern_pharaos_vault(trigger: bool = False) -> int:
         move_to((940, 1010))
         start_loop = time.time()
         while time.time() - start_loop < config['wait_page'] and not color_at(1010, 1010) == 'green':
-            sleep(1)
+            pass
 
     if color_at(1870, 410) == 'red':
         click((1800, 450))

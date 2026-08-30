@@ -109,6 +109,8 @@ But sadly, new OculiX IDE looking shiny on my desktop, getting frustrated by the
 - Pirates price
 
 ### Shop
+- Amulet of the day (configurable)
+  **WARNING**: This **will** spend either 20 keys or 2000 gems when the amulet(s) of choice becomes available.
 - Daily rewards
 - Mystery box
 
