@@ -36,6 +36,7 @@ from custom_core import (
     press_key,
     Region,
     screen,
+    sleep,
     timeouts
 )
 
@@ -69,11 +70,11 @@ def alchemist(trigger: bool = False) -> int:
         if ts == 'Completed':
             Debug.history(f'Completed {name} Experiment')
             click((x + 50, 800))
-            time.sleep(1)
+            sleep(1)
         elif color_at(x + 50, 780) == 'yellow':
             Debug.history(f'Completed {name} Experiment for free')
             click((x + 50, 780))
-            time.sleep(1)
+            sleep(1)
         elif re.search(r'(\d{2})?:?(\d{1,2}):(\d{2})', ts.lower()):
             ts = parse_ui_timeout(ts)
             if ts:
@@ -82,7 +83,7 @@ def alchemist(trigger: bool = False) -> int:
         if upgrade and color_at(x + 50, 780) == 'green':
             Debug.history(f'Starting {name} Experiment')
             click((x + 50, 800))
-            time.sleep(1)
+            sleep(1)
             ts = Region(x, 675, 280, 30).text('', colormap['white'])
             if re.search(r'(\d{2})?:?(\d{1,2}):(\d{2})', ts.lower()):
                 ts = parse_ui_timeout(ts)
@@ -102,7 +103,7 @@ def alchemist(trigger: bool = False) -> int:
         for name, (y, obtain) in coords.items():
             if obtain:
                 while color_at(1800, y) == 'green':
-                    time.sleep(0.5)
+                    sleep(0.5)
                     Debug.history(f'Transmuting a {name} chest')
                     click((1800, y))
                     move_to((1840, y))
@@ -138,7 +139,7 @@ def bag(trigger: bool = False) -> int:
 
     if config['bag_open_chests']:
         click((1460, 300)) # Chests
-        time.sleep(1)
+        sleep(1)
 
         # save first chests for dailies
         x = 1700 if trigger else 1570
@@ -146,7 +147,7 @@ def bag(trigger: bool = False) -> int:
         while not get_pixel_color(x, 200) == (158, 128, 103):
             Debug.history('Opening bag')
             click((x, 200))
-            time.sleep(1)
+            sleep(1)
 
             for x2 in range(1400, 500, -225):
                 if color_at(x2, 850) == 'green':
@@ -158,13 +159,13 @@ def bag(trigger: bool = False) -> int:
 
             while not color_at(1840, 55) in ['white', 'white_overlayed']:
                 pass
-            time.sleep(1)
+            sleep(1)
             if color_at(1040, 890) == 'green':
                 Debug.info("Picked up new items in chests")
                 click((1040, 890))
 
             click((1840, 55))
-            time.sleep(1)
+            sleep(1)
     click((1870, 70))
     return get_timeout(3600)
 
@@ -177,19 +178,19 @@ def battle_pass(trigger: bool = False) -> int:
 
     if color_at(1890, 800) == 'red':
         click((1860, 814))
-        time.sleep(1)
+        sleep(1)
         click((1110, 60))
 
         for x in range(390, 1820, 10):
             if color_at(x, 560) == 'green':
                 Debug.history('Picking up golden battle pass reward')
-                time.sleep(0.3)
+                sleep(0.3)
                 click((x, 560))
             if color_at(x, 1000) == 'green':
                 Debug.history('Picking up battle pass reward')
-                time.sleep(0.3)
+                sleep(0.3)
                 click((x, 1000))
-        time.sleep(0.3)
+        sleep(0.3)
 
         click((1840, 55))
 
@@ -204,7 +205,7 @@ def character_quests(trigger: bool = False) -> int:
     """
     if trigger:
         press_key('q')
-        time.sleep(2)
+        sleep(2)
         click((1500, 40))
 
     if not page_wait('character_quests'):
@@ -216,15 +217,15 @@ def character_quests(trigger: bool = False) -> int:
             break
 
         click((x, 130))
-        time.sleep(0.3)
+        sleep(0.3)
         while color_at(1560, 300) == 'green':
             Debug.history(f'Claiming {quest_type} quest')
             click((1560, 300))
             move_to((1620, 300))
-            time.sleep(1)
+            sleep(1)
             if color_at(1260, 730) == 'green':
                 click((1260, 730))
-                time.sleep(1)
+                sleep(1)
 
     click((1850, 76))
     if trigger:
@@ -237,7 +238,7 @@ def character_talents(trigger: bool = False) -> int:
     """
     if trigger:
         press_key('q')
-        time.sleep(2)
+        sleep(2)
         click((680, 40))
 
     if not page_wait('character_talents'):
@@ -258,11 +259,11 @@ def character_talents(trigger: bool = False) -> int:
                 click((1020, 866))
                 move_to((1100, 866))
                 clicked = True
-                time.sleep(1)
+                sleep(1)
             click((1250, 320))
             break
         drag_drop((950, 990), (950, 590))
-        time.sleep(1)
+        sleep(1)
         counter += 1
         if counter > 10:
             for _ in range(1, counter):
@@ -283,16 +284,34 @@ def check_heroes(trigger: bool = False) -> int:
 
     clicked: bool = False
     x: int = 960
-    for name, (x, y) in party_coords.items():
-        if name == 'upgrade' or color_at(x, y + 60) != 'yellow':
-            continue
-        Debug.history(f'Upgrading {name}')
-        move_to((x, y + 70))
-        mouse_down()
-        while color_at(x, y + 60) != 'grey':
-            pass
-        mouse_up()
-        clicked = True
+    upgraded: int = 1
+    while upgraded > 0:
+        upgraded = 0
+        for slot, name in enumerate(party_coords):
+            if name=='upgrade':
+                continue
+            elif name=='guardian':
+                if not config['upgrade_guardian']:
+                    continue
+            elif name=='specials':
+                if not config['upgrade_specials']:
+                    continue
+            else:
+                if slot < 5 and not config[f'upgrade_slot{slot + 1}']:
+                    continue
+
+            x, y = party_coords[name]
+            if color_at(x, y + 60) != 'yellow':
+                continue
+
+            Debug.history(f'Upgrading {name}')
+            move_to((x, y + 70))
+            mouse_down()
+            while color_at(x, y + 60) != 'grey':
+                pass
+            mouse_up()
+            upgraded += 1
+            clicked = True
     if clicked:
         move_to((x, 1080))
     return get_timeout(5)
@@ -306,16 +325,16 @@ def check_mail(trigger: bool = False) -> int:
 
     if color_at(110, 590) == 'red':
         click((60, 620))
-        time.sleep(1)
+        sleep(1)
         while not color_at(1600, 980) == 'lightbrown':
             if color_at(1320, 830) == 'green':
                 Debug.history('Claiming reward from mail')
                 click((1320, 840))
-                time.sleep(0.3)
+                sleep(0.3)
                 click((1190, 720))
-                time.sleep(0.3)
+                sleep(0.3)
             click((1600, 980))
-            time.sleep(0.3)
+            sleep(0.3)
         click((1650, 40))
 
     return get_timeout(300)
@@ -331,7 +350,7 @@ def check_party(trigger: bool = False) -> int:
 
     area = Region(10, 910, 1900, 160)
     max_x: int = 0
-    party_coords = {}
+    coords = {}
 
     for root, _, files in os.walk('images/heroes'):
         files = [f for f in files if f.lower().endswith('.png')]
@@ -349,9 +368,10 @@ def check_party(trigger: bool = False) -> int:
                 x = m.get_x() + m.get_w() + 10
                 y = m.get_y()
                 max_x = x if x > max_x else max_x
-                party_coords[name] = (x, y)
+                coords[name] = (x, y)
 
-    party_coords['upgrade'] = (max_x + 80, y)
+    coords['upgrade'] = (max_x + 80, y)
+    party_coords = dict(sorted(coords.items(), key=lambda item: item[1][0]))
     Debug.info(f'{party_coords}')
     return time.time() * 2
 
@@ -437,7 +457,7 @@ def crazygames_error(trigger: bool = False) -> int:
             Debug.warn('Gamecrash detected. Preparing for web reload.')
             pause_on(True)
             press_key('f5')
-            time.sleep(20)
+            sleep(20)
             pause_off()
 
     return get_timeout(300)
@@ -451,9 +471,9 @@ def engineer(trigger: bool = False) -> int:
     """
     if trigger:
         press_key('t')
-        time.sleep(2)
+        sleep(2)
         click((1280, 820))
-        time.sleep(1)
+        sleep(1)
         click((590, 520))
 
     if not page_wait('engineer'):
@@ -472,9 +492,9 @@ def engineer_garage(trigger: bool = False) -> int:
     """
     if trigger:
         press_key('t')
-        time.sleep(2)
+        sleep(2)
         click((1280, 820))
-        time.sleep(1)
+        sleep(1)
         click((940, 520))
 
     if not page_wait('engineer_garage'):
@@ -507,7 +527,7 @@ def engineer_garage(trigger: bool = False) -> int:
         for machine in machines:
             if config[f'wm_{machine}_{item}']:
                 click((x, 150))
-                time.sleep(1)
+                sleep(1)
                 amount = Region(1580, 20, 116, 36).get_number()
                 if amount:
                     items[item] = (x, amount)
@@ -587,12 +607,12 @@ def events(trigger: bool = False) -> int:
                 continue
 
             click((950, y + 65))
-            time.sleep(2)
+            sleep(2)
 
             if color_at(1330, 25) == 'white':
                 Debug.history(f'Checking {text} event')
                 click((1150, 50))
-                time.sleep(1)
+                sleep(1)
 
                 event_type = eventlist[text]
                 if event_type == 'mini':
@@ -607,7 +627,7 @@ def events(trigger: bool = False) -> int:
                     Debug.warn('unsupported event type')
 
             click((1765, 100))
-            time.sleep(1)
+            sleep(1)
 
         click((1530, 50))
 
@@ -650,10 +670,10 @@ def exotic_merchant(trigger: bool = False) -> int:
                 while color_at(x, y) == 'green':
                     Debug.history(f'Selling {name}')
                     click((x + 10, y))
-                    time.sleep(1)
+                    sleep(1)
         drag_drop((1690, 940), (1690, 380))
         drag_count += 1
-        time.sleep(2)
+        sleep(2)
 
     for _ in range(0, drag_count):
         drag_drop((1690, 380), (1690, 940))
@@ -680,11 +700,11 @@ def exotic_merchant(trigger: bool = False) -> int:
                 break
             while color_at(x + 790, y + 280) == 'green':
                 click((x + 790, y + 280))
-                time.sleep(1)
+                sleep(1)
 
         drag_drop((1690, 940), (1690, 380))
         drag_count += 1
-        time.sleep(2)
+        sleep(2)
 
     for _ in range(0, drag_count):
         drag_drop((1690, 380), (1690, 940))
@@ -692,12 +712,12 @@ def exotic_merchant(trigger: bool = False) -> int:
     # Emblem market
     if color_at(1540, 125) == 'white':
         click((1470, 160))
-        time.sleep(1)
+        sleep(1)
         for y in [390, 560, 730]:
             if not color_at(627, y) == 'white':
                 continue
             click((650, y +20))
-            time.sleep(1)
+            sleep(1)
             if not color_at(1250, 630) == 'green':
                 continue
             click((1250, 630))
@@ -726,7 +746,7 @@ def guild(trigger: bool = False) -> int:
         click((180, 450))       # Treasury
         click((180, 600))       # Bank log
         click((180, 800))       # Locker
-        time.sleep(1)
+        sleep(1)
         if color_at(1100, 840) == 'green':
             click((950, 940))   # Claim rewards
         click((1670, 50))
@@ -756,7 +776,7 @@ def guild_arcanecrystal(trigger: bool = False) -> int:
             return -1
 
         click((1670, 890))
-        time.sleep(2)
+        sleep(2)
 
         amount = Region(1580, 20, 117, 37).get_number()
         amount = int(min(amount, 5))
@@ -767,12 +787,12 @@ def guild_arcanecrystal(trigger: bool = False) -> int:
                 move_to((1120, 960))
                 start_loop = time.time()
                 while time.time() - start_loop < 10 and not color_at(1050, 970) == 'green':
-                    time.sleep(1)
+                    sleep(1)
             else:
                 break
 
         click((1840, 55))
-        time.sleep(1)
+        sleep(1)
 
     click((1840, 55))
     return 0
@@ -789,7 +809,7 @@ def guild_awakening(trigger: bool = False) -> int:
         move_to((1880, 600))
         time_start = time.time()
         while time.time() - time_start < 6 and not color_at(1600, 600) == 'yellow':
-            time.sleep(0.5)
+            sleep(0.5)
 
     click((1840, 55))
     return 0
@@ -806,7 +826,7 @@ def guild_chaos_rift(trigger: bool = False) -> int:
         move_to((1200, 970))
         start_loop = time.time()
         while time.time() - start_loop < 5 and not color_at(1050, 970) == 'green':
-            time.sleep(0.3)
+            pass
 
     click((1840, 55))
     return 0
@@ -916,7 +936,7 @@ def guild_forbidden_knowledge(trigger: bool = False) -> int:
         while available:
             if available >= 50 and color_at(350, 910) == 'yellow':
                 click((220, 910))
-                time.sleep(0.3)
+                sleep(0.3)
                 if color_at(960, 890) == 'green':
                     Debug.history(f'- Recruiting {name}')
                     click((960, 890))
@@ -962,9 +982,9 @@ def library_firestone_research(trigger: bool = False) -> int:
     """
     if trigger:
         press_key('l')
-        time.sleep(2)
+        sleep(2)
         click((1810, 640))
-        time.sleep(2)
+        sleep(2)
 
     if not page_wait('library_firestone_research'):
         return -1
@@ -1005,7 +1025,7 @@ def library_firestone_research(trigger: bool = False) -> int:
                 break
         if found:
             click((x, y + 130))
-            time.sleep(1)
+            sleep(1)
             ts = Region(1050, 610, 300, 32).text('', colormap['green'])
             timeout = 0
             if re.search(r'^[\d:]+$', ts):
@@ -1024,7 +1044,7 @@ def library_firestone_research(trigger: bool = False) -> int:
         else:
             drag_drop((800, 430), (200, 430))
             drag_count += 1
-            time.sleep(1)
+            sleep(1)
 
     if drag_count:
         for _ in range(1, drag_count):
@@ -1042,9 +1062,9 @@ def library_meteorite_research(trigger: bool = False) -> int:
     """
     if trigger:
         press_key('l')
-        time.sleep(2)
+        sleep(2)
         click((1810, 460))
-        time.sleep(2)
+        sleep(2)
 
     if not page_wait('library_meteorite_research'):
         return -1
@@ -1075,7 +1095,7 @@ def magic_quarter(trigger: bool = False) -> int:
     """
     if trigger:
         press_key('g')
-        time.sleep(2)
+        sleep(2)
 
     if not page_wait('magic_quarter'):
         return -1
@@ -1100,45 +1120,45 @@ def magic_quarter(trigger: bool = False) -> int:
                 del tmp[current]
 
             # General
-            if config[f'guardian_train_{current}'] or config[f'guardian_train_{current}']:
+            if config[f'guardian_{current}_train'] or config[f'guardian_{current}_enlighten']:
                 click((1050, 150))
-                time.sleep(0.3)
-                if config[f'guardian_train_{current}'] and color_at(1090, 800) == 'green':
+                sleep(0.3)
+                if config[f'guardian_{current}_train'] and color_at(1090, 800) == 'green':
                     Debug.history(f'Training {current}')
                     click((1090,800))
-                while config[f'guardian_enlighten_{current}'] and color_at(1590, 800) == 'green':
+                while config[f'guardian_{current}_enlighten'] and color_at(1590, 800) == 'green':
                     Debug.history(f'Enlightening {current}')
                     click((1590, 800))
                     move_to((1590, 900))
-                    time.sleep(0.3)
+                    sleep(0.3)
 
             # Evolution - colorcheck disabled because of bug
-            #if config[f'guardian_evolve_{current}'] and color_at(1265, 100) == 'white':
+            #if config[f'guardian_{current}_evolve'] and color_at(1265, 100) == 'white':
             click((1210, 150))
-            time.sleep(0.3)
-            if config[f'guardian_evolve_{current}'] and color_at(1220, 780) == 'green':
+            sleep(0.3)
+            if config[f'guardian_{current}_evolve'] and color_at(1220, 780) == 'green':
                 Debug.history(f'Evolving {current}')
                 click((1220, 780))
-                time.sleep(10)
+                sleep(10)
 
             # Chaos Rift
-            if config[f'guardian_chaos_rift_{current}'] and color_at(1435, 100) == 'white':
+            if config[f'guardian_{current}_chaosrift'] and color_at(1435, 100) == 'white':
                 click((1400, 150))
-                time.sleep(0.3)
+                sleep(0.3)
                 while color_at(1630, 775) == 'green':
                     Debug.history(f'Increase {current}\'s holy damage')
                     click((1720, 760))
                     move_to((1720, 660))
-                    time.sleep(0.3)
+                    sleep(0.3)
 
             # Guardian rarity
-            if color_at(1600, 100) == 'white':
+            if config[f'guardian_{current}_rarity'] and color_at(1600, 100) == 'white':
                 click((1560, 150))
-                time.sleep(0.3)
+                sleep(0.3)
                 if color_at(1365, 630) == 'green':
                     Debug.history(f'Increase {current}\'s rarity')
                     click((1365, 630))
-                    time.sleep(10)
+                    sleep(10)
 
         if not tmp:
             break
@@ -1165,11 +1185,11 @@ def map_campaign(trigger: bool = False) ->int:
     if color_at(1870, 990) == 'red':
         Debug.history('[Campaign] Heading for daily missions')
         click((1770, 1000))
-        time.sleep(1)
+        sleep(1)
 
         Debug.history('[Campaign] Opening Liberation')
         click((685, 820))
-        time.sleep(1)
+        sleep(1)
 
         # Loop through available liberations
         winning = True
@@ -1192,7 +1212,7 @@ def map_campaign(trigger: bool = False) ->int:
                             winning = False
                             click((870, 770))
                             break
-                        time.sleep(1)
+                        sleep(1)
                 if not winning:
                     break
             if winning:
@@ -1231,14 +1251,14 @@ def map_map(trigger: bool = False, direction: int = 0) -> int:
         if color_at(280, 945) == 'yellow':
             # refresh for free
             click((200, 950))
-            time.sleep(3)
+            sleep(3)
         else:
             # Get new missions time
             while True:
                 ts = Region(260, 1020, 150, 40).text('', colormap['lightyellow']).lower()
                 match = re.search(r':\s([\d:]+)$', ts)
                 if match:
-                    timeout = parse_ui_timeout(match.groups()[0])
+                    timeout = parse_ui_timeout(match.group(1))
                     if timeout < time.time() + 21600:
                         if timeout - time.time() > 180:
                             timestamps.append(timeout)
@@ -1261,7 +1281,7 @@ def map_map(trigger: bool = False, direction: int = 0) -> int:
                     if timeout:
                         if abs(timeout - time.time()) < 181:
                             click((160, 306))
-                            time.sleep(1)
+                            sleep(1)
                             if color_at(1450, 790) == 'yellow':
                                 click((1400, 790))
                             clicked = True
@@ -1271,10 +1291,10 @@ def map_map(trigger: bool = False, direction: int = 0) -> int:
                         timestamps.append(get_timeout(30))
 
             if clicked:
-                time.sleep(1)
+                sleep(1)
                 if color_at(1450, 790) == 'yellow':
                     click((1400, 790))
-                    time.sleep(0.5)
+                    sleep(0.5)
                 if color_at(1060, 650) == 'green':
                     click((1060, 650))
             else:
@@ -1295,8 +1315,8 @@ def map_map(trigger: bool = False, direction: int = 0) -> int:
             text = f'4{text}'
         current_text = re.search(r'(\d+)/(\d+)', text)
         if current_text:
-            available = int(current_text.groups()[0])
-            total = int(current_text.groups()[1])
+            available = int(current_text.group(1))
+            total = int(current_text.group(2))
         else:
             attempts += 1
 
@@ -1380,7 +1400,7 @@ def map_map(trigger: bool = False, direction: int = 0) -> int:
                         available -= required
 
                     click((1090, 870))
-                    time.sleep(0.5)
+                    sleep(0.5)
                 else:
                     txt = Region(960, 870, 560, 50).text('Youdnthavegsq', colormap['red'])
                     click((1530, 220))
@@ -1402,7 +1422,7 @@ def map_map(trigger: bool = False, direction: int = 0) -> int:
     else:
         if direction == 1:
             drag_drop((960, 270), (960, 540))
-            time.sleep(1)
+            sleep(1)
             click((1840, 55))
 
     if not direction:
@@ -1431,7 +1451,7 @@ def oracle(trigger: bool = False) -> int:
     """
     if trigger:
         press_key('o')
-        time.sleep(2)
+        sleep(2)
 
     if not page_wait('oracle'):
         return -1
@@ -1491,7 +1511,7 @@ def oracle(trigger: bool = False) -> int:
                     continue
                 # select the item
                 click((x - 60, y + 50))
-                time.sleep(1)
+                sleep(1)
                 # check if we can bless this
                 if color_at(1485, 850) == 'green':
                     Debug.history(f'Blessing {name}')
@@ -1499,7 +1519,7 @@ def oracle(trigger: bool = False) -> int:
                     tmp[name] = (x, y, current + 1)
                     amounts.append(current + 1)
                 click((1710, 220))
-                time.sleep(1)
+                sleep(1)
 
     click((1840, 55))
     return 0
@@ -1539,7 +1559,7 @@ def pirates_price(trigger: bool = False) -> int:
                 claimed = True
 
         drag_drop((1500, 800), (272, 800))
-        time.sleep(2)
+        sleep(2)
         trials += 1
 
     click((1840, 55))
@@ -1558,12 +1578,12 @@ def shop_signin(trigger: bool = False) -> int:
 
     # Check for the mystery box while here
     click((620, 100))
-    time.sleep(1)
+    sleep(1)
     if color_at(740, 900) == 'green':
         Debug.history('[shop_signin] Picked up mystery box')
         click((600, 900))
 
-    time.sleep(1)
+    sleep(1)
     click((1840, 55))
 
     # perfect opportunity to go for dailies
@@ -1583,7 +1603,7 @@ def tavern_scarab_game(trigger: bool = False) -> int:
     # shop
     if color_at(1880, 710) == 'white':
         click((1810, 750))
-        time.sleep(1)
+        sleep(1)
         tavern_scarab_token()
 
     # the game itself
@@ -1592,18 +1612,18 @@ def tavern_scarab_game(trigger: bool = False) -> int:
         move_to((800, 1000))
         start_loop = time.time()
         while time.time() - start_loop < 5 and not color_at(1024, 1000) == 'green':
-            time.sleep(1)
+            sleep(1)
 
     # pharao's vault
     if color_at(1880, 180) == 'white':
         click((1810, 220))
-        time.sleep(1)
+        sleep(1)
         tavern_pharaos_vault()
 
     # release beast
     if color_at(400, 610) == 'white':
         click((300, 640))
-        time.sleep(5)
+        sleep(5)
 
     click((1840, 55))
     return 0
@@ -1615,7 +1635,7 @@ def tavern_scarab_milestone(trigger: bool = False) -> int:
     if trigger:
         pass
 
-    time.sleep(1)
+    sleep(1)
     drag_count = 0
     while drag_count < 3:
         for x_coords in range(130, 1700, 20):
@@ -1641,7 +1661,7 @@ def tavern_scarab_token(trigger: bool = False) -> int:
 
     click((610,800))
     click((1840, 55))
-    time.sleep(1)
+    sleep(1)
     return tavern_scarab_game()
 
 def tavern_pharaos_vault(trigger: bool = False) -> int:
@@ -1656,15 +1676,15 @@ def tavern_pharaos_vault(trigger: bool = False) -> int:
         move_to((940, 1010))
         start_loop = time.time()
         while time.time() - start_loop < config['wait_page'] and not color_at(1010, 1010) == 'green':
-            time.sleep(1)
+            sleep(1)
 
     if color_at(1870, 410) == 'red':
         click((1800, 450))
-        time.sleep(2)
+        sleep(2)
         tavern_scarab_token()
 
     click((1840, 55))
-    time.sleep(1)
+    sleep(1)
     return tavern_scarab_game()
 
 def tavern_tavern_collect(trigger: bool = False) -> int:
@@ -1678,12 +1698,11 @@ def tavern_tavern_collect(trigger: bool = False) -> int:
     while True:
         if color_at(400, 640) == 'green':
             click((400, 640))
-            time.sleep(0.5)
+            sleep(0.5)
         else:
             click((1670, 270))
             break
 
-    click((1840, 55))
     click((1840, 55))
     return 0
 
@@ -1697,19 +1716,18 @@ def tavern_tavern_game(trigger: bool = False) -> int:
         return 0
 
     press_key('t')
-    time.sleep(1)
+    sleep(1)
     click((690, 965))
-    time.sleep(1)
+    sleep(1)
     click((770, 550))
-    time.sleep(2)
+    sleep(2)
     amount = Region(1585, 30, 110, 35).get_number()
-    Debug.info(f'[Tavern] Amount: {amount}')
 
     amount = min(int(amount), 10)
     for _ in range(0, amount):
         if color_at(1060, 1000) == 'green':
             click((960, 1000))
-            time.sleep(1)
+            sleep(1)
             click((random.choice([660, 960, 1260]) , random.choice([330, 760])))
             while not color_at(1060, 1000) in ['green', 'grey']:
                 pass
@@ -1739,14 +1757,14 @@ def temple_of_eternals(trigger: bool = False) -> int:
         Debug.warn(f'[temple_of_eternals] Time to jump! {percentage}%/{jump_require}%')
         timeouts['check_upgrade'] = 0
         click((1360 ,510))
-        time.sleep(0.5)
+        sleep(0.5)
         if percentage >= int(config['jump_temple_token']) and color_at(1050, 990) == 'green':
             click((1050, 990))
         else:
             click((960, 660))
-        time.sleep(0.5)
+        sleep(0.5)
         click((1100, 720))
-        time.sleep(5)
+        sleep(5)
         click((950, 740))
     else:
         Debug.warn(f'[temple_of_eternals] Current percentage: {percentage}%/{jump_require}%')

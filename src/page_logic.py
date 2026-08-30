@@ -172,6 +172,6 @@ def page_wait(page: str) -> bool:
     while not actual_function():
         if time.time() - time_start >= config['wait_page']:
             return False
-        time.sleep(1)
+        pass
 
     return True

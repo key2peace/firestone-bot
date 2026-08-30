@@ -20,6 +20,7 @@ But sadly, new OculiX IDE looking shiny on my desktop, getting frustrated by the
 - Auto maximize and disable gamebar on crazygames
 - Crazygames crash dialog detection
 - Caputres F5/Esc keypress in order to pause the bot
+- Configuration dialog
 
 ## Tasks supported
 
@@ -145,7 +146,7 @@ But sadly, new OculiX IDE looking shiny on my desktop, getting frustrated by the
 
 ### General
 - Walk through the beginning dialogs if you start fresh
-- Settings GUI/Webserver
+- Settings Webserver
 - More detailed logging what the bot is doing
 - Improve OCR
 - Finetune timeouts
@@ -209,6 +210,7 @@ python main.py
 - Start the game and go full-screen
 - When ready, press the Scroll-Lock key.
 - If things go wrong -> Scroll-Lock
+- Press the HOME button to configure things
 
 ## License
 This code is released under the MIT License, for more details, see [License](https://github.com/key2peace/firestone-bot/blob/main/LICENSE)
