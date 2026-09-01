@@ -10,12 +10,12 @@ import random
 import re
 import time
 
+from config_logic import config
 from custom_core import (
     click,
     color_at,
     color_name,
     colormap,
-    config,
     #dailies,
     Debug,
     drag_drop,
@@ -219,7 +219,8 @@ def character_quests(trigger: bool = False) -> int:
         click((x, 130))
         sleep(0.3)
         while color_at(1560, 300) == 'green':
-            Debug.history(f'Claiming {quest_type} quest')
+            text = Region(160, 230, 660, 46).text().split(' ')[0].lower().capitalize()
+            Debug.history(f'Claiming {quest_type} quest \'{text}\'')
             click((1560, 300))
             move_to((1620, 300))
             sleep(1)
@@ -245,17 +246,18 @@ def character_talents(trigger: bool = False) -> int:
         return -1
 
     bubble = 'images/tasks/character/talents_bubble.png'
-    _area = Region(470, 170, 1340, 860)
+    area = Region(470, 170, 1340, 860)
     counter = 0
     clicked = False
     while True:
-        match = _area.exists(bubble)
+        match = area.exists(bubble)
         if match:
             Debug.history('Selecting talent')
             match.click()
             match.wait_vanish()
+            text = Region(780, 320,390, 44).text('', colormap['yellow'])
             while color_at(1032, 853) == 'green_talents':
-                Debug.history('Upgrading talent')
+                Debug.history(f'Upgrading talent \'{text}\'')
                 click((1020, 866))
                 move_to((1100, 866))
                 clicked = True
@@ -348,6 +350,10 @@ def check_party(trigger: bool = False) -> int:
     if trigger:
         pass
 
+    # Check for offline progress window
+    if color_at(1040, 930) == 'green':
+        click((1040, 930))
+
     area = Region(10, 910, 1900, 160)
     max_x: int = 0
     coords = {}
@@ -412,11 +418,11 @@ def check_upgrade(trigger: bool = False) -> int:
     if trigger:
         pass
 
-    target_mode = str(config['upgrade_mode']).lower()
+    values = ['x1','x10','x100','next','max']
+    target_mode = values[config['upgrade_mode']]
     x, y = party_coords['upgrade']
     area = Region(x, y, 250, 160)
 
-    # Cycle selector modes inline until text configuration criteria are met
     while target_mode not in area.text('', colormap['white']).lower():
         area.click()
         move_to((area.get_center().get_x(), 1080))
@@ -843,29 +849,12 @@ def guild_chaos_rift_supplies(trigger: bool = False) -> int:
     return 0
 
 def guild_expeditions(trigger: bool = False) -> int:
-    """
-    Execute sequentially coordinated inputs inside the Guild Expeditions panel.
-
-    Processes an ordered array of screen coordinate nodes to advance active
-    expedition pipelines with minimal state tracking.
-    """
+    """ Perform guild expeditions. """
     if trigger:
         pass
 
-    if not page_wait('guild_expeditions'):
-        return -1
-
-    timestamps = []
-    click((1250,330))
-    ts = Region(720, 320, 220, 50).text('1234567890:', colormap['white'])
-    if ts:
-        timeout = parse_ui_timeout(ts)
-        if timeout:
-            timestamps.append(timeout)
-    click((1290, 330))
-    click((1510, 70))
-    if timestamps:
-        return min(timestamps)
+    click((1290,320))
+    click((1290,320))
     return 0
 
 def guild_forbidden_knowledge(trigger: bool = False) -> int:
@@ -1464,7 +1453,8 @@ def oracle(trigger: bool = False) -> int:
         for _ in range (0, 2):
             for name, (x, y) in coords.items():
                 if color_at(x, y) == 'green':
-                    Debug.history(f'Performing/ claiming {name} ritual')
+                    text = Region(x - 180, y - 10, 180, 50).text('', colormap['white'])
+                    Debug.history(f'{text}ing {name} ritual')
                     click((x, y))
 
     # blessings
@@ -1730,10 +1720,6 @@ def tavern_tavern_collect(trigger: bool = False) -> int:
     """
     Convert beer into game tokens
     """
-    if trigger:
-        pass
-
-
     while True:
         if color_at(400, 640) == 'green':
             click((400, 640))
@@ -1742,34 +1728,52 @@ def tavern_tavern_collect(trigger: bool = False) -> int:
             click((1670, 270))
             break
 
-    click((1840, 55))
-    return 0
-
-def tavern_tavern_game(trigger: bool = False) -> int:
-    """
-    Run the tavern game
-    """
-    if not trigger:
-        # save for dailies
-        click((1840, 55))
+    if trigger:
         return 0
 
-    press_key('t')
-    sleep(1)
-    click((690, 965))
-    sleep(1)
-    click((770, 550))
-    sleep(2)
-    amount = Region(1585, 30, 110, 35).get_number()
+    return tavern_tavern_game()
 
-    amount = min(int(amount), 10)
-    for _ in range(0, amount):
-        if color_at(1060, 1000) == 'green':
-            click((960, 1000))
-            sleep(1)
-            click((random.choice([660, 960, 1260]) , random.choice([330, 760])))
-            while not color_at(1060, 1000) in ['green', 'grey']:
-                pass
+def tavern_tavern_game(trigger: bool = False) -> int:
+    """ Run the tavern game """
+    if trigger:
+        press_key('t')
+        sleep(1)
+        click((690, 965))
+        sleep(1)
+        click((770, 550))
+        sleep(2)
+
+    # Check for shop
+    if color_at(1878, 666) == 'white':
+        Debug.history('Heading for shop')
+        click((1800, 700))
+        sleep(2)
+        tavern_tavern_collect(True)
+
+    amount = Region(1585, 30, 110, 35).get_number()
+    if not trigger:
+        amount -= 10
+        amount = 0 if amount < 0 else amount
+
+    if amount:
+        for _ in range(0, amount):
+            if color_at(1060, 1000) == 'green':
+                Debug.history('Playing a round')
+                click((960, 1000))
+                sleep(1)
+                click((random.choice([660, 960, 1260]) , random.choice([330, 760])))
+                while not color_at(1060, 1000) in ['green', 'grey']:
+                    pass
+
+    # Craft ancient artifact
+    if color_at(410, 990)== 'white':
+        Debug.history('Crafting ancient artifact')
+        click((230, 1030))
+        while not color_at(1820, 80) == 'white':
+            pass
+        text = Region(420, 800, 1120, 130).text('', colormap['yellow'])
+        Debug.history(f'Obtained {text}')
+        click((180, 80))
 
     click((1840, 55))
     return 0
@@ -1792,12 +1796,13 @@ def temple_of_eternals(trigger: bool = False) -> int:
     percentage = Region(1430, 417, 180, 40).get_number('green')
 
     jump_require = int(config['jump_percentage'])
-    if percentage >= jump_require:
+    if jump_require and percentage >= jump_require:
         Debug.warn(f'[temple_of_eternals] Time to jump! {percentage}%/{jump_require}%')
         timeouts['check_upgrade'] = 0
         click((1360 ,510))
         sleep(0.5)
-        if percentage >= int(config['jump_temple_token']) and color_at(1050, 990) == 'green':
+        jump_temple_token = int(config['jump_temple_token'])
+        if jump_temple_token and percentage >= jump_temple_token and color_at(1050, 990) == 'green':
             click((1050, 990))
         else:
             click((960, 660))

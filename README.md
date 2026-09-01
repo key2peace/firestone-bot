@@ -21,6 +21,7 @@ But sadly, new OculiX IDE looking shiny on my desktop, getting frustrated by the
 - Crazygames crash dialog detection
 - Caputres F5/Esc keypress in order to pause the bot
 - Configuration dialog
+- Multi monitor support
 
 ## Tasks supported
 
@@ -122,8 +123,9 @@ But sadly, new OculiX IDE looking shiny on my desktop, getting frustrated by the
   - Pickup scarab milestones
   - Release beast
 - Tavern Game:
-  - Play the game (spending a max of 10 tokens per run)
+  - Play the game (saving 10 tokens for dailies)
   - Convert beer to tokens
+  - Crafting ancient artifacts
 
 ### Temple of eternals
 - Collect when configurable percentage has been reached

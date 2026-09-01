@@ -2,6 +2,7 @@
 Pure Python Custom Core API for Firestone Bot.
 Fully multi-platform utilizing mss, pyautogui, cv2, and pytesseract.
 """
+from __future__ import annotations
 import base64
 import datetime
 import hashlib
@@ -14,7 +15,6 @@ import subprocess
 import time
 import threading
 import tkinter as tk
-from tkinter import ttk
 
 from ctypes import windll, create_unicode_buffer
 from typing import Any, ClassVar, Dict, List, Optional, Tuple, Union
@@ -27,6 +27,7 @@ import pyautogui
 import pytesseract
 import requests
 
+from config_logic import config, config_page
 from pynput import keyboard
 from watchdog.events import FileSystemEventHandler
 from watchdog.observers import Observer
@@ -64,160 +65,6 @@ colormap = {
     'gamebar': (33, 33, 34, 34, 51, 51)
 }
 
-# Config
-config = {
-    # System settings
-    'logfile':                          'logs/firestone-bot.log',   # location of the logfile
-    'ollama_url':                       'http://localhost:11434',   # url voor ollama
-    'ollama_model':                     'llama3.2:latest',          # model to use for ollama, llama3.2(-vision) should be optimal
-    'tracker_file':                     'index.json',               # name of the filetracker index files
-    'wait_page':                        5,                          # float or int value for the timeout waiting for a page to appear
-    'min_score':                        0.95,                       # minimal match score
-    'monitor':                          1,                          # monitor to use for capturing
-
-    # Alchemist
-    'alchemist_dragon_blood':           True,                       # alchemist: do dragon blood experiments
-    'alchemist_strange_dust':           True,                       # alchemist: do strange dust experiments
-    'alchemist_exotic_coin':            True,                       # alchemist: do exotic coin experiments
-    'transmute_legendary':              True,                       # alchemist: transmute legendary chests
-    'transmute_epic':                   True,                       # alchemist: transmute epic chests
-    'transmute_rare':                   True,                       # alchemist: transmute rare chests
-    'transmute_uncommon':               True,                       # alchemist: transmute uncommon chests
-
-    # Battle screen
-    'bag_open_chests':                  True,                       # bag: open chests
-    'upgrade_slot1':                    True,                       # Upgrade leader
-    'upgrade_slot2':                    True,                       # Upgrade hero in slot 2
-    'upgrade_slot3':                    True,                       # Upgrade hero in slot 3
-    'upgrade_slot4':                    True,                       # Upgrade hero in slot 4
-    'upgrade_slot5':                    True,                       # Upgrade hero in slot 5
-    'upgrade_guardian':                 True,                       # Upgrade guardian
-    'upgrade_specials':                 True,                       # Upgrade specials
-    'upgrade_mode':                     '100',                      # check_upgrade: set upgrade amount for heroes
-                                                                    #       options: 1,10,100, next, max
-
-    # Exotic Merchant
-    'sell_scroll_of_speed':             True,                       # 80 exotic coins
-    'sell_scroll_of_damage':            True,                       # 80 exotic coins
-    'sell_scroll_of_health':            True,                       # 80 exotic coins
-    'sell_midas_touch':                 True,                       # 70 exotic coins
-    'sell_pouch_of_gold':               True,                       # 10 exotic coins
-    'sell_bucket_of_gold':              True,                       # 35 exotic coins
-    'sell_crate_of_gold':               True,                       # 65 exotic coins
-    'sell_barrel_of_gold':              True,                       # 130 exotic coins
-    'sell_drums_of_war':                True,                       # 270 exotic coins
-    'sell_dragon_armor':                True,                       # 180 exotic coins
-    'sell_guardians_rune':              True,                       # 50 exotic coins
-    'sell_totem_of_agony':              True,                       # 150 exotic coins
-    'sell_totem_of_annihilation':       True,                       # 240 exotic coins
-
-    # Garage
-    'wm_fortress_upgrade':              True,
-    'wm_fortress_blueprints':           True,
-    'wm_fortress_rarity':               True,
-    'wm_thunderclap_upgrade':           True,
-    'wm_thunderclap_blueprints':        True,
-    'wm_thunderclap_rarity':            True,
-    'wm_firecracker_upgrade':           True,
-    'wm_firecracker_blueprints':        True,
-    'wm_firecracker_rarity':            True,
-    'wm_aegis_upgrade':                 True,
-    'wm_aegis_blueprints':              True,
-    'wm_aegis_rarity':                  True,
-    'wm_harvester_upgrade':             True,
-    'wm_harvester_blueprints':          True,
-    'wm_harvester_rarity':              True,
-    'wm_cloudfist_upgrade':             True,
-    'wm_cloudfist_blueprints':          True,
-    'wm_cloudfist_rarity':              True,
-    'wm_hunter_upgrade':                True,
-    'wm_hunter_blueprints':             True,
-    'wm_hunter_rarity':                 True,
-    'wm_goliath_upgrade':               True,
-    'wm_goliath_blueprints':            True,
-    'wm_goliath_rarity':                True,
-    'wm_judgement_upgrade':             True,
-    'wm_judgement_blueprints':          True,
-    'wm_judgement_rarity':              True,
-    'wm_curator_upgrade':               True,
-    'wm_curator_blueprints':            True,
-    'wm_curator_rarity':                True,
-    'wm_sentinel_upgrade':              True,
-    'wm_sentinel_blueprints':           True,
-    'wm_sentinel_rarity':               True,
-    'wm_talos_upgrade':                 True,
-    'wm_talos_blueprints':              True,
-    'wm_talos_rarity':                  True,
-    'wm_earthshatterer_upgrade':        True,
-    'wm_earthshatterer_blueprints':     True,
-    'wm_earthshatterer_rarity':         True,
-
-    # Guild
-    'guild_bank':                       True,                       # visit guild bank
-    'guild_bank_donate':                True,                       # donate leftover guild coins to guild bank
-    'guild_hall':                       True,                       # visit guild hall
-
-    # Magic Quarter
-    'guardian_vermilion_train':         True,                       # enlighten vermilion (uses dust)
-    'guardian_vermilion_enlighten':     True,                       # enlighten vermilion (uses dust)
-    'guardian_vermilion_evolve':        True,                       # evolve vermilion (uses dust)
-    'guardian_vermilion_chaosrift':     True,                       # increase vermilion holy damage (uses orbs of light)
-    'guardian_vermilion_rarity':        True,                       # increase vermilion rarity (uses contracts)
-    'guardian_grace_train':             True,                       # enlighten grace (uses dust)
-    'guardian_grace_enlighten':         True,                       # enlighten grace (uses dust)
-    'guardian_grace_evolve':            True,                       # evolve grace (uses dust)
-    'guardian_grace_chaosrift':         True,                       # increase grace holy damage (uses orbs of light)
-    'guardian_grace_rarity':            True,                       # increase grace rarity (uses contracts)
-    'guardian_ankaa_train':             True,                       # enlighten ankaa (uses dust)
-    'guardian_ankaa_enlighten':         True,                       # enlighten ankaa (uses dust)
-    'guardian_ankaa_evolve':            True,                       # evolve ankaa (uses dust)
-    'guardian_ankaa_chaosrift':         True,                       # increase ankaa holy damage (uses orbs of light)
-    'guardian_ankaa_rarity':            True,                       # increase ankaa rarity (uses contracts)
-    'guardian_azhar_train':             True,                       # enlighten azhar (uses dust)
-    'guardian_azhar_enlighten':         True,                       # enlighten azhar (uses dust)
-    'guardian_azhar_evolve':            True,                       # evolve azhar (uses dust)
-    'guardian_azhar_chaosrift':         True,                       # increase azhar holy damage (uses orbs of light)
-    'guardian_azhar_rarity':            True,                       # increase azhar rarity (uses contracts)
-
-    # Map
-    'map_order':                        'mystery,dragon,monster,naval,scout,war,adventure', # the order to play map missions
-
-    # Shop
-    'buy_amulet_of_conquest':           False,
-    'buy_amulet_of_the_sky':            False,
-    'buy_amulet_of_knowledge':          False,
-    'buy_amulet_of_war':                False,
-    'buy_amulet_of_power':              False,
-    'buy_amulet_of_midas':              False,
-    'buy_amulet_of_alchemy':            False,
-    'buy_amulet_of_cartography':        False,
-    'buy_amulet_of_exploration':        False,
-    'buy_amulet_of_greed':              False,
-    'buy_amulet_of_the_quartermaster':  False,
-    'buy_amulet_of_the_pioneers':       False,
-    'buy_amulet_of_liberation':         False,
-    'buy_amulet_of_production':         False,
-    'buy_amulet_of_clarity':            False,
-    'buy_amulet_of_astrology':          False,
-    'buy_amulet_of_the_seven':          False,
-    'buy_amulet_of_tinkering':          False,
-    'buy_amulet_of_insight':            False,
-    'buy_amulet_of_luck':               False,
-    'buy_amulet_of_the_king':           False,
-    'buy_amulet_of_the_queen':          False,
-    'buy_amulet_of_speed':              False,
-    'buy_amulet_of_damage':             False,
-    'buy_amulet_of_health':             False,
-
-    # Temple of eternals
-    'jump_percentage':                  400,                        # temple of eternals: jump percentage
-    'jump_temple_token':                800,                        # temple of eternals: percentage to use temple tokens
-
-    'dummy':                            0                           # dummy on the end
-}
-config_file: str = 'bot_settings.json'
-config_panel_vars = {}
-
 lock_file: str = '.bot_running'
 if os.path.exists(lock_file):
     os.remove(lock_file)
@@ -225,91 +72,6 @@ if os.path.exists(lock_file):
 reload_file: str = '.bot_reload'
 if os.path.exists(reload_file):
     os.remove(reload_file)
-
-# name: (pattern, callable, reset_on_reload, max_runtime)
-tasks = {
-    # starting with these
-    '_crazygames_check':    ('',                                'crazygames_check', 1, 5),
-    '_crazygames_error':    ('',                                'crazygames_error', 1, 0),
-    '_check_party':         ('',                                'check_party', 1, 5),
-    '_check_upgrade':       ('',                                'check_upgrade', 1, 30),
-    '_check_heroes':        ('',                                'check_heroes', 1, 20),
-    '_battle_pass':         ('',                                'battle_pass', 1, 0), # add golden pass purchase
-    '_events':              ('',                                'events', 0, 0),
-
-    # alchemist
-    'alchemist':            ('alchemist/alchemist.png',         'alchemist', 0, 0),
-    '_alchemist':           ('',                                'alchemist', 0, 10),
-
-    # arena of kings
-    'arena_of_kings':       ('arena_of_kings.png',              'arena_of_kings', 0, 0),
-
-    #character
-    'quests':               ('character/quests.png',            'character_quests', 0, 0),
-    'talents':              ('character/talents_upgrade.png',   'character_talents', 0, 0),
-
-    # engineer
-    'engineer':             ('engineer/engineer.png',           'engineer', 0, 0),
-    'garage':               ('engineer/garage.png',             'engineer_garage', 0, 0),
-    #'garage_rarity':        ('engineer/garage_rarity.png',      'engineer_garage', 0, 0),
-    'new_warmachine':       ('engineer/new_warmachine.png',     'engineer_garage', 0, 0),
-
-    # guild
-    'pickaxe':              ('guild/pickaxe.png',               'guild_shop_pickaxe', 0, 0),
-    'arcane_crystal':       ('guild/arcane_crystal.png',        'guild_arcanecrystal', 0, 0),
-    'awakening':            ('guild/awakening.png',             'guild_awakening', 0, 0),
-    'chaos_rift_supplies':  ('guild/chaos_rift_supplies.png',   'guild_chaos_rift_supplies', 0, 0),
-    'chaos_rift':           ('guild/chaos_rift.png',            'guild_chaos_rift', 0, 60),
-    'expeditions':          ('guild/expeditions.png',           'guild_expeditions', 0, 0),
-    'forbidden_knowledge':  ('guild/forbidden_knowledge.png',   'guild_forbidden_knowledge', 0, 0),
-    '_guild':               ('',                                'guild', 0, 0),
-
-    # library
-    'firestone_research':   ('library/firestone_research.png',  'library_firestone_research', 0, 0),
-    'meteorite_research':   ('library/meteorite_research.png',  'library_meteorite_research', 0, 0),
-
-    # map
-    'campaign':             ('map/campaign.png',                'map_campaign', 0, 0),
-    'map':                  ('map/map.png',                     'map_map', 0, 0),
-    '_map':                 ('',                                'map_map', 0, 0),
-
-    # oracle
-    'oracle_gift':          ('oracle/gift.png',                 'oracle_gift', 0, 0),
-    'oracle_rituals':       ('oracle/rituals.png',              'oracle', 0, 0),
-    'oracle_blessing':      ('oracle/blessing.png',             'oracle', 0, 0),
-
-    # pirate ship
-    'pirates_price':        ('pirate_ship/pirates_price.png',   'pirates_price', 0, 0), #rework pickup method
-
-    # shop
-    'sign_in':              ('shop/sign_in.png',                'shop', 0, 300),
-
-    # tavern
-    'pharaos_vault':        ('tavern/pharaos_vault.png',        'tavern_pharaos_vault', 0, 0),
-    'scarab_token':         ('tavern/scarab_token.png',         'tavern_scarab_token', 0, 0),
-    'scarab_game':          ('tavern/scarab_game.png',          'tavern_scarab_game', 0, 0),
-    'scarab_beast':         ('tavern/scarab_beast.png',         'tavern_scarab_game', 0, 0),
-    'scarab_milestone':     ('tavern/scarab_milestone.png',     'tavern_scarab_milestone', 0, 0),
-    'tavern_collect':       ('tavern/tavern_pickup.png',        'tavern_tavern_collect', 0, 0),
-
-    # temple of eternals
-    'temple_of_eternals':   ('temple_of_eternals.png',          'temple_of_eternals', 0, 0),
-
-    # others on the end
-    '_firestone_research':  ('',                                'library_firestone_research', 0, 0),
-    'bag':                  ('',                                'bag', 0, 0),
-    'check_mail':           ('',                                'check_mail', 0, 0),
-    'check_taskcount':      ('',                                'check_taskcount', 0, 0)
-}
-
-# Add magic quarter upgrades to the tasks
-for tasks_root, _, tasks_files in os.walk('images/tasks/magic_quarter'):
-    task_files = [f for f in tasks_files if f.lower().endswith('.png')]
-    if not task_files:
-        continue
-    for task_filename in task_files:
-        tasks_filepath = os.path.join('magic_quarter', task_filename)
-        tasks[f'guardian_{task_filename[:-4]}'] = (tasks_filepath, 'magic_quarter', 0, 0)
 
 timeouts = {}
 
@@ -485,258 +247,6 @@ def color_name(color:Tuple[int, int, int]) -> str:
 
     return ''
 
-def config_load() -> None:
-    """ Load config """
-    if os.path.exists(config_file):
-        try:
-            with open(config_file, 'r', encoding='utf-8') as f:
-                loaded_config = json.load(f)
-                config.update(loaded_config)
-        except Exception as e:
-            Debug.error(f'[Core] Unable to load configuration\n{e}')
-    else:
-        config_save()
-
-def _config_checkbox(tab, text, row, varname, column_start:int = 0) -> None:
-    global config_panel_vars
-
-    tk.Label(tab, text=text, bg='black', fg='white', ).grid(row=row, column=column_start, pady=2, sticky='nsew', ipadx=5)
-    config_panel_vars.update({varname: tk.IntVar(value=config[varname])})
-    tk.Checkbutton(tab, variable=config_panel_vars[varname], onvalue=True, offvalue=False).grid(row=row, column=column_start + 1, padx=5, pady=2, sticky='nsw')
-
-def _config_numeric(tab, text, row, varname, min_val, max_val) -> None:
-    global config_panel_vars
-
-    tk.Label(tab, text=text, bg='black', fg='white', ).grid(row=row, column=0, pady=2, sticky='nsew', ipadx=5)
-    config_panel_vars.update({varname: tk.DoubleVar(value=config[varname])})
-    tk.Spinbox(tab, from_=min_val, to=max_val, increment=0.1, textvariable=config_panel_vars[varname], width=6).grid(row=row, column=1, padx=5, pady=2, sticky='nsw')
-
-def _config_slider(tab, text, row, varname, min_val, max_val) -> None:
-    global config_panel_vars
-
-    tk.Label(tab, text=text, bg='black', fg='white').grid(row=row, column=0, pady=2, sticky='nsew', ipadx=5)
-    config_panel_vars.update({varname: tk.DoubleVar(value=config[varname])})
-    tk.Scale(tab, from_=min_val, to=max_val, orient=tk.HORIZONTAL, resolution=0.01, variable=config_panel_vars[varname]).grid(row=row, column=1, padx=5, pady=2, sticky='nsew')
-
-def _config_text(tab, text, row, varname) -> None:
-    global config_panel_vars
-
-    tk.Label(tab, text=text, bg='black', fg='white').grid(row=row, column=0, pady=2, sticky=tk.N+tk.E+tk.S+tk.W, ipadx=5)
-    config_panel_vars.update({varname: tk.StringVar(value=config[varname])})
-    tk.Entry(tab, textvariable=config_panel_vars[varname]).grid(row=row, column=1, padx=5, pady=2, sticky=tk.N+tk.E+tk.S+tk.W)
-
-def _config_listevent(event, item, action, varname) -> None:
-    global config_panel_vars
-
-    if event:
-        pass
-
-    idx = item.curselection()
-    if not idx:
-        return
-    idx = idx[0]
-
-    if action == 'dblclick':
-        color = 'red' if item.itemcget(idx, 'fg') == 'green' else 'green'
-        item.itemconfig(idx, fg=color)
-    elif action in ['down', 'up']:
-        if action == 'down' and idx == item.size() -1:
-            return
-        if action == 'up' and not idx:
-            return
-        color = item.itemcget(idx, 'fg')
-        text = item.get(idx)
-        new_idx = idx - 1 if action == 'up' else idx + 1
-        item.delete(idx)
-        item.insert(new_idx, text)
-        item.itemconfig(new_idx, fg=color)
-        item.selection_set(new_idx)
-
-    config_panel_vars.update({varname: tk.StringVar(value=','.join([item.get(i) for i in range(item.size()) if item.itemcget(i, 'fg') == 'green']))})
-
-def _config_comboevent(event, item, varname) -> None:
-    global config_panel_vars
-
-    if event:
-        pass
-
-    config_panel_vars.update({varname: tk.IntVar(value=item.current() + 1)})
-
-def config_page() -> None:
-    """
-    Settings dialog
-    """
-    global config_panel_vars
-
-    c = tk.Tk()
-    c.title('Firestone Bot Configuration')
-    style = ttk.Style()
-    style.configure('LeftTabs.TNotebook', tabposition='wn')
-    style.configure('LeftTabs.TNotebook.Tab', width=-25, anchor='w', padding=(10, 8))
-    style.configure('TFrame', background='white')
-
-    menu_frame = ttk.Frame(c, padding=10)
-    menu_frame.pack(side=tk.LEFT, fill=tk.Y)
-    tabs = ttk.Notebook(menu_frame, style='LeftTabs.TNotebook')
-    tabs.pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
-    button_frame = ttk.Frame(menu_frame, padding=(0, 10, 0, 0))
-    button_frame.pack(side=tk.BOTTOM, fill=tk.X)
-    tk.Button(button_frame, text='Save Settings', command=config_save, bg='green', fg='white').pack(side=tk.LEFT, padx=(0, 5), fill=tk.X, expand=True)
-    tk.Button(button_frame, text='Quit', command=c.destroy, bg='red', fg='white').pack(side=tk.LEFT, padx=(0, 5), fill=tk.X, expand=True)
-
-    tab1 = ttk.Frame(tabs, padding=10)
-    tab2 = ttk.Frame(tabs, padding=10)
-    tab3 = ttk.Frame(tabs, padding=10)
-    tab4 = ttk.Frame(tabs, padding=10)
-    tab5 = ttk.Frame(tabs, padding=10)
-    tab6 = ttk.Frame(tabs, padding=10)
-    tab7 = ttk.Frame(tabs, padding=10)
-    tab8 = ttk.Frame(tabs, padding=10)
-    tab9 = ttk.Frame(tabs, padding=10)
-    tab10 = ttk.Frame(tabs, padding=10)
-
-    tabs.add(tab1, text='System')
-    tab1.grid_columnconfigure(1, minsize=400, weight=0)
-    _config_text(tab1, 'Logfile', 0, 'logfile')
-    _config_text(tab1, 'Ollama URL', 1, 'ollama_url')
-    _config_text(tab1, 'Ollama Model', 2, 'ollama_model')
-    _config_text(tab1, 'Tracker file', 3, 'tracker_file')
-    _config_numeric(tab1, 'Page Wait Time', 4, 'wait_page', 1, 30)
-    _config_slider(tab1, 'Min match score', 5, 'min_score', 0.8, 1)
-    tk.Label(tab1, text='Monitor', bg='black', fg='white').grid(row=6, column=0, pady=5, sticky='nsew', ipadx=5)
-    config_panel_vars.update({'monitor': tk.IntVar(value=config['monitor'])})
-    values = []
-    monitors = mss.MSS().monitors[1::]
-    for idx, monitor in enumerate(monitors):
-        text = f'[Display {idx + 1}] {monitor['name']} @ {monitor['width']}x{monitor['height']}'
-        if monitor['is_primary']:
-            text += ' (primary)'
-        values.append(text)
-    monitor_list = ttk.Combobox(tab1, state='readonly', values=values)
-    monitor_list.grid(row=6, column=1, padx=5, pady=5, sticky='nsew', ipadx=5)
-    monitor_list.current(config['monitor'] - 1)
-    monitor_list.bind('<<ComboboxSelected>>', lambda e: _config_comboevent(e, monitor_list, 'monitor'))
-
-    tabs.add(tab2, text='Alchemist')
-    tk.Label(tab2, text='Experiments', bg='black', fg='white').grid(row=0, column=0, columnspan=6, pady=5, sticky='nsew', ipadx=5)
-    _config_checkbox(tab2, 'Dragon Blood', 1,'alchemist_dragon_blood')
-    _config_checkbox(tab2, 'Strange Dust', 1,'alchemist_strange_dust', 2)
-    _config_checkbox(tab2, 'Exotic Coin', 1,'alchemist_exotic_coin', 4)
-
-    tk.Label(tab2, text='Transmute Chests', bg='black', fg='white').grid(row=2, column=0, columnspan=6, pady=5, sticky='nsew', ipadx=5)
-    _config_checkbox(tab2, 'Legendary', 3,'transmute_legendary')
-    _config_checkbox(tab2, 'Epic', 3,'transmute_epic', 2)
-    _config_checkbox(tab2, 'Rare', 3,'transmute_rare', 4)
-    _config_checkbox(tab2, 'Uncommon', 3,'transmute_uncommon', 8)
-
-    tabs.add(tab3, text='Battle Screen')
-    tk.Label(tab3, text='Upgrade mode', bg='black', fg='white').grid(row=0, column=0, pady=2, sticky='nsew')
-    config_panel_vars.update({'upgrade_mode': tk.StringVar(value=config['upgrade_mode'])})
-    tk.Radiobutton(tab3, text='x1', variable=config_panel_vars['upgrade_mode'], value='1').grid(row=0, column=1, padx=5, pady=2, sticky='nsw')
-    tk.Radiobutton(tab3, text='x10', variable=config_panel_vars['upgrade_mode'], value='10').grid(row=0, column=2, padx=5, pady=2, sticky='nsw')
-    tk.Radiobutton(tab3, text='x100', variable=config_panel_vars['upgrade_mode'], value='100').grid(row=0, column=3, padx=5, pady=2, sticky='nsw')
-    tk.Radiobutton(tab3, text='next', variable=config_panel_vars['upgrade_mode'], value='next').grid(row=0, column=4, padx=5, pady=2, sticky='nsw')
-    tk.Radiobutton(tab3, text='max', variable=config_panel_vars['upgrade_mode'], value='max').grid(row=0, column=5, padx=5, pady=2, sticky='nsw')
-    for idx, name in enumerate(['upgrade_slot1', 'upgrade_slot2', 'upgrade_slot3', 'upgrade_slot4', 'upgrade_slot5', 'upgrade_guardian', 'upgrade_specials', 'bag_open_chests']):
-        text = name.replace('_', ' ').capitalize()
-        _config_checkbox(tab3, text, idx + 1, name)
-
-    tabs.add(tab4, text='Exotic Merchant')
-    idx = 0
-    offset = 0
-    for name, _ in config.items():
-        if name.startswith('sell_'):
-            text = name.replace('_', ' ').capitalize()
-            _config_checkbox(tab4, text, idx, name, offset)
-            offset += 2
-            if offset == 6:
-                idx += 1
-                offset = 0
-
-    tabs.add(tab5, text='Garage')
-    machines = ['aegis', 'cloudfist', 'curator', 'earthshatterer', 'firecracker', 'fortress', 'goliath', 'harvester', 'hunter', 'judgement', 'sentinel', 'talos', 'thunderclap']
-    for idx, machine in enumerate(machines):
-        tk.Label(tab5, text=machine.capitalize(), bg='black', fg='white').grid(row=idx, column=0, pady=2, sticky='nsew', ipadx=5)
-        for offset, item in enumerate(['upgrade', 'blueprints', 'rarity']):
-            varname = f'wm_{machine}_{item}'
-            value = tk.IntVar(value=config[varname])
-            config_panel_vars.update({varname: value})
-            tk.Checkbutton(tab5, text=item.capitalize(), variable=config_panel_vars[varname], onvalue=1, offvalue=0).grid(row=idx, column=1+offset, padx=5, pady=2, sticky='nsw')
-
-    tabs.add(tab6, text='Guild')
-    _config_checkbox(tab6, 'Visit guild bank', 0, 'guild_bank')
-    _config_checkbox(tab6, 'Donate guild tokens', 1, 'guild_bank_donate')
-    _config_checkbox(tab6, 'Visit guild hall', 2, 'guild_hall')
-
-    tabs.add(tab7, text='Magic Quarter')
-    guardians = ['vermilion', 'grace', 'ankaa', 'azhar']
-    for idx, guardian in enumerate(guardians):
-        tk.Label(tab7, text=guardian.capitalize(), bg='black', fg='white').grid(row=idx, column=0, pady=2, sticky='nsew', ipadx=5)
-        for offset, item in enumerate(['train', 'enlighten', 'evolve', 'chaosrift', 'rarity']):
-            varname = f'guardian_{guardian}_{item}'
-            value = tk.IntVar(value=config[varname])
-            config_panel_vars.update({varname: value})
-            item = 'chaos rift' if item=='chaosrift' else item
-            config_panel_vars.update({varname: value})
-            tk.Checkbutton(tab7, text=item.capitalize(), variable=config_panel_vars[varname], onvalue=1, offvalue=0).grid(row=idx, column=1+offset, padx=5, pady=2, sticky='nsw')
-
-    tabs.add(tab8, text='Map')
-    mission_types = ['adventure', 'dragon', 'monster', 'mystery', 'naval', 'scout', 'titan', 'war']
-    missions_current = config['map_order'].split(',')
-    tk.Label(tab8, text='Mission map order', bg='black', fg='white').grid(row=0, column=0, pady=2, sticky='nsew', ipadx=5)
-    tk.Button(tab8, text="▲ Up     ", command=lambda: _config_listevent(None, map_list, 'up', 'map_order')).grid(row=3, column=0, padx=5, pady=2, sticky='nsew')
-    tk.Button(tab8, text="🌓 Toggle", command=lambda: _config_listevent(None, map_list, 'dblclick', 'map_order')).grid(row=4, column=0, padx=5, pady=2, sticky='nsew')
-    tk.Button(tab8, text="▼ Down   ", command=lambda: _config_listevent(None, map_list, 'down', 'map_order')).grid(row=5, column=0, padx=5, pady=2, sticky='nsew')
-
-    map_list = tk.Listbox(tab8, selectmode=tk.SINGLE, activestyle='none', exportselection=0, height=len(mission_types))
-    map_list.grid(row=0, column=1, rowspan=len(mission_types), padx=5, pady=2, sticky='nsw')
-    idx = 0
-    for m in missions_current:
-        name = m.strip().lower()
-        if name not in mission_types:
-            continue
-        mission_types.remove(name)
-        map_list.insert(idx, name)
-        map_list.itemconfig(idx, fg='green')
-        idx += 1
-    for mission in mission_types:
-        map_list.insert(idx, mission)
-        map_list.itemconfig(idx, fg='red')
-        idx += 1
-    map_list.bind("<Double-1>", lambda e: _config_listevent(e, map_list, 'dblclick', 'map_order'))
-
-    tabs.add(tab9, text='Shop')
-    idx = 0
-    offset = 0
-    for name, _ in config.items():
-        if name.startswith('buy_'):
-            text = name[3::].replace('_', ' ').strip().capitalize()
-            _config_checkbox(tab9, text, idx, name, offset)
-            offset += 2
-            if offset == 6:
-                idx += 1
-                offset = 0
-
-    tabs.add(tab10, text='Temple of eternals')
-    _config_numeric(tab10, 'Jump percentage', 0, 'jump_percentage', 100, 100000000000)
-    _config_numeric(tab10, 'Use temple token at', 1, 'jump_temple_token', 100, 100000000000)
-
-    c.mainloop()
-
-def config_save() -> None:
-    """ Save config """
-    global config
-
-    try:
-        if config_panel_vars:
-            for name, value in config_panel_vars.items():
-                config.update({name: value.get()})
-
-        with open(config_file, 'w', encoding='utf-8') as f:
-            f.write(json.dumps(config, indent=4))
-    except Exception as e:
-        Debug.error(f'[Core] Unable to write configuration\n{e}')
-
 def get_coords(location: Union[Tuple[int, int], 'Region', 'Match']) -> Tuple[int, int]:
     """
     Convert tuple, region or match into tuple
@@ -751,7 +261,7 @@ def get_coords(location: Union[Tuple[int, int], 'Region', 'Match']) -> Tuple[int
             return (-1, -1)
 
     with mss.MSS() as _mss_client:
-        monitor = _mss_client.monitors[config['monitor']]
+        monitor = _mss_client.monitors[config['monitor'] + 1]
         x +=  monitor['left']
         y +=  monitor['top']
 
@@ -1042,7 +552,7 @@ def grab_screen_to_mat(region_obj: Union[Match, Region] = None) -> 'np.ndarray |
     try:
         with mss.MSS() as _mss_client:
             # Define the exact bounding box required by mss
-            monitor = _mss_client.monitors[config['monitor']]
+            monitor = _mss_client.monitors[config['monitor'] + 1]
             if region_obj:
                 monitor = {
                     'top': monitor['top'] + int(region_obj.get_y()),
@@ -2088,7 +1598,6 @@ class Match(Region):
         return self.score
 
 os.system('color')
-config_load()
 
 # general regions
 screen = Region(0, 0, 1920, 1080)

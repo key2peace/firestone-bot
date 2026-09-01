@@ -20,9 +20,93 @@ from custom_core import (
     Region,
     reload_file,
     screen,
-    tasks,
     timeouts
 )
+
+# name: (pattern, callable, reset_on_reload, max_runtime)
+tasks = {
+    # starting with these
+    '_crazygames_check':    ('',                                'crazygames_check', 1, 5),
+    '_crazygames_error':    ('',                                'crazygames_error', 1, 0),
+    '_check_party':         ('',                                'check_party', 1, 5),
+    '_check_upgrade':       ('',                                'check_upgrade', 1, 30),
+    '_check_heroes':        ('',                                'check_heroes', 1, 20),
+    '_battle_pass':         ('',                                'battle_pass', 1, 0), # add golden pass purchase
+    '_events':              ('',                                'events', 0, 0),
+
+    # alchemist
+    'alchemist':            ('alchemist/alchemist.png',         'alchemist', 0, 0),
+    '_alchemist':           ('',                                'alchemist', 0, 10),
+
+    # arena of kings
+    'arena_of_kings':       ('arena_of_kings.png',              'arena_of_kings', 0, 0),
+
+    #character
+    'quests':               ('character/quests.png',            'character_quests', 0, 0),
+    'talents':              ('character/talents_upgrade.png',   'character_talents', 0, 0),
+
+    # engineer
+    'engineer':             ('engineer/engineer.png',           'engineer', 0, 0),
+    'garage':               ('engineer/garage.png',             'engineer_garage', 0, 0),
+    #'garage_rarity':        ('engineer/garage_rarity.png',      'engineer_garage', 0, 0),
+    'new_warmachine':       ('engineer/new_warmachine.png',     'engineer_garage', 0, 0),
+
+    # guild
+    'pickaxe':              ('guild/pickaxe.png',               'guild_shop_pickaxe', 0, 0),
+    'arcane_crystal':       ('guild/arcane_crystal.png',        'guild_arcanecrystal', 0, 0),
+    'awakening':            ('guild/awakening.png',             'guild_awakening', 0, 0),
+    'chaos_rift_supplies':  ('guild/chaos_rift_supplies.png',   'guild_chaos_rift_supplies', 0, 0),
+    'chaos_rift':           ('guild/chaos_rift.png',            'guild_chaos_rift', 0, 60),
+    'expeditions':          ('guild/expeditions.png',           'guild_expeditions', 0, 0),
+    'forbidden_knowledge':  ('guild/forbidden_knowledge.png',   'guild_forbidden_knowledge', 0, 0),
+    '_guild':               ('',                                'guild', 0, 0),
+
+    # library
+    'firestone_research':   ('library/firestone_research.png',  'library_firestone_research', 0, 0),
+    'meteorite_research':   ('library/meteorite_research.png',  'library_meteorite_research', 0, 0),
+
+    # map
+    'campaign':             ('map/campaign.png',                'map_campaign', 0, 0),
+    'map':                  ('map/map.png',                     'map_map', 0, 0),
+    '_map':                 ('',                                'map_map', 0, 0),
+
+    # oracle
+    'oracle_gift':          ('oracle/gift.png',                 'oracle_gift', 0, 0),
+    'oracle_rituals':       ('oracle/rituals.png',              'oracle', 0, 0),
+    'oracle_blessing':      ('oracle/blessing.png',             'oracle', 0, 0),
+
+    # pirate ship
+    'pirates_price':        ('pirate_ship/pirates_price.png',   'pirates_price', 0, 0), #rework pickup method
+
+    # shop
+    'sign_in':              ('shop/sign_in.png',                'shop', 0, 300),
+
+    # tavern
+    'pharaos_vault':        ('tavern/pharaos_vault.png',        'tavern_pharaos_vault', 0, 0),
+    'scarab_token':         ('tavern/scarab_token.png',         'tavern_scarab_token', 0, 0),
+    'scarab_game':          ('tavern/scarab_game.png',          'tavern_scarab_game', 0, 0),
+    'scarab_beast':         ('tavern/scarab_beast.png',         'tavern_scarab_game', 0, 0),
+    'scarab_milestone':     ('tavern/scarab_milestone.png',     'tavern_scarab_milestone', 0, 0),
+    'tavern_collect':       ('tavern/tavern_pickup.png',        'tavern_tavern_collect', 0, 0),
+
+    # temple of eternals
+    'temple_of_eternals':   ('temple_of_eternals.png',          'temple_of_eternals', 0, 0),
+
+    # others on the end
+    '_firestone_research':  ('',                                'library_firestone_research', 0, 0),
+    'bag':                  ('',                                'bag', 0, 0),
+    'check_mail':           ('',                                'check_mail', 0, 0),
+    'check_taskcount':      ('',                                'check_taskcount', 0, 0)
+}
+
+# Add magic quarter upgrades to the tasks
+for tasks_root, _, tasks_files in os.walk('images/tasks/magic_quarter'):
+    task_files = [f for f in tasks_files if f.lower().endswith('.png')]
+    if not task_files:
+        continue
+    for task_filename in task_files:
+        tasks_filepath = os.path.join('magic_quarter', task_filename)
+        tasks[f'guardian_{task_filename[:-4]}'] = (tasks_filepath, 'magic_quarter', 0, 0)
 
 class SequentialTaskTimeout:
     """ Task checker."""

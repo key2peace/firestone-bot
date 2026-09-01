@@ -6,9 +6,9 @@ Provides handlers in regards to page identification.
 import sys
 import time
 
+from config_logic import config
 from custom_core import (
     colormap,
-    config,
     Debug,
     get_pixel_color,
     Region
