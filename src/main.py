@@ -207,7 +207,6 @@ def main() -> None:
                                 timeout_return = int(actual_function(True)) # pylint: disable=assignment-from-no-return
                     except TimeoutError:
                         Debug.warn(f'[Task] {friendly_name} aborted')
-                        pass
 
                     duration = duration_text(start_task)
                     if timeout_return:

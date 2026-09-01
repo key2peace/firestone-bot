@@ -23,6 +23,10 @@ But sadly, new OculiX IDE looking shiny on my desktop, getting frustrated by the
 - Configuration dialog
 - Multi monitor support
 
+## Platforms
+- Works with CrazyGames
+- Will NOT work with steam (thanks XGabranth for testing)
+
 ## Tasks supported
 
 ### Alchemist
