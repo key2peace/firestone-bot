@@ -27,10 +27,11 @@ import pyautogui
 import pytesseract
 import requests
 
-from config_logic import config, config_page
 from pynput import keyboard
 from watchdog.events import FileSystemEventHandler
 from watchdog.observers import Observer
+
+from config_logic import config, config_page
 
 # Internal variables
 _ollama_cache: List[Dict[str, str]] = []
@@ -140,7 +141,7 @@ def ask_ollama(prompt: str, src_mat = None) -> str:
             )
             response.raise_for_status()
             msg = response.json().get('message')
-            if assistant_msg:
+            if msg:
                 _ollama_cache.append(msg)
         except Exception as error:
             Debug.error(f'[Ollama] Base handshake failed: {error}')
@@ -451,7 +452,7 @@ def get_pixel_color(x: int, y: int) -> Tuple[int, int, int]:
     try:
         pixel = tuple(grab_screen_to_mat(Region(x, y, 1, 1))[0][0])
         return (int(pixel[2]), int(pixel[1]), int(pixel[0]))
-    except Exception as e:
+    except Exception:
         return (0, 0, 0)
 
 def get_value(value: str) -> Tuple[float, int]:
@@ -640,7 +641,7 @@ def on_keyrelease(key) -> None:
         if not word in app:
             return
 
-    for idx, word in enumerate(['armor games', 'crazygames', 'kongregate', 'minijuegos', 'miniplay', 'r2games', 'yandex']):
+    for _, word in enumerate(['armor games', 'crazygames', 'kongregate', 'minijuegos', 'miniplay', 'r2games', 'yandex']):
         if word in app:
             platform = word
             if word not in ['crazygames']:
