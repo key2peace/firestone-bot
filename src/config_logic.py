@@ -3,13 +3,16 @@ Configuration related stuff
 """
 import json
 import os
-import tkinter as tk
-from tkinter import ttk
-
-from typing import Any, ClassVar, Dict, List, Optional, Tuple, Union
+import re
+import sys
 
 import mss
 import mss.tools
+import tkinter as tk
+import requests
+
+from tkinter import ttk
+from typing import Any, ClassVar, Dict, List, Optional, Tuple, Union
 
 config = {
     # System settings
@@ -32,14 +35,9 @@ config = {
 
     # Battle screen
     'bag_open_chests':                  True,                       # bag: open chests
-    'upgrade_slot1':                    True,                       # Upgrade leader
-    'upgrade_slot2':                    True,                       # Upgrade hero in slot 2
-    'upgrade_slot3':                    True,                       # Upgrade hero in slot 3
-    'upgrade_slot4':                    True,                       # Upgrade hero in slot 4
-    'upgrade_slot5':                    True,                       # Upgrade hero in slot 5
-    'upgrade_guardian':                 True,                       # Upgrade guardian
-    'upgrade_specials':                 True,                       # Upgrade specials
-    'upgrade_mode':                     2,                          # check_upgrade: set upgrade amount for heroes
+    'upgrade_order':                    'slot 1,slot 2,slot 3,slot 4,slot 5, guardian, specials',
+    'upgrade_mode':                     2,                          # set upgrade amount for heroes
+    'battle_boss_retry':                5,                          # set minimum battle duration before retrying boss
 
     # Exotic Merchant
     'sell_scroll_of_speed':             True,                       # 80 exotic coins
@@ -101,6 +99,7 @@ config = {
     'guild_bank':                       True,                       # visit guild bank
     'guild_bank_donate':                True,                       # donate leftover guild coins to guild bank
     'guild_hall':                       True,                       # visit guild hall
+    'guild_autoaccept':                 True,                       # auto accept guild applications
 
     # Magic Quarter
     'guardian_vermilion_train':         True,                       # enlighten vermilion (uses dust)
@@ -158,28 +157,44 @@ config = {
     'jump_percentage':                  400,                        # temple of eternals: jump percentage
     'jump_temple_token':                800,                        # temple of eternals: percentage to use temple tokens
 
-    'dummy':                            0                           # dummy on the end
+    'version':                          1                           # config version on the end
 }
 config_file: str = 'bot_settings.json'
 config_panel_vars = {}
 config_comboboxes = {}
+current_tab = None
 
-def checkbox(tab, text, row, varname, column_start:int = 0) -> None:
+def checkbox(**args) -> None:
     global config_panel_vars
 
-    label(tab, text, row, column_start)
-    config_panel_vars.update({varname: tk.IntVar(value=config[varname])})
-    tk.Checkbutton(tab, variable=config_panel_vars[varname], onvalue=True, offvalue=False).grid(row=row, column=column_start + 1, padx=5, pady=2, sticky='nsw')
+    column = args.get('column', 0)
+    row = args.get('row', 0)
+    tab = args.get('tab', current_tab)
+    text = args.get('text', None)
+    varname = args.get('varname', None)
+    if not tab or not text or not varname:
+        return
 
-def combobox(tab, text, row, varname, values) -> None:
+    config_panel_vars.update({varname: tk.IntVar(value=config.get(varname, 0))})
+    tk.Checkbutton(tab, text=text, variable=config_panel_vars.get(varname, 0), onvalue=True, offvalue=False).grid(row=row, column=column, padx=5, pady=2, sticky='nsw')
+
+def combobox(**args) -> None:
     global config_comboboxes
 
-    label(tab, text, row)
+    row = args.get('row', 0)
+    tab = args.get('tab', current_tab)
+    text = args.get('text', None)
+    values = args.get('values', None)
+    varname = args.get('varname', None)
+    if not tab or not text or not values or not varname:
+        return
+
+    label(text=text, row=row)
     config_panel_vars.update({varname: tk.IntVar(value=config[varname])})
     config_comboboxes.update({varname: ttk.Combobox(tab, state='readonly', values=values)})
-    config_comboboxes[varname].grid(row=row, column=1, columnspan=20, padx=5, pady=5, sticky='nsew', ipadx=5)
-    config_comboboxes[varname].current(config[varname])
-    config_comboboxes[varname].bind('<<ComboboxSelected>>', lambda e: combobox_event(e, varname))
+    config_comboboxes.get(varname).grid(row=row, column=1, columnspan=20, padx=5, pady=5, sticky='nsew', ipadx=5)
+    config_comboboxes.get(varname).current(config[varname])
+    config_comboboxes.get(varname).bind('<<ComboboxSelected>>', lambda e: combobox_event(e, varname))
 
 def combobox_event(event, varname) -> None:
     global config_comboboxes, config_panel_vars
@@ -187,17 +202,23 @@ def combobox_event(event, varname) -> None:
     if event:
         pass
 
-    config_panel_vars.update({varname: tk.IntVar(value=config_comboboxes[varname].current())})
+    config_panel_vars.update({varname: tk.IntVar(value=config_comboboxes.get(varname).current())})
 
 def config_load() -> None:
     """ Load config """
+    global config
+
     if os.path.exists(config_file):
-        try:
-            with open(config_file, 'r', encoding='utf-8') as f:
-                loaded_config = json.load(f)
-                config.update(loaded_config)
-        except Exception as e:
-            Debug.error(f'[Core] Unable to load configuration\n{e}')
+        conf_version = config.get('version')
+        file_version = 0
+
+        with open(config_file, 'rt', encoding='utf-8') as f:
+            loaded_config = json.load(f)
+            file_version = loaded_config.get('version', 0)
+            config.update(loaded_config)
+
+        if conf_version != file_version:
+            config_page()
     else:
         config_save()
 
@@ -205,14 +226,18 @@ def config_page() -> None:
     """
     Settings dialog
     """
-    global config_panel_vars
+    global config_panel_vars, current_tab
 
     c = tk.Tk()
     c.title('Firestone Bot Configuration')
+    c.wm_attributes('-topmost', True)
+
     style = ttk.Style()
+    style.theme_use('xpnative')
     style.configure('LeftTabs.TNotebook', tabposition='wn')
     style.configure('LeftTabs.TNotebook.Tab', width=-20, anchor='e', padding=(10, 8))
-    style.configure('TFrame', background='white')
+    #style.configure('TFrame', background='white')
+    style.configure('TLabel', background='black', foreground='white')
 
     menu_frame = ttk.Frame(c, padding=10)
     menu_frame.pack(side=tk.LEFT, fill=tk.Y)
@@ -223,25 +248,15 @@ def config_page() -> None:
     tk.Button(button_frame, text='Save', command=config_save, bg='green', fg='white').pack(side=tk.LEFT, padx=(10,5), fill=tk.X, expand=True)
     tk.Button(button_frame, text='Exit', command=c.destroy, bg='red', fg='white').pack(side=tk.LEFT, padx=(5, 10), fill=tk.X, expand=True)
 
-    tab1 = ttk.Frame(tabs, padding=10)
-    tab2 = ttk.Frame(tabs, padding=10)
-    tab3 = ttk.Frame(tabs, padding=10)
-    tab4 = ttk.Frame(tabs, padding=10)
-    tab5 = ttk.Frame(tabs, padding=10)
-    tab6 = ttk.Frame(tabs, padding=10)
-    tab7 = ttk.Frame(tabs, padding=10)
-    tab8 = ttk.Frame(tabs, padding=10)
-    tab9 = ttk.Frame(tabs, padding=10)
-    tab10 = ttk.Frame(tabs, padding=10)
-
-    tabs.add(tab1, text='System')
-    tab1.grid_columnconfigure(1, minsize=400, weight=0)
-    input_text(tab1, 'Logfile', 0, 'logfile')
-    input_text(tab1, 'Ollama URL', 1, 'ollama_url')
-    input_text(tab1, 'Ollama Model', 2, 'ollama_model')
-    input_text(tab1, 'Tracker file', 3, 'tracker_file')
-    input_number(tab1, 'Page Wait Time', 4, 'wait_page', 1, 30, 0.01)
-    slider(tab1, 'Min match score', 5, 'min_score', 0.8, 1)
+    current_tab = ttk.Frame(tabs, padding=10)
+    tabs.add(current_tab, text='System')
+    current_tab.grid_columnconfigure(1, minsize=400, weight=0)
+    input_text(current_tab, 'Logfile', 0, 'logfile')
+    input_text(current_tab, 'Ollama URL', 1, 'ollama_url', ('<Return>', 'ollama_url_verify'))
+    input_text(current_tab, 'Ollama Model', 2, 'ollama_model', ('<Return>', 'ollama_model_verify'))
+    input_text(current_tab, 'Tracker file', 3, 'tracker_file')
+    input_number(current_tab, 'Page Wait Time', 4, 'wait_page', 1, 30, 0.01)
+    slider(current_tab, 'Min match score', 5, 'min_score', 0.8, 1)
 
     values = []
     monitors = mss.MSS().monitors[1::]
@@ -250,111 +265,99 @@ def config_page() -> None:
         if monitor['is_primary']:
             text += ' (primary)'
         values.append(text)
-    combobox(tab1, 'Monitor', 6, 'monitor', values)
+    combobox(text='Monitor', row=6, varname='monitor', values=values)
 
-    tabs.add(tab2, text='Alchemist')
-    label(tab2, 'Experiments', 0)
-    checkbox(tab2, 'Dragon Blood', 1,'alchemist_dragon_blood')
-    checkbox(tab2, 'Strange Dust', 1,'alchemist_strange_dust', 2)
-    checkbox(tab2, 'Exotic Coin', 1,'alchemist_exotic_coin', 4)
+    current_tab = ttk.Frame(tabs, padding=10)
+    tabs.add(current_tab, text='Alchemist')
+    label(text='Experiments')
+    checkbox(text='Dragon Blood', row=1, varname='alchemist_dragon_blood')
+    checkbox(text='Strange Dust', row=1,varname='alchemist_strange_dust', column=2)
+    checkbox(text='Exotic Coin', row=1, varname='alchemist_exotic_coin', column=4)
 
-    label(tab2, 'Transmute Chests', 2)
-    checkbox(tab2, 'Legendary', 3,'transmute_legendary')
-    checkbox(tab2, 'Epic', 3,'transmute_epic', 2)
-    checkbox(tab2, 'Rare', 3,'transmute_rare', 4)
-    checkbox(tab2, 'Uncommon', 3,'transmute_uncommon', 8)
+    label(text='Transmute Chests', row=2)
+    checkbox(text='Legendary', row=3, varname='transmute_legendary')
+    checkbox(text='Epic', row=3, varname='transmute_epic', column=2)
+    checkbox(text='Rare', row=3, varname='transmute_rare', column=4)
+    checkbox(text='Uncommon', row=3, varname='transmute_uncommon', column=8)
 
-    tabs.add(tab3, text='Battle Screen')
+    current_tab = ttk.Frame(tabs, padding=10)
+    tabs.add(current_tab, text='Battle Screen')
     values = ['Upgrade x1','Upgrade x10','Upgrade x100','Next milestone','Upgrade max']
-    combobox(tab3, 'Upgrade mode', 0, 'upgrade_mode', values)
-    checkbox(tab3, 'Upgrade slot 1', 1,'upgrade_slot1')
-    checkbox(tab3, 'Upgrade slot 2', 1,'upgrade_slot2', 2)
-    checkbox(tab3, 'Upgrade slot 3', 1,'upgrade_slot3', 4)
-    checkbox(tab3, 'Upgrade slot 4', 1,'upgrade_slot4', 6)
-    checkbox(tab3, 'Upgrade slot 5', 2,'upgrade_slot5')
-    checkbox(tab3, 'Upgrade guardian', 2,'upgrade_guardian', 2)
-    checkbox(tab3, 'Upgrade specials', 2,'upgrade_specials', 4)
+    combobox(text='Upgrade mode', row=0, varname='upgrade_mode', values=values)
 
-    tabs.add(tab4, text='Exotic Merchant')
-    idx = 0
+    upgrade_types = ['slot 1', 'slot 2', 'slot 3', 'slot 4', 'slot 5', 'guardian', 'specials']
+    listbox(current_tab, 'Upgrade order', 1, 'upgrade_order', upgrade_types)
+    input_number(current_tab, 'Boss retry', 20, 'battle_boss_retry', 0, 60, 0.1)
+
+    current_tab = ttk.Frame(tabs, padding=10)
+    tabs.add(current_tab, text='Exotic Merchant')
+    label(text='Sell items')
+    idx = 1
     offset = 0
     for name, _ in config.items():
         if name.startswith('sell_'):
-            text = name.replace('_', ' ').capitalize()
-            checkbox(tab4, text, idx, name, offset)
+            text = name[5::].replace('_', ' ').capitalize()
+            checkbox(text=text, row=idx, varname=name, column=offset)
             offset += 2
             if offset == 6:
                 idx += 1
                 offset = 0
 
-    tabs.add(tab5, text='Garage')
+    current_tab = ttk.Frame(tabs, padding=10)
+    tabs.add(current_tab, text='Garage')
     machines = ['aegis', 'cloudfist', 'curator', 'earthshatterer', 'firecracker', 'fortress', 'goliath', 'harvester', 'hunter', 'judgement', 'sentinel', 'talos', 'thunderclap']
     for idx, machine in enumerate(machines):
-        label(tab5, machine.capitalize(), idx)
+        label(text=machine.capitalize(), row=idx)
         for offset, item in enumerate(['upgrade', 'blueprints', 'rarity']):
             varname = f'wm_{machine}_{item}'
-            value = tk.IntVar(value=config[varname])
+            value = tk.IntVar(value=config.get(varname, 0))
             config_panel_vars.update({varname: value})
-            tk.Checkbutton(tab5, text=item.capitalize(), variable=config_panel_vars[varname], onvalue=1, offvalue=0).grid(row=idx, column=1+offset, padx=5, pady=2, sticky='nsw')
+            checkbox(text=item.capitalize(), varname=varname, row=idx, column=1+offset)
 
-    tabs.add(tab6, text='Guild')
-    checkbox(tab6, 'Visit guild bank', 0, 'guild_bank')
-    checkbox(tab6, 'Donate guild tokens', 1, 'guild_bank_donate')
-    checkbox(tab6, 'Visit guild hall', 2, 'guild_hall')
+    current_tab = ttk.Frame(tabs, padding=10)
+    tabs.add(current_tab, text='Guild')
+    checkbox(text='Visit guild bank', row=0, varname='guild_bank')
+    checkbox(text='Donate guild tokens', row=1, varname='guild_bank_donate')
+    checkbox(text='Visit guild hall', row=2, varname='guild_hall')
+    checkbox(text='Accept applications', row=3, varname='guild_autoaccept')
 
-    tabs.add(tab7, text='Magic Quarter')
+    current_tab = ttk.Frame(tabs, padding=10)
+    tabs.add(current_tab, text='Magic Quarter')
     guardians = ['vermilion', 'grace', 'ankaa', 'azhar']
     for idx, guardian in enumerate(guardians):
-        label(tab7, guardian.capitalize(), idx)
+        label(text=guardian.capitalize(), row=idx)
         for offset, item in enumerate(['train', 'enlighten', 'evolve', 'chaosrift', 'rarity']):
             varname = f'guardian_{guardian}_{item}'
-            value = tk.IntVar(value=config[varname])
+            value = tk.IntVar(value=config.get(varname, 0))
             config_panel_vars.update({varname: value})
             item = 'chaos rift' if item=='chaosrift' else item
             config_panel_vars.update({varname: value})
-            tk.Checkbutton(tab7, text=item.capitalize(), variable=config_panel_vars[varname], onvalue=1, offvalue=0).grid(row=idx, column=1+offset, padx=5, pady=2, sticky='nsw')
+            checkbox(text=item.capitalize(), varname=varname, row=idx, column=1+offset)
 
-    tabs.add(tab8, text='Map')
+    current_tab = ttk.Frame(tabs, padding=10)
+    tabs.add(current_tab, text='Map')
     mission_types = ['adventure', 'dragon', 'monster', 'mystery', 'naval', 'scout', 'titan', 'war']
-    missions_current = config['map_order'].split(',')
-    label(tab8, 'Mission map order', 0)
-    tk.Button(tab8, text="Up    ", command=lambda: listbox_event(None, map_list, 'up', 'map_order')).grid(row=3, column=0, padx=5, pady=2, sticky='nsew')
-    tk.Button(tab8, text="Toggle", command=lambda: listbox_event(None, map_list, 'dblclick', 'map_order')).grid(row=4, column=0, padx=5, pady=2, sticky='nsew')
-    tk.Button(tab8, text="Down  ", command=lambda: listbox_event(None, map_list, 'down', 'map_order')).grid(row=5, column=0, padx=5, pady=2, sticky='nsew')
+    listbox(current_tab, 'Mission map order', 0, 'map_order', mission_types)
 
-    map_list = tk.Listbox(tab8, selectmode=tk.SINGLE, activestyle='none', exportselection=0, height=len(mission_types))
-    map_list.grid(row=0, column=1, rowspan=len(mission_types), padx=5, pady=2, sticky='nsw')
-    idx = 0
-    for m in missions_current:
-        name = m.strip().lower()
-        if name not in mission_types:
-            continue
-        mission_types.remove(name)
-        map_list.insert(idx, name)
-        map_list.itemconfig(idx, fg='green')
-        idx += 1
-    for mission in mission_types:
-        map_list.insert(idx, mission)
-        map_list.itemconfig(idx, fg='red')
-        idx += 1
-    map_list.bind("<Double-1>", lambda e: listbox_event(e, map_list, 'dblclick', 'map_order'))
-
-    tabs.add(tab9, text='Shop')
-    idx = 0
+    current_tab = ttk.Frame(tabs, padding=10)
+    tabs.add(current_tab, text='Shop')
+    label(text='Obtain Amulets')
+    idx = 1
     offset = 0
     for name, _ in config.items():
         if name.startswith('buy_'):
             text = name[3::].replace('_', ' ').strip().capitalize()
-            checkbox(tab9, text, idx, name, offset)
+            checkbox(text=text, row=idx, varname=name, column=offset)
             offset += 2
             if offset == 6:
                 idx += 1
                 offset = 0
 
-    tabs.add(tab10, text='Temple of eternals')
-    tab10.grid_columnconfigure(1, minsize=400, weight=0)
-    input_number(tab10, 'Jump percentage', 0, 'jump_percentage', 0, 100000000000)
-    input_number(tab10, 'Use temple token at', 1, 'jump_temple_token', 0, 100000000000)
+    current_tab = ttk.Frame(tabs, padding=10)
+    tabs.add(current_tab, text='Temple of eternals')
+    current_tab.grid_columnconfigure(1, minsize=400, weight=0)
+    input_number(current_tab, 'Jump percentage', 0, 'jump_percentage', 0, 100000000000)
+    input_number(current_tab, 'Use temple token at', 1, 'jump_temple_token', 0, 100000000000)
 
     c.mainloop()
 
@@ -362,32 +365,70 @@ def config_save() -> None:
     """ Save config """
     global config
 
-    try:
-        if config_panel_vars:
-            for name, value in config_panel_vars.items():
-                config.update({name: value.get()})
+    if config_panel_vars:
+        for name, value in config_panel_vars.items():
+            config.update({name: value.get()})
 
-        with open(config_file, 'w', encoding='utf-8') as f:
-            f.write(json.dumps(config, indent=4))
-    except Exception as e:
-        Debug.error(f'[Core] Unable to write configuration\n{e}')
+    with open(config_file, 'wt', encoding='utf-8') as f:
+        f.write(json.dumps(config, indent=4))
 
 def input_number(tab, text, row, varname, min_val, max_val, increment = 1) -> None:
     global config_panel_vars
 
-    label(tab, text, row)
+    label(text=text, row=row)
     config_panel_vars.update({varname: tk.DoubleVar(value=config[varname])})
-    tk.Spinbox(tab, from_=min_val, to=max_val, increment=increment, textvariable=config_panel_vars[varname], width=6).grid(row=row, column=1, padx=5, pady=2, sticky='nsew')
+    tk.Spinbox(tab, from_=min_val, to=max_val, increment=increment, textvariable=config_panel_vars.get(varname), width=6).grid(row=row, column=1, padx=5, pady=2, sticky='nsew')
 
-def input_text(tab, text, row, varname) -> None:
+def input_text(tab, text:str, row: int, varname: str, on_update: Union[None, Tuple[str, str]] = None) -> None:
     global config_panel_vars
 
-    label(tab, text, row)
+    label(text=text, row=row)
     config_panel_vars.update({varname: tk.StringVar(value=config[varname])})
-    tk.Entry(tab, textvariable=config_panel_vars[varname]).grid(row=row, column=1, padx=5, pady=2, sticky='nsew')
+    item = tk.Entry(tab, textvariable=config_panel_vars.get(varname), highlightthickness=2)
+    item.grid(row=row, column=1, padx=5, pady=2, sticky='nsew')
+    if on_update:
+        current_module = sys.modules[__name__]
+        trigger, actual = on_update
+        actual_function = getattr(current_module, actual)
+        if actual_function:
+            item.bind(trigger, lambda e: actual_function(e, item, varname))
+            actual_function(None, item, varname)
 
-def label(tab, text, row, column = 0, columnspan = 1) -> None:
-    tk.Label(tab, text=text, bg='black', fg='white').grid(row=row, column=column, columnspan=columnspan, pady=5, sticky='nsew', ipadx=5)
+def label(**args) -> None:
+
+    column = args.get('column', 0)
+    columnspan = args.get('columnspan', 1)
+    row = args.get('row', 0)
+    tab = args.get('tab', current_tab)
+    text = args.get('text', None)
+    if not tab or not text:
+        return
+
+    ttk.Label(tab, text=text).grid(row=row, column=column, columnspan=columnspan, pady=5, sticky='nsew', ipadx=5)
+
+def listbox(tab, text, row, varname, values) -> None:
+    label(text=text, row=row)
+    item = tk.Listbox(tab, selectmode=tk.SINGLE, activestyle='none', exportselection=0, height=len(values))
+    item.grid(row=row, column=1, rowspan=len(values), padx=5, pady=2, sticky='nsw')
+    middle = len(values) // 2 + row
+    ttk.Button(tab, text='  Up  ', command=lambda: listbox_event(None, item, 'up', varname)).grid(row=middle - 1, column=0, padx=5, pady=2, sticky='nsew')
+    ttk.Button(tab, text='Toggle', command=lambda: listbox_event(None, item, 'dblclick', varname)).grid(row=middle, column=0, padx=5, pady=2, sticky='nsew')
+    ttk.Button(tab, text=' Down ', command=lambda: listbox_event(None, item, 'down', varname)).grid(row=middle + 1, column=0, padx=5, pady=2, sticky='nsew')
+
+    current = config.get(varname, ','.join(values)).split(',')
+    idx = 0
+    for m in current:
+        if m not in values:
+            continue
+        values.remove(m)
+        item.insert(idx, m)
+        item.itemconfig(idx, fg='green')
+        idx += 1
+    for m in values:
+        item.insert(idx, m)
+        item.itemconfig(idx, fg='red')
+        idx += 1
+    item.bind('<Double-1>', lambda e: listbox_event(e, item, 'dblclick', varname))
 
 def listbox_event(event, item, action, varname) -> None:
     global config_panel_vars
@@ -418,12 +459,59 @@ def listbox_event(event, item, action, varname) -> None:
 
     config_panel_vars.update({varname: tk.StringVar(value=','.join([item.get(i) for i in range(item.size()) if item.itemcget(i, 'fg') == 'green']))})
 
+def ollama_model_verify(event, item, varname) -> None:
+    global config_panel_vars
+
+    if event:
+        pass
+
+    url = f'{config_panel_vars.get('ollama_url').get().rstrip('/')}/api/tags'
+    if not re.search(r'^https?://', url):
+        return
+
+    color = 'red'
+    try:
+        response = requests.get(url = url, timeout = 5)
+        response.raise_for_status()
+        for model in response.json().get('models', {}):
+            if model.get('name', '').lower() == config_panel_vars.get(varname, '').get().lower():
+                color = 'green'
+                if not 'vision' in model.get('capabilities', []):
+                    color = 'orange'
+                break
+    except Exception:
+        pass
+
+    item.configure(highlightbackground=color, highlightcolor=color)
+
+def ollama_url_verify(event, item, varname) -> None:
+    global config_panel_vars
+
+    if event:
+        pass
+
+    url = f'{config_panel_vars.get(varname).get().rstrip('/')}/api/version'
+    color = 'red'
+    if re.search(r'^https?://', url):
+        try:
+            response = requests.get(url = url, timeout = 5)
+            response.raise_for_status()
+            version = response.json().get('version')
+            m = re.search(r'^(\d+\.\d+\.\d+)$', version)
+            if m:
+                print(f'Ollama version {version} detected.\n')
+                color = 'green'
+        except Exception:
+            pass
+
+    item.configure(highlightbackground = color, highlightcolor = color)
+
 def slider(tab, text, row, varname, min_val, max_val) -> None:
     global config_panel_vars
 
-    label(tab, text, row)
-    config_panel_vars.update({varname: tk.DoubleVar(value=config[varname])})
-    tk.Scale(tab, from_=min_val, to=max_val, orient=tk.HORIZONTAL, resolution=0.01, variable=config_panel_vars[varname]).grid(row=row, column=1, padx=5, pady=2, sticky='nsew')
+    label(text=text, row=row)
+    config_panel_vars.update({varname: tk.DoubleVar(value=config.get(varname))})
+    tk.Scale(tab, from_=min_val, to=max_val, orient=tk.HORIZONTAL, resolution=0.01, variable=config_panel_vars.get(varname)).grid(row=row, column=1, padx=5, pady=2, sticky='nsew')
 
 config_load()
 if __name__ == '__main__':

@@ -65,15 +65,34 @@ colormap = {
     'gamebar': (33, 33, 34, 34, 51, 51)
 }
 
-lock_file: str = '.bot_running'
-if os.path.exists(lock_file):
-    os.remove(lock_file)
-
-reload_file: str = '.bot_reload'
-if os.path.exists(reload_file):
-    os.remove(reload_file)
-
+lock_event = threading.Event()
+lock_event.set()
+platform:str = ''
+reload_event = threading.Event()
 timeouts = {}
+
+def alpha_filter(src_mat: np.ndarray, threshold: int = 128) -> np.ndarray:
+    """
+    Perform Alpha Flattening on a given BGR-A matrix using NumPy and OpenCV.
+
+    Args:
+        src_mat (np.ndarray): The source image matrix (BGRA).
+        threshold (int): Binary threshold value for the alpha layer.
+
+    Returns:
+        np.ndarray: The processed matrix with a flattened alpha channel.
+    """
+    if src_mat is None or src_mat.size == 0 or src_mat.shape[2] < 4:
+        return src_mat
+
+    # Split channels using native NumPy slicing instead of Java wrappers
+    b_ch, g_ch, r_ch, a_ch = cv2.split(src_mat)
+
+    # Apply thresholding directly to the alpha channel array
+    _, alpha_thresh = cv2.threshold(a_ch, threshold, 255, cv2.THRESH_BINARY)
+
+    # Merge channels back efficiently via OpenCV
+    return cv2.merge([b_ch, g_ch, r_ch, alpha_thresh])
 
 def ask_ollama(prompt: str, src_mat = None) -> str:
     """
@@ -84,8 +103,8 @@ def ask_ollama(prompt: str, src_mat = None) -> str:
     """
     global _ollama_cache
 
-    ollama_url = f"{config['ollama_url'].rstrip('/')}/api/chat"
-    model_name = config['ollama_model']
+    ollama_url = f"{config.get('ollama_url','').rstrip('/')}/api/chat"
+    model_name = config.get('ollama_model','')
     model_info = subprocess.run(['ollama','show', model_name], capture_output=True, check=True)
     model_vision = True
     if model_info:
@@ -120,9 +139,9 @@ def ask_ollama(prompt: str, src_mat = None) -> str:
                 timeout=90
             )
             response.raise_for_status()
-            assistant_msg = response.json().get('message')
+            msg = response.json().get('message')
             if assistant_msg:
-                _ollama_cache.append(assistant_msg)
+                _ollama_cache.append(msg)
         except Exception as error:
             Debug.error(f'[Ollama] Base handshake failed: {error}')
             return ''
@@ -141,7 +160,7 @@ def ask_ollama(prompt: str, src_mat = None) -> str:
     if model_vision and src_mat:
         success, encoded_image = cv2.imencode('.png', src_mat)
         if success:
-            message['images'] = base64.b64encode(encoded_image.tobytes()).decode('utf-8')
+            message.update({'images': base64.b64encode(encoded_image.tobytes()).decode('utf-8')})
 
     payload['messages'].append(message)
 
@@ -185,8 +204,8 @@ def capture(filename: str) -> bool:
 
     try:
         return cv2.imwrite(target_path, grab_screen_to_mat())
-    except Exception as e:
-        Debug.error(f'[Capture] Failed to write matrix: {e}')
+    except cv2.error as e:
+        Debug.error(f'[Capture] Failed to write image: {e}')
         return False
 
 def click(location: Union[Tuple[int, int], 'Region', 'Match']) -> None:
@@ -207,7 +226,7 @@ def click(location: Union[Tuple[int, int], 'Region', 'Match']) -> None:
     x_coord, y_coord = get_coords(location)
 
     try:
-        if not os.path.exists(lock_file):
+        if lock_event.is_set():
             return
 
         mouse_controller.moveTo(x_coord, y_coord)
@@ -234,7 +253,10 @@ def color_at(x: int, y: int) -> str:
         str: The designated color name string if a valid match is located,
              otherwise empty string.
     """
-    return color_name(get_pixel_color(x, y))
+    color = get_pixel_color(x, y)
+    if not color:
+        return ''
+    return color_name(color)
 
 def color_name(color:Tuple[int, int, int]) -> str:
     """
@@ -262,8 +284,15 @@ def get_coords(location: Union[Tuple[int, int], 'Region', 'Match']) -> Tuple[int
 
     with mss.MSS() as _mss_client:
         monitor = _mss_client.monitors[config['monitor'] + 1]
+        # place on the correct monitor
         x +=  monitor['left']
         y +=  monitor['top']
+
+        # take screen resolution into account
+        if monitor['width'] != 1920:
+            x = round((monitor['width'] / 1920) * x)
+        if monitor['height'] != 1080:
+            y = round((monitor['height'] / 1080) * y)
 
     return (x, y)
 
@@ -281,12 +310,13 @@ def drag_drop(start_location: Union[Tuple[int, int], 'Region', 'Match'],
 
     # Execute precise drag-and-drop workflow matching Unity engine requirements
     try:
-        if not os.path.exists(lock_file):
+        if lock_event.is_set():
             return
 
         mouse_controller.moveTo(int(x1), int(y1))
         delay = get_distance(start_location, end_location) / 300
         pyautogui.dragTo(int(x2), int(y2), delay, button='left')
+        time.sleep(1)
     except mouse_controller.FailSafeException:
         pause_on()
 
@@ -371,56 +401,12 @@ def extract_color_layer(src_mat: np.ndarray, color_range: tuple[int, int, int, i
     # Reconstruct the high-fidelity alpha layer
     return cv2.merge([b_ch, g_ch, r_ch, new_alpha])
 
-def find_all(image_path: str) -> list:
-    """
-    Locate all matching iterations of a pattern across the entire primary monitor.
-
-    Bypasses Java Toolkit dependencies by utilizing pyautogui to dynamically
-    fetch screen boundaries, constructing a full-screen viewport Region.
-
-    Args:
-        image_path (str): The local file path to the target pattern image (.png).
-
-    Returns:
-        list: A list containing Match nodes for every unique sequence discovered.
-    """
-    # Fetch screen dimensions using pure Python pyautogui layer
-    screen_width, screen_height = pyautogui.size()
-
-    # Construct a temporary full-screen Region to execute the multi-scan
-    full_screen = Region(0, 0, screen_width, screen_height)
-    return full_screen.find_all(image_path)
-
-def filter_mat_alpha(src_mat: np.ndarray, threshold: int = 128) -> np.ndarray:
-    """
-    Perform Alpha Flattening on a given BGR-A matrix using NumPy and OpenCV.
-
-    Args:
-        src_mat (np.ndarray): The source image matrix (BGRA).
-        threshold (int): Binary threshold value for the alpha layer.
-
-    Returns:
-        np.ndarray: The processed matrix with a flattened alpha channel.
-    """
-    if src_mat is None or src_mat.size == 0 or src_mat.shape[2] < 4:
-        return src_mat
-
-    # Split channels using native NumPy slicing instead of Java wrappers
-    b_ch, g_ch, r_ch, a_ch = cv2.split(src_mat)
-
-    # Apply thresholding directly to the alpha channel array
-    _, alpha_thresh = cv2.threshold(a_ch, threshold, 255, cv2.THRESH_BINARY)
-
-    # Merge channels back efficiently via OpenCV
-    return cv2.merge([b_ch, g_ch, r_ch, alpha_thresh])
-
 def get_distance(start_location: Union[Tuple[int, int], 'Region', 'Match'], end_location: Union[Tuple[int, int], 'Region', 'Match']) -> float:
     """
     Calculate distance betwee two coordinates
     """
-    # Extract start coordinates safely
-    x1, y1 = get_coords(start_location)
-    x2, y2 = get_coords(end_location)
+    x1, y1 = start_location
+    x2, y2 = end_location
 
     return math.sqrt(math.pow(x1 - x2, 2) + math.pow(y1 - y2, 2))
 
@@ -430,27 +416,23 @@ def get_file_sha256(filepath: str):
     """
     hasher = hashlib.sha256()
     with open(filepath, 'rb') as file_ptr:
-        buf = file_ptr.read()
-        hasher.update(buf)
+        hasher.update(file_ptr.read())
     return hasher.hexdigest()
 
-def get_next_reset(target_hour: int = 8) -> int:
+def get_next_reset() -> int:
     """
-    Calculate the absolute UNIX timestamp of the next upcoming UTC server reset boundary.
-
-    Guarantees seamless cross-timezone execution by anchoring time-deltas strictly
-    to the timezone-aware UTC clock space.
+    Get timestamp for next daily cycle
     """
-    now_utc = datetime.datetime.now(datetime.timezone.utc)
+    ts = datetime.datetime.now()
 
-    next_reset = now_utc.replace(
-        hour=target_hour,
+    next_reset = ts.replace(
+        hour=10,
         minute=0,
         second=0,
         microsecond=0
     )
 
-    if now_utc >= next_reset:
+    if ts >= next_reset:
         next_reset += datetime.timedelta(days=1)
 
     return int(next_reset.timestamp())
@@ -470,10 +452,9 @@ def get_pixel_color(x: int, y: int) -> Tuple[int, int, int]:
         pixel = tuple(grab_screen_to_mat(Region(x, y, 1, 1))[0][0])
         return (int(pixel[2]), int(pixel[1]), int(pixel[0]))
     except Exception as e:
-        Debug.error(f'[get_pixel_color] Failed to extract color map coordinates: {e}')
         return (0, 0, 0)
 
-def get_value(value: str) -> Union[int, float]:
+def get_value(value: str) -> Tuple[float, int]:
     """
     Convert game-style exponential alpha suffixes and roman to a numerical rank.
 
@@ -481,36 +462,37 @@ def get_value(value: str) -> Union[int, float]:
         value (str): The string containing the value.
 
     Returns:
-        int, float: The computed true numeric value.
+        Tuple[float, int]: A tuple of the value, and it's x10 exponent.
+                          (1.2, 3) = 1.2 * 10^3 = 1200
     """
     # Simple numbers
     m = re.search(r'^[\d\.]+$', value)
     if m:
-        return float(value)
+        return (float(value), 0)
 
     # Scientific notation
     m = re.search(r'^([\d,]+)e(\d+)$', value)
     if m:
         val, suffix = m.groups()
-        return float(val.replace(',','.')) * (10 ** int(suffix))
+        return (float(val.replace(',','.')), int(suffix))
 
     # Game notation
     m = re.search(r'^([\d,]+)([KMBT]{1})$', value)
     if m:
-        mapping = {'K': 3, 'M': 6, 'B': 9, 'T': 12}
+        mapping: dict[str, int] = {'K': 3, 'M': 6, 'B': 9, 'T': 12}
         val, suffix = m.groups()
-        return float(val.replace(',','.')) * (10 ** mapping[suffix])
+        return (float(val.replace(',','.')), mapping[suffix])
 
     m = re.search(r'^([\d,]+)([a-z]+)$', value)
     if m:
         val, suffix = m.groups()
         exp: int = 15
         for pos, char in enumerate(reversed(suffix)):
-            exp += (ord(char) - ord("A")) * (26 ** pos)
-        return float(val.replace(',','.')) * (10 ** exp)
+            exp += (ord(char) - ord('A')) * (26 ** pos)
+        return (float(val.replace(',','.')), exp)
 
     # Roman notation
-    m = re.search(r'^([IVXLCDM]+)$', value).upper()
+    m = re.search(r'^([IVXLCDM]+)$', value.upper())
     if m:
         roman_map: dict[str, int] = {'I':1, 'V':5, 'X':10, 'L':50, 'C':100, 'D':500, 'M':1000}
         res: int = 0
@@ -527,9 +509,9 @@ def get_value(value: str) -> Union[int, float]:
                     res += current_val
             else:
                 res += current_val
-        return res
+        return (res, 0)
 
-    return 0
+    return (0, 0)
 
 def get_timeout(seconds: float) -> int:
     """
@@ -541,7 +523,7 @@ def get_timeout(seconds: float) -> int:
     Returns:
         int timestamp
     """
-    return int(time.time()+seconds)
+    return int(time.time() + seconds)
 
 def grab_screen_to_mat(region_obj: Union[Match, Region] = None) -> 'np.ndarray | None':
     """
@@ -599,7 +581,7 @@ def mouse_down(timeout: float=0) -> None:
         'timeout (float, optional)
     """
     try:
-        if not os.path.exists(lock_file):
+        if lock_event.is_set():
             return
 
         mouse_controller.mouseDown()
@@ -609,20 +591,11 @@ def mouse_down(timeout: float=0) -> None:
     except mouse_controller.FailSafeException:
         pause_on()
 
-def mouse_scroll(amount: int) -> None:
-    """
-    Scroll mousewheel up or down
-
-    Args:
-        'amount' (int) the amount to scroll. Positive for up, negative for down
-    """
-    pyautogui.scroll(amount)
-
 def mouse_up() -> None:
     """
     Release mousebutton after mouseDown()
     """
-    if not os.path.exists(lock_file):
+    if lock_event.is_set():
         return
 
     mouse_controller.mouseUp()
@@ -641,7 +614,7 @@ def move_to(location: Union[Tuple[int, int], 'Region', 'Match']) -> None:
     x_coord, y_coord = get_coords(location)
 
     try:
-        if not os.path.exists(lock_file):
+        if lock_event.is_set():
             return
 
         mouse_controller.moveTo(x_coord, y_coord)
@@ -658,16 +631,35 @@ def on_keyrelease(key) -> None:
     """
     Background thread listener callback for key release.
     """
+    global platform
+
+    app = get_active_windowtitle().lower()
+    #Debug.info(f'{app}')
+
+    for word in ['firestone', 'idle', 'rpg']:
+        if not word in app:
+            return
+
+    for idx, word in enumerate(['armor games', 'crazygames', 'kongregate', 'minijuegos', 'miniplay', 'r2games', 'yandex']):
+        if word in app:
+            platform = word
+            if word not in ['crazygames']:
+                Debug.warn(f'{word.capitalize()} has not been tested yet. Use at your own risk and let me know if it works or not!')
+                platform += ' (untested)'
+
+    if not platform:
+        Debug.warn('Unrecognized platform. Use at your own risk and let me know if it works or not!')
+
     #Debug.info(f'Key released: {key}')
 
     try:
         # (un)pausing the game using Scroll Lock
         keys = keyboard.Key
         if key == keys.scroll_lock:
-            if os.path.exists(lock_file):
-                pause_on()
-            else:
+            if lock_event.is_set():
                 pause_off()
+            else:
+                pause_on()
         # detect possible browser reload(F5) or exiting fullscreen mode (ESCAPE)
         elif key in [keys.f5, keys.esc]:
             Debug.info(f'{key} press detected. Preparing for web reload.')
@@ -702,7 +694,7 @@ def optimize_alpha_channels(target_dir: str = 'images', threshold: int = 128) ->
 
                         if channels >= 4:
                             Debug.info(f'[optimize_alpha_channels] Optimizing {filepath}')
-                            optimized_src = filter_mat_alpha(src, threshold)
+                            optimized_src = alpha_filter(src, threshold)
                             cv2.imwrite(filepath, optimized_src)
 
                 except Exception as error:
@@ -714,31 +706,28 @@ def pause_check() -> None:
     """
     System breaks
     """
-    if not os.path.exists(lock_file):
+    if lock_event.is_set():
         Debug.info('Systems paused, toggle Scroll-Lock to continue. Home to configure.')
-        while not os.path.exists(lock_file):
-            pass
+        while lock_event.is_set():
+            sleep(0.01)
 
 def pause_off() -> None:
     """
-    Create lock_file
+    Clear lock
     """
-    with open(lock_file, 'wt', encoding='utf-8') as ptr:
-        ptr.write(str(time.time_ns()))
-        Debug.info('Resuming tasks.')
+    lock_event.clear()
+    Debug.info('Resuming tasks.')
 
 def pause_on(reload: bool = False) -> None:
     """
-    Remove lock_file
+    Set lock
     """
-    if os.path.exists(lock_file):
-        os.remove(lock_file)
-        Debug.info('Disabling interactions. Pausing as soon as current loop finished.')
+    lock_event.set()
+    Debug.info('Disabling interactions. Pausing as soon as current loop finished.')
 
-    if reload and not os.path.exists(reload_file):
-        with open(reload_file, 'wt', encoding='utf-8') as ptr:
-            ptr.write(str(time.time_ns()))
-            Debug.info('Web reload prepared.')
+    if reload and not reload_event.is_set():
+        reload_event.set()
+        Debug.info('Web reload prepared.')
 
 def parse_ui_timeout(ocr_text: str) -> float | None:
     """
@@ -805,11 +794,6 @@ def popup(message: str, title: str = 'Bot Notification', timeout: float = 0) -> 
         timeout (float): Seconds to wait before auto-closing. 0 blocks indefinitely.
     """
 
-    if timeout <= 0:
-        # Standard blocking alert dialog
-        pyautogui.alert(text=str(message), title=str(title), button='OK')
-        return
-
     def auto_close_worker() -> None:
         """
         Background worker thread that counts down and forcefully kills the dialog.
@@ -824,8 +808,9 @@ def popup(message: str, title: str = 'Bot Notification', timeout: float = 0) -> 
 
     try:
         # Spawn the closer thread and immediately execute the alert interface
-        closer_thread = threading.Thread(target=auto_close_worker, daemon=True)
-        closer_thread.start()
+        if timeout > 0:
+            closer_thread = threading.Thread(target=auto_close_worker, daemon=True)
+            closer_thread.start()
         pyautogui.alert(text=str(message), title=str(title), button='OK')
     except Exception as error:
         Debug.error(f'[popup] Render failed:\n{error}')
@@ -837,7 +822,7 @@ def press_key(key_name: str) -> None:
     Args:
         key_name (str): The alphanumeric identifier string (e.g., 'enter', 'space').
     """
-    if not os.path.exists(lock_file):
+    if lock_event.is_set():
         return
     keyboard_controller.press(key_name)
 
@@ -1003,7 +988,7 @@ class ImageEventHandler(FileSystemEventHandler):
                 if src is not None:
                     # Execute alpha-channel optimization if image has 4 channels
                     if len(src.shape) == 3 and src.shape[2] == 4:
-                        optimized_src = filter_mat_alpha(src)
+                        optimized_src = alpha_filter(src)
                         cv2.imwrite(event.src_path, optimized_src)
                     self.tracker.add(event.src_path)
             except Exception as error:
@@ -1253,7 +1238,7 @@ class Region():
             Debug.error(f'[Region.match] {e}')
             return None
 
-    def find_all(self, image_path: str) ->List[Match]:
+    def find_all(self, image_path: str) -> List[Match]:
         """
         Locate all matching iterations of a pattern within this region boundaries.
 

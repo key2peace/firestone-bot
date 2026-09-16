@@ -26,5 +26,9 @@
     "pickaxe.png": {
         "timestamp": 1786591705.535293,
         "sha256": "34be36fe99c3ecb6f4bfcd2aeeaee26eaedd1caa8b2870bcd0aa11a05cb7bc5d"
+    },
+    "application.png": {
+        "timestamp": 1788548814.5702636,
+        "sha256": "ac78aa8504b148f69381deb14307473d587fcdc3a637260396b1adbb8e081569"
     }
 }

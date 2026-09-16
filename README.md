@@ -18,14 +18,36 @@ But sadly, new OculiX IDE looking shiny on my desktop, getting frustrated by the
 
 ## Features
 - Auto maximize and disable gamebar on crazygames
-- Crazygames crash dialog detection
+- Reload if healthbar is broken
 - Caputres F5/Esc keypress in order to pause the bot
 - Configuration dialog
 - Multi monitor support
 
-## Platforms
-- Works with CrazyGames
-- Will NOT work with steam (thanks XGabranth for testing)
+## Support matrix
+### Web versions
+| **Platform** | **Chrome** | **Firefox** |  **Opera**  |
+| :----------- | :--------- | :---------- | :---------- |
+| ArmorGames   | Untested   | Untested    | Untested    |
+| Crazygames   | Tested     | Untested    | Untested    |
+| Facebook     | Untested   | Untested    | Untested    |
+| Kongregate   | Untested   | Untested    | Untested    |
+| Miniplay     | Untested   | Untested    | Untested    |
+| R2Games      | Untested   | Untested    | Untested    |
+| Yandex       | Untested   | Untested    | Untested    |
+
+### Others
+| **Platform** | **Result** |
+| :----------- | :--------- |
+| Epic Games   | Untested   |
+| Steam        | Failed     |
+
+### Operating systems
+| **OS**       | **Result** |
+| :----------- | :--------- |
+| Linux        | Untested   |
+| MacOS        | Untested   |
+| Windows      | Tested     |
+
 
 ## Tasks supported
 
@@ -83,6 +105,7 @@ But sadly, new OculiX IDE looking shiny on my desktop, getting frustrated by the
 - Guild expeditions
 - Guild hall:
     - Guild log
+    - Auto accept applications
 
 ### Library
 - Firestone research:
@@ -98,7 +121,6 @@ But sadly, new OculiX IDE looking shiny on my desktop, getting frustrated by the
 
 ### Map
 - Claim finished tasks (3 minutes before end for free)
-- Refresh for free 3 minutes before end
 - Pick new tasks in the order defined in config
 - Experimental support for silver missions (not yet unlocked map level 10 to test)
 - Campaign Battles:
@@ -158,20 +180,8 @@ But sadly, new OculiX IDE looking shiny on my desktop, getting frustrated by the
 - More detailed logging what the bot is doing
 - Improve OCR
 - Finetune timeouts
-- Server reconnect detection
-- Test on other platforms (feel free to share your experience):
-  - Operating systems:
-    - Linux
-    - MacOS
-  - Game enviroments:
-    - ArmorGames
-    - Epic Games (do I really even wanna support that?)
-    - Facebook
-    - Kongregate
-    - Miniplay
-    - R2Games
-    - Steam
-    - Yandex
+- Server reconnect detection 
+- Browser plugins 
 
 ### Guild
 - Tree of Life
@@ -218,7 +228,11 @@ python main.py
 - Start the game and go full-screen
 - When ready, press the Scroll-Lock key.
 - If things go wrong -> Scroll-Lock
-- Press the HOME button to configure things
+
+- Press the HOME button to configure things or run:
+```
+python config_logic.py
+```
 
 ## License
 This code is released under the MIT License, for more details, see [License](https://github.com/key2peace/firestone-bot/blob/main/LICENSE)
