@@ -180,8 +180,8 @@ But sadly, new OculiX IDE looking shiny on my desktop, getting frustrated by the
 - More detailed logging what the bot is doing
 - Improve OCR
 - Finetune timeouts
-- Server reconnect detection 
-- Browser plugins 
+- Server reconnect detection
+- Browser plugins
 
 ### Guild
 - Tree of Life

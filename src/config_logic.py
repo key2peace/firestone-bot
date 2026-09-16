@@ -223,9 +223,7 @@ def config_load() -> None:
         config_save()
 
 def config_page() -> None:
-    """
-    Settings dialog
-    """
+    """ Settings dialog """
     global config_panel_vars, current_tab
 
     c = tk.Tk()

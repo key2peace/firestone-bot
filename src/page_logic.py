@@ -1,7 +1,5 @@
 """
 Page Logic Subroutines for Firestone Bot Gameplay Automation.
-
-Provides handlers in regards to page identification.
 """
 import sys
 import time
@@ -157,9 +155,7 @@ def page_identify() -> str:
     return next((name for name in attributes if getattr(current_module, name)()), '')
 
 def page_wait(page: str) -> bool:
-    """
-    Wait for a page to appear or return false
-    """
+    """ Wait for a page to appear or return false """
     if not page:
         return False
 

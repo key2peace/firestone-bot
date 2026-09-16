@@ -1,9 +1,5 @@
 """
 Task Logic Subroutines for Firestone Bot Gameplay Automation.
-
-Provides alphabetically organized gameplay handlers dispatched dynamically
-via the main automation loop. All visual state checks, hardware inputs,
-and lifecycle guards are handled natively through the custom core framework.
 """
 import os
 import random
@@ -135,9 +131,7 @@ def alchemist(trigger: bool = False) -> int:
     return get_timeout(1800)
 
 def arena_of_kings(trigger: bool = False) -> int:
-    """
-    Execute the Arena of Kings navigational cleanup subroutine.
-    """
+    """ Play Arena of Kings. """
     if trigger:
         press_key('k')
 
@@ -147,9 +141,7 @@ def arena_of_kings(trigger: bool = False) -> int:
     return 0
 
 def bag(trigger: bool = False) -> int:
-    """
-    Cleanup the bag
-    """
+    """ Cleanup the bag """
     if trigger:
         pass
 
@@ -193,9 +185,7 @@ def bag(trigger: bool = False) -> int:
     return get_timeout(3600)
 
 def battle_pass(trigger: bool = False) -> int:
-    """
-    Check if we got a baatle pass to claim
-    """
+    """ Check battle pass rewards """
     if trigger:
         pass
 
@@ -218,12 +208,7 @@ def battle_pass(trigger: bool = False) -> int:
     return get_timeout(300)
 
 def character_quests(trigger: bool = False) -> int:
-    """
-    Execute the quest completion and collection protocol.
-
-    Navigates through multiple quest category tabs and sequentially triggers
-    claim buttons using fixed index ranges to collect accumulated rewards.
-    """
+    """ Daily/Weekly quests """
     if trigger:
         press_key('q')
         sleep(2)
@@ -254,9 +239,7 @@ def character_quests(trigger: bool = False) -> int:
     return 0
 
 def character_talents(trigger: bool = False) -> int:
-    """
-    Upgrade talents
-    """
+    """ Upgrade talents """
     if trigger:
         press_key('q')
         sleep(2)
@@ -297,9 +280,7 @@ def character_talents(trigger: bool = False) -> int:
     return 0
 
 def check_heroes(trigger: bool = False) -> int:
-    """
-    Execute upgrade related stuff
-    """
+    """ Upgrade heroes """
     if trigger:
         pass
 
@@ -361,9 +342,7 @@ def check_heroes(trigger: bool = False) -> int:
     return get_timeout(10)
 
 def check_mail(trigger: bool = False) -> int:
-    """
-    Check if we got mail
-    """
+    """ Check if we got mail """
     if trigger:
         pass
 
@@ -383,9 +362,7 @@ def check_mail(trigger: bool = False) -> int:
     return get_timeout(300)
 
 def check_party(trigger: bool = False) -> int:
-    """
-    Check the setup of the party
-    """
+    """ Check the setup of the party """
     global party_coords
 
     if trigger:
@@ -430,9 +407,7 @@ def check_party(trigger: bool = False) -> int:
     return time.time() * 2
 
 def crazygames_check(trigger: bool = False) -> int:
-    """
-    Check for crazygames specific elements
-    """
+    """ Check for crazygames specific elements """
     if trigger:
         pass
 
@@ -453,29 +428,21 @@ def crazygames_check(trigger: bool = False) -> int:
     return get_timeout(time.time())
 
 def crazygames_error(trigger: bool = False) -> int:
-    """
-    Check for crazygames error screen
-    """
+    """ Check for crazygames error screen """
     if trigger:
         pass
 
     if color_at(1080, 670) == 'purple':
-        if Region(875, 650, 170, 40).text('', colormap['white']) == 'Reload game':
-            Debug.warn('Gamecrash detected. Preparing for web reload.')
-            pause_on(True)
-            press_key('f5')
-            sleep(20)
-            pause_off()
+        Debug.warn('Gamecrash detected. Preparing for web reload.')
+        pause_on(True)
+        press_key('f5')
+        sleep(20)
+        pause_off()
 
     return get_timeout(300)
 
 def engineer(trigger: bool = False) -> int:
-    """
-    Execute the Engineer resource allocation routine.
-
-    Interacts with the localized production interface before firing
-    global exit anchors to restore primary canvas visibility.
-    """
+    """ Pickup tools from engineer """
     if trigger:
         press_key('t')
         sleep(2)
@@ -493,9 +460,7 @@ def engineer(trigger: bool = False) -> int:
     return get_timeout(21600)
 
 def engineer_garage(trigger: bool = False) -> int:
-    """
-    Process the garage page
-    """
+    """ Process the garage page """
     if trigger:
         press_key('t')
         sleep(2)
@@ -632,9 +597,7 @@ def events(trigger: bool = False) -> int:
     return get_timeout(300)
 
 def exotic_merchant(trigger: bool = False) -> int:
-    """"
-    Exotic Merchant
-    """
+    """" Exotic Merchant """
     if trigger:
         pass
 
@@ -721,9 +684,7 @@ def exotic_merchant(trigger: bool = False) -> int:
     return get_next_reset()
 
 def go_home() -> None:
-    """"
-    Return to the home screen
-    """
+    """" Return to the home screen """
     while True:
         m = screen.exists('images/misc/close.png')
         if not m:
@@ -732,9 +693,7 @@ def go_home() -> None:
         m.wait_vanish()
 
 def guild(trigger: bool = False) -> int:
-    """
-    Walk the guild map
-    """
+    """ Walk the guild map """
     if trigger:
         pass
 
@@ -744,21 +703,25 @@ def guild(trigger: bool = False) -> int:
 
     # guild bank
     if config['guild_bank'] and color_at(400, 875) == 'red':
+        Debug.history('Visiting guild bank')
         click((300, 700))       # Bank on guild map
         if not page_wait('guild_bank'):
             return -1
         if config['guild_bank_donate'] and color_at(1200, 750) == 'green':
+            Debug.history('Donating guild coins')
             click((1130, 750))  # Max donation
         click((180, 450))       # Treasury
         click((180, 600))       # Bank log
         click((180, 800))       # Locker
         sleep(1)
         if color_at(1100, 840) == 'green':
+            Debug.history('Claiming rewards')
             click((950, 940))   # Claim rewards
         click((1670, 50))
 
     # guild hall
     if config['guild_hall'] and color_at(1210, 585) == 'red':
+        Debug.history('Visiting guild hall')
         click((1070, 500))      # Guild hall
         if not page_wait('guild_hall'):
             return -1
@@ -772,9 +735,7 @@ def guild(trigger: bool = False) -> int:
     return get_timeout(7200)
 
 def guild_arcanecrystal(trigger: bool = False) -> int:
-    """
-    Execute the Arcane Crystal.
-    """
+    """ Execute the Arcane Crystal. """
     if trigger:
         click((1860, 430))      # Guild icon on main screen
         if not page_wait('guild_map'):
@@ -789,10 +750,11 @@ def guild_arcanecrystal(trigger: bool = False) -> int:
 
     for _ in range(0, amount):
         if color_at(960, 960) == 'green':
+            Debug.history('Hitting arcane crystal')
             click((960, 960))
             move_to((1120, 960))
             start_loop = time.time()
-            while time.time() - start_loop < 10 and not color_at(1050, 970) == 'green':
+            while time.time() - start_loop < 8 and not color_at(1050, 970) == 'green':
                 pass
         else:
             break
@@ -800,13 +762,12 @@ def guild_arcanecrystal(trigger: bool = False) -> int:
     return 0
 
 def guild_awakening(trigger: bool = False) -> int:
-    """
-    Process awakening screen
-    """
+    """ Process awakening screen """
     if trigger:
         pass
 
     while color_at(1600, 600) == 'yellow':
+        Debug.history('Awakening hero')
         click((1800, 600))
         move_to((1880, 600))
         time_start = time.time()
@@ -816,18 +777,21 @@ def guild_awakening(trigger: bool = False) -> int:
     return 0
 
 def guild_chaos_rift(trigger: bool = False) -> int:
-    """
-    Run chaos rift challenge.
-    """
+    """ Run chaos rift challenge. """
     if trigger:
         pass
 
     if color_at(1885, 675) == 'white':
         click((1810, 720))
+        sleep(0.5)
+        click((175, 600))
         sleep(1)
+        guild_chaos_rift_supplies()
         click((1840, 55))
+        sleep(0.5)
 
     while color_at(1050, 970) == 'green':
+        Debug.history('Hitting a god')
         click((1050, 970))
         move_to((1200, 970))
         start_loop = time.time()
@@ -837,16 +801,16 @@ def guild_chaos_rift(trigger: bool = False) -> int:
     return 0
 
 def guild_chaos_rift_supplies(trigger: bool = False) -> int:
-    """
-    Process ledra supplies
-    """
+    """ Process chaos rift supplies """
     if trigger:
         pass
 
     while color_at(560, 820) == 'green':
+        Debug.history('Getting tome')
         click((560, 820))
         move_to((480, 820))
         if color_at(1000, 680) == 'green':
+            Debug.history('Insufficient dark runes')
             click((1000, 680))
             break
 
@@ -857,14 +821,15 @@ def guild_expeditions(trigger: bool = False) -> int:
     if trigger:
         pass
 
-    click((1290,320))
-    click((1290,320))
+    while color_at(1210, 320) == 'green':
+        Debug.history('Claiming/Starting guild expedition')
+        click((1290,320))
+        move_to((1290, 370))
+
     return 0
 
 def guild_forbidden_knowledge(trigger: bool = False) -> int:
-    """
-    Run forbidden knowledge circle
-    """
+    """ Run forbidden knowledge """
     if trigger:
         pass
 
@@ -954,17 +919,10 @@ def guild_new_application(trigger: bool = False) -> int:
             click((1210, 210))
             sleep(1)
 
-    click((1310, 45))
-    click((1666, 45))
     return 0
 
 def guild_shop_pickaxe(trigger: bool = False) -> int:
-    """
-    Execute the Pickaxe tool allocation and interaction routine.
-
-    Interacts with the localized mining area coordinates before triggering
-    global exit anchors to return execution back to the primary canvas.
-    """
+    """ Get pickaxes from guild shop. """
     if trigger:
         pass
 
@@ -974,13 +932,7 @@ def guild_shop_pickaxe(trigger: bool = False) -> int:
     return 0
 
 def library_firestone_research(trigger: bool = False) -> int:
-    """
-    Manage the Firestone research pipeline lifecycle in two distinct phases.
-
-    Phase 1 monitors and collects completed research projects utilizing rapid
-    pixel color scans. Phase 2 processes active template research bubbles and
-    executes screen drag operations to initialize new available projects.
-    """
+    """  Firestone research. """
     if trigger:
         press_key('l')
         sleep(2)
@@ -1052,9 +1004,7 @@ def library_firestone_research(trigger: bool = False) -> int:
     return get_timeout(600)
 
 def library_meteorite_research(trigger: bool = False) -> int:
-    """
-    Execute the Meteorite Research.
-    """
+    """ Perform Meteorite Research. """
     if trigger:
         press_key('l')
         sleep(2)
@@ -1084,9 +1034,7 @@ def library_meteorite_research(trigger: bool = False) -> int:
     return 0
 
 def magic_quarter(trigger: bool = False) -> int:
-    """
-    Magic Quarter
-    """
+    """ Magic Quarter """
     if trigger:
         press_key('g')
         sleep(2)
@@ -1128,12 +1076,13 @@ def magic_quarter(trigger: bool = False) -> int:
 
             # Evolution - colorcheck disabled because of bug
             #if config[f'guardian_{current}_evolve'] and color_at(1265, 100) == 'white':
-            click((1210, 150))
-            sleep(0.3)
-            if config[f'guardian_{current}_evolve'] and color_at(1220, 780) == 'green':
-                Debug.history(f'Evolving {current}')
-                click((1220, 780))
-                sleep(10)
+            if True:
+                click((1210, 150))
+                sleep(0.3)
+                if config[f'guardian_{current}_evolve'] and color_at(1220, 780) == 'green':
+                    Debug.history(f'Evolving {current}')
+                    click((1220, 780))
+                    sleep(10)
 
             # Chaos Rift
             if config[f'guardian_{current}_chaosrift'] and color_at(1435, 100) == 'white':
@@ -1164,9 +1113,7 @@ def magic_quarter(trigger: bool = False) -> int:
     return get_timeout(120)
 
 def map_campaign(trigger: bool = False) ->int:
-    """
-    Perform Campaign Task
-    """
+    """ Perform Campaign Task """
     if trigger:
         pass
 
@@ -1223,13 +1170,7 @@ def map_campaign(trigger: bool = False) ->int:
     return 0
 
 def map_map(trigger: bool = False, direction: int = 0) -> int:
-    """
-    Manage world map operations including reward claiming and dynamic deployment.
-
-    Phase 1 harvests finished missions using rapid pixel color scans. Phase 2
-    normalizes the map viewport scale via drag-and-drop zoom controls to align
-    icon dimensions. Phase 3 scans and dispatches type-specific campaigns.
-    """
+    """ Manage mission map operations """
     if trigger:
         press_key('m')
 
@@ -1397,9 +1338,7 @@ def new_hero(trigger: bool = False) -> int:
     return get_timeout(604800)
 
 def oracle(trigger: bool = False) -> int:
-    """
-    Perform oracle tasks
-    """
+    """ Perform oracle tasks """
     if trigger:
         press_key('o')
         sleep(2)
@@ -1420,7 +1359,7 @@ def oracle(trigger: bool = False) -> int:
         for _ in range (0, 2):
             for name, (x, y) in coords.items():
                 if color_at(x, y) == 'green':
-                    text = Region(x - 180, y - 10, 180, 50).text('', colormap['white'])
+                    text = Region(x - 180, y - 10, 180, 50).text('', colormap['white']).capitalize()
                     Debug.history(f'{text}ing {name} ritual')
                     click((x, y))
 
@@ -1476,9 +1415,7 @@ def oracle(trigger: bool = False) -> int:
     return 0
 
 def oracle_gift(trigger: bool = False) -> int:
-    """
-    Obtain oracle gift
-    """
+    """ Obtain oracle gift """
     if trigger:
         pass
 
@@ -1486,17 +1423,13 @@ def oracle_gift(trigger: bool = False) -> int:
         return -1
 
     if color_at(750, 820) == 'green':
+        Debug.history('Grabbing oracle gift')
         click((750, 820))
 
     return 0
 
 def pirates_price(trigger: bool = False) -> int:
-    """
-    Execute the Pirates Price tool allocation and interaction routine.
-
-    Interacts with the localized mining area coordinates before triggering
-    global exit anchors to return execution back to the primary canvas.
-    """
+    """ Claim pirates prices """
     if trigger:
         pass
 
@@ -1505,6 +1438,7 @@ def pirates_price(trigger: bool = False) -> int:
     while not claimed and trials < 6:
         for x in range(390, 1900, 10):
             if color_at(x, 910) == 'green':
+                Debug.history('Claiming pirates price')
                 click((x, 910))
                 claimed = True
 
@@ -1515,13 +1449,12 @@ def pirates_price(trigger: bool = False) -> int:
     return 0
 
 def shop(trigger: bool = False) -> int:
-    """
-    Collect Sign-In Bonus
-    """
+    """ Fly around the shop around signin time """
     if trigger:
         pass
 
     # Loop through possible positions
+    Debug.info('Grabbing daily sign-in')
     for y_coords in [870, 920]:
         click((1360, y_coords))
 
@@ -1576,9 +1509,6 @@ def shop(trigger: bool = False) -> int:
         Debug.history('[shop] Picked up mystery box')
         click((600, 900))
 
-    sleep(1)
-    click((1840, 55))
-
     # perfect opportunity to go for dailies
     items = {
         'bag': False,
@@ -1594,9 +1524,7 @@ def shop(trigger: bool = False) -> int:
     return get_next_reset()
 
 def tavern_scarab_game(trigger: bool = False) -> int:
-    """
-    Play scarab game
-    """
+    """ Play scarab game """
     if trigger:
         pass
 
@@ -1608,6 +1536,7 @@ def tavern_scarab_game(trigger: bool = False) -> int:
 
     # the game itself
     while color_at(1024, 1000) == 'green':
+        Debug.history('Playing a round of scarab game')
         click((1024,1000))
         move_to((800, 1000))
         start_loop = time.time()
@@ -1622,15 +1551,14 @@ def tavern_scarab_game(trigger: bool = False) -> int:
 
     # release beast
     if color_at(400, 610) == 'white':
+        Debug.history('Releasing a new beast')
         click((300, 640))
         sleep(5)
 
     return 0
 
 def tavern_scarab_milestone(trigger: bool = False) -> int:
-    """
-    Get daily scarab token
-    """
+    """ Get daily scarab token """
     if trigger:
         pass
 
@@ -1639,6 +1567,7 @@ def tavern_scarab_milestone(trigger: bool = False) -> int:
     while drag_count < 3:
         for x_coords in range(130, 1700, 20):
             if color_at(x_coords, 825) == 'green':
+                Debug.history('Grabbing scarab milestone')
                 click((x_coords, 825))
         drag_drop((1700, 560), (240, 560))
         drag_count += 1
@@ -1652,21 +1581,18 @@ def tavern_scarab_milestone(trigger: bool = False) -> int:
     return tavern_pharaos_vault()
 
 def tavern_scarab_token(trigger: bool = False) -> int:
-    """
-    Get daily scarab token
-    """
+    """ Get daily scarab token """
     if trigger:
         pass
 
-    click((610,800))
+    click((610,800)) # Check for green?
+    Debug.history('Getting daily scarab token')
     click((1840, 55))
     sleep(1)
     return tavern_scarab_game()
 
 def tavern_pharaos_vault(trigger: bool = False) -> int:
-    """
-    Process Pharao's Vault
-    """
+    """ Process Pharao's Vault """
     if trigger:
         pass
 
@@ -1688,16 +1614,13 @@ def tavern_pharaos_vault(trigger: bool = False) -> int:
     return tavern_scarab_game()
 
 def tavern_tavern_collect(trigger: bool = False) -> int:
-    """
-    Convert beer into game tokens
-    """
-    while True:
-        if color_at(400, 640) == 'green':
-            click((400, 640))
-            sleep(0.5)
-        else:
-            click((1670, 270))
-            break
+    """ Convert beer into game tokens """
+    while color_at(400, 640) == 'green':
+        Debug.history('Exchanging beer for tokens')
+        click((400, 640))
+        sleep(0.5)
+
+    click((1670, 270))
 
     if trigger:
         return 0
@@ -1749,12 +1672,7 @@ def tavern_tavern_game(trigger: bool = False) -> int:
     return 0
 
 def temple_of_eternals(trigger: bool = False) -> int:
-    """
-    Execute the Firestone collection interface clearing routing.
-
-    Fires a precise exit input to clear the localized inventory
-    overlay and return execution context back to the central loop.
-    """
+    """ Check temple of eternals and determine if we should empower. """
     global timeouts
 
     if trigger:
@@ -1785,7 +1703,7 @@ def temple_of_eternals(trigger: bool = False) -> int:
     return 0
 
 def mainscreen_logic(event, reload_event, lock_event) -> None:
-    """Managing progress"""
+    """ Managing progress """
     while 'check_party' not in timeouts:
         sleep(5)
 
@@ -1818,7 +1736,7 @@ def mainscreen_logic(event, reload_event, lock_event) -> None:
             sleep(0.01)
 
         duration: float = time.time() - start_ts
-        # Debug.info(f'[Battle] Round: {round(duration, 3)}s | Boss: {boss} | DPS: {dps} | HP: {hp}')                             
+        # Debug.info(f'[Battle] Round: {round(duration, 3)}s | Boss: {boss} | DPS: {dps} | HP: {hp}')
         if boss and duration < boss_retry:
             click((1700, 490))
 

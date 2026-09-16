@@ -132,9 +132,7 @@ class SequentialTaskTimeout:
         return self._trace_callback
 
 def main() -> None:
-    """
-    Execute the primary automation lifecycle loop in local scope.
-    """
+    """ Execute the primary automation loop. """
     global timeouts
 
     pause_check()
