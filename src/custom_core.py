@@ -41,6 +41,7 @@ colormap = {
     # name: r_min, r_max, g_min, g_max, b_min, b_max
     'black': (0, 10, 0, 10, 0, 10),
     'blue': (8, 12, 125, 135, 250, 255),
+    'bag_empty': (150, 160, 124, 130, 95, 105),
     'blue_forbidden_knowledge': (20, 35, 55, 65, 135, 145),
     'blue_liberation_lost': (32, 35, 75, 80, 123, 128),
     'blue_meteorite_research': (33, 45, 56, 75, 134, 165),
@@ -70,6 +71,7 @@ lock_event = threading.Event()
 lock_event.set()
 platform:str = ''
 reload_event = threading.Event()
+task_event = threading.Event()
 timeouts = {}
 
 def alpha_filter(src_mat: np.ndarray, threshold: int = 128) -> np.ndarray:

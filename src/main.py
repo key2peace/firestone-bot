@@ -16,6 +16,7 @@ from custom_core import (
     pause_check,
     platform,
     reload_event,
+    task_event,
     timeouts
 )
 
@@ -174,8 +175,8 @@ def main() -> None:
                     Debug.history(f'[Tasks] {friendly_name} detected (Score: {round(last_m.get_score(), 3)})')
 
                 if hasattr(task_logic, task_function_name):
-                    Debug.history(f'[Task] {friendly_name} - Launching {task_function_name}')
-
+                    # Debug.history(f'[Task] {friendly_name} - Launching {task_function_name}')
+                    task_event.set()
                     if last_m:
                         last_m.click()
                         #last_m.move_mouse_away()
@@ -191,6 +192,7 @@ def main() -> None:
                             timeout_return = int(actual_function(arg)) # pylint: disable=assignment-from-no-return
                     except TimeoutError:
                         timeout_return = -2
+                    task_event.clear()
                     duration = duration_text(start_task)
 
                     if timeout_return:
@@ -201,9 +203,9 @@ def main() -> None:
                         else:
                             timeouts.update({task_function_name: int(timeout_return)})
                             timeout_return = duration_text(time.time_ns(), timeout_return*1000000000)
-                            Debug.history(f'[Task] {friendly_name} finished in {duration} (timeout: {timeout_return})')
+                            # Debug.history(f'[Task] {friendly_name} finished in {duration} (timeout: {timeout_return})')
                     else:
-                        Debug.history(f'[Task] {friendly_name} finished in {duration}')
+                        # Debug.history(f'[Task] {friendly_name} finished in {duration}')
                         with open(stats_file, mode='at', encoding='utf-8') as fp:
                             if not os.path.isfile(stats_file):
                                 fp.write('Function\tDuration\n')

@@ -38,6 +38,8 @@ config = {
     'upgrade_order':                    'slot 1,slot 2,slot 3,slot 4,slot 5, guardian, specials',
     'upgrade_mode':                     2,                          # set upgrade amount for heroes
     'battle_boss_retry':                5,                          # set minimum battle duration before retrying boss
+    'battle_level_back':                5,                          # go back x levels to farm
+    'battle_level_farm':                1800,                       # farm time in seconds
 
     # Exotic Merchant
     'sell_scroll_of_speed':             True,                       # 80 exotic coins
@@ -286,6 +288,8 @@ def config_page() -> None:
     upgrade_types = ['slot 1', 'slot 2', 'slot 3', 'slot 4', 'slot 5', 'guardian', 'specials']
     listbox(current_tab, 'Upgrade order', 1, 'upgrade_order', upgrade_types)
     input_number(current_tab, 'Boss retry', 20, 'battle_boss_retry', 0, 60, 0.1)
+    input_number(current_tab, 'Level back', 21, 'battle_level_back', 0, 60)
+    input_number(current_tab, 'Farm time', 22, 'battle_level_farm', 0, 604800)
 
     current_tab = ttk.Frame(tabs, padding=10)
     tabs.add(current_tab, text='Exotic Merchant')

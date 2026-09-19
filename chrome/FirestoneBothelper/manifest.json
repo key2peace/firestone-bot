@@ -1,0 +1,17 @@
+{
+  "manifest_version": 3,
+  "name": "Firestone-bot Helper Plugin",
+  "version": "0.0.2",
+  "description": "Monitor the website while playing the game, send state of site to bot.",
+  "permissions": ["activeTab", "tabs", "scripting", "storage"],
+  "content_scripts": [
+    {
+      "matches": [
+        "https://www.crazygames.com/*/firestone-idle-rpg"
+      ],
+      "js": ["content.js"],
+      "run_at": "document_end",
+      "world": "USER_SCRIPT"
+    }
+  ]
+}

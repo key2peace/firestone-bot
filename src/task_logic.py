@@ -39,6 +39,7 @@ from custom_core import (
     reload_event,
     screen,
     sleep,
+    task_event,
     timeouts
 )
 
@@ -158,7 +159,7 @@ def bag(trigger: bool = False) -> int:
     # save first chests for dailies
     x = 1700 if trigger else 1570
 
-    while not get_pixel_color(x, 200) == (158, 128, 103):
+    while not color_at(x, 200) == 'bag_empty':
         Debug.history('Opening chest')
         click((x, 200))
         sleep(1)
@@ -300,14 +301,9 @@ def check_heroes(trigger: bool = False) -> int:
     x: int = 960
     upgraded: int = 1
 
-    items = config['upgrade_order'].split(',')
-    if mainscreen_event.is_set() and 'specials' in items:
-        items = ['specials']
-
-
     while upgraded > 0:
         upgraded: int = 0
-        for upgrade_type in items:
+        for upgrade_type in config['upgrade_order'].split(','):
             y: int = 0
             upgrade_type = upgrade_type.strip().lower()
             if party_coords.get(upgrade_type, 0):
@@ -372,11 +368,14 @@ def check_party(trigger: bool = False) -> int:
     if color_at(1040, 930) == 'green':
         click((1040, 930))
 
+    # Check for big ass decorated heroes button
+    if color_at(1640, 160) == 'white':
+        click((1640, 160))
+
     area = Region(10, 910, 1900, 160)
     max_x: int = 0
     coords = {}
-    guardian = None
-    specials = None
+    y: int = 0
 
     for root, _, files in os.walk('images/heroes'):
         files = [f for f in files if f.lower().endswith('.png')]
@@ -390,19 +389,12 @@ def check_party(trigger: bool = False) -> int:
                 x = m.get_x() + m.get_w() + 10
                 y = m.get_y()
                 max_x = x if x > max_x else max_x
-                if name in ['armor', 'damage', 'gold', 'health']:
-                    specials = (x, y)
-                elif name in ['ankaa', 'azhar', 'grace', 'vermilion']:
-                    guardian = (x, y)
-                else:
-                   coords[name] = (x, y)
+                coords[name] = (x, y)
 
     party_coords = dict(sorted(coords.items(), key=lambda item: item[1][0]))
-    if guardian:
-        party_coords['guardian'] = guardian
-    if specials:
-        party_coords['specials'] = specials
-    party_coords['upgrade'] = (max_x + 80, y)
+    party_coords['guardian'] = (max_x + 192, y)
+    party_coords['specials'] = (max_x + 384, y)
+    party_coords['upgrade'] = (max_x + 464, y)
     Debug.info(f'{party_coords}')
     return time.time() * 2
 
@@ -553,7 +545,7 @@ def events(trigger: bool = False) -> int:
             'sigils of prophecy': 'mini',
 
             # calendar events
-            'decorated heroes': 'calendar',
+            'decorated heroes': 'decorated',
             'love is in the air': 'calendar',
             'nature\'s dance': 'calendar',
             'tropicana': 'calendar',
@@ -566,32 +558,52 @@ def events(trigger: bool = False) -> int:
             if not color_at(1470, y) == 'white':
                 continue
 
-            text = Region(530, y + 15, 890, 80).text('', colormap['yellow']).replace(':','').strip().lower()
-            if text not in eventlist:
+            text = Region(530, y + 15, 890, 80).text('', colormap['yellow']).strip().lower()
+            found = False
+            for name, _ in eventlist.items():
+                if re.search(name, text):
+                    found = name
+                    break
+
+            if not found:
                 Debug.warn(f'\'{text}\' not defined in eventlist')
                 continue
 
             click((950, y + 65))
             sleep(2)
 
-            if color_at(1330, 25) == 'white':
-                Debug.history(f'Checking {text} event')
+            event_type = eventlist[found]
+            if event_type in ['mini', 'calendar'] and color_at(1330, 25) == 'white':
                 click((1150, 50))
                 sleep(1)
-
-                event_type = eventlist[text]
+                
                 if event_type == 'mini':
                     for y2 in [390, 640, 890]:
                         if color_at(1640, y2) == 'green':
-                            Debug.history('Claiming reward')
+                            Debug.history(f'Claiming reward from {name} event')
                             click((1640, y2))
-                elif event_type == 'calenda':
-                    # these just collect stuff maybe setup preffered items to cash in
-                    pass
-                else:
-                    Debug.warn('unsupported event type')
+                click((1765, 100))
+            elif event_type == 'decorated':
+                # Complete all scout missions 3 times
+                # Enlighten guardian 3 times
+                # Complete 10 firestone researches
+                # Conduct 9 alchemy experiments
+                # Hit the arcane crystal 15 times
+                # Play 12 times with the cards at the tavern
+                # Complete 15 guild expeditions
+                # Stay online for 60 minutes
+                for y in [620, 950]:
+                    for x in [350, 800, 1250, 1700]:
+                        while color_at(x, y) == 'green':
+                            Debug.history(f'Claiming reward from {name} event')
+                            click((x, y))
+                            move_to((x, y + 50))
+                            sleep(0.5)
+                click((960, 170)) # Stars exchange
+                click((1840, 80))
+            else:
+                Debug.warn('unsupported event type')
 
-            click((1765, 100))
             sleep(1)
 
     return get_timeout(300)
@@ -648,7 +660,7 @@ def exotic_merchant(trigger: bool = False) -> int:
         while True:
             pixels = grab_screen_to_mat(area)
             found = False
-            for y in range(0, pixels.shape[0], 10):
+            for y in range(0, pixels.shape[0], 5):
                 for x in [30, 400, 800]:
                     b_ch, g_ch, r_ch = pixels[y, x]
                     if color_name((r_ch, g_ch, b_ch)) == 'green':
@@ -821,10 +833,11 @@ def guild_expeditions(trigger: bool = False) -> int:
     if trigger:
         pass
 
-    while color_at(1210, 320) == 'green':
+    while color_at(1200, 300) == 'green':
         Debug.history('Claiming/Starting guild expedition')
         click((1290,320))
         move_to((1290, 370))
+        sleep(0.5)
 
     return 0
 
@@ -1122,50 +1135,58 @@ def map_campaign(trigger: bool = False) ->int:
         click((80, 1000))
 
     # Check for daily missions
-    if color_at(1870, 990) == 'red':
-        Debug.history('[Campaign] Heading for daily missions')
-        click((1770, 1000))
-        sleep(1)
+    if not color_at(1870, 990) == 'red':
+        return 0
 
-        Debug.history('[Campaign] Opening Liberation')
-        click((685, 820))
-        sleep(1)
+    Debug.history('[Campaign] Heading for daily missions')
+    click((1770, 1000))
+    sleep(1)
 
-        # Loop through available liberations
-        winning = True
-        drag_count = 0
-        while winning and drag_count < 3:
-            for x in range(90, 1800, 10):
-                if color_at(x, 800) == 'green':
-                    Debug.history('[Campaign] Select Liberation')
-                    click((x, 800))
+    items = {
+        'liberation': 800,
+        'dungeon': 1360
+    }
 
-                    # Liberation moving on, waiting for finish
-                    start_ts = time.time_ns()
-                    while True :
-                        if color_at(870, 770) == 'green' and color_at(960, 690) == 'brown_liberation_won':
-                            Debug.history(f'[Campaign] Liberation successfully finished in {duration_text(start_ts)}')
-                            click((870, 770))
-                            break
-                        if color_at(870, 770) == 'green' and color_at(960, 720) == 'blue_liberation_lost':
-                            Debug.warn(f'[Campaign] Liberation lost in {duration_text(start_ts)}')
-                            winning = False
-                            click((870, 770))
-                            break
-                        sleep(1)
-                if not winning:
-                    break
-            if winning:
-                #drag the screen 800 pixels to the left
-                drag_drop((1000,430), (200,430))
-                drag_count += 1
+    for name, x_start in items.items():
+        if color_at(x_start, 780) == 'white':
+            Debug.history(f'[Campaign] Opening {name.capitalize()}')
+            click((x_start - 50, 825))
+            sleep(1)
 
-        if drag_count:
-            #drag the screen back to the beginning
-            for _ in range(0, drag_count):
-                drag_drop((200,430), (1000,430))
-        click((1820, 70))
-        click((1510, 90))
+            # Loop through available missions
+            winning = True
+            drag_count = 0
+            while winning and drag_count < 3:
+                for x in range(90, 1800, 10):
+                    if color_at(x, 800) == 'green':
+                        Debug.history(f'[Campaign] Select {name}')
+                        click((x, 800))
+
+                        # Battle moving on, waiting for finish
+                        start_ts = time.time_ns()
+                        while True :
+                            if color_at(870, 770) == 'green' and color_at(960, 690) == 'brown_liberation_won':
+                                Debug.history(f'[Campaign] {name.capitalize()} successfully finished in {duration_text(start_ts)}')
+                                click((870, 770))
+                                break
+                            if color_at(870, 770) == 'green' and color_at(960, 720) == 'blue_liberation_lost':
+                                Debug.warn(f'[Campaign] {name.capitalize()} lost in {duration_text(start_ts)}')
+                                winning = False
+                                click((870, 770))
+                                break
+                            sleep(1)
+                    if not winning:
+                        break
+                if winning:
+                    #drag the screen 800 pixels to the left
+                    drag_drop((1000,430), (200,430))
+                    drag_count += 1
+
+            if drag_count:
+                #drag the screen back to the beginning
+                for _ in range(0, drag_count):
+                    drag_drop((200,430), (1000,430))
+            click((1820, 70))
 
     return 0
 
@@ -1702,26 +1723,43 @@ def temple_of_eternals(trigger: bool = False) -> int:
 
     return 0
 
-def mainscreen_logic(event, reload_event, lock_event) -> None:
+def mainscreen_logic(task_event, reload_event, lock_event) -> None:
     """ Managing progress """
+    def is_paused() -> bool:
+        if lock_event.is_set() or task_event.is_set():
+            return True
+        return False
+
+    farm = 0
     while 'check_party' not in timeouts:
         sleep(5)
 
     while True:
+        while is_paused():
+            sleep(1)
+
         start_ts: float = time.time()
         max_wait = 300
         while color_at(1186, 90) != 'red' and time.time() - start_ts < max_wait:
             sleep(0.01)
 
         duration = time.time() - start_ts
-        if duration > max_wait and not lock_event.is_set():
+        if duration > max_wait and not is_paused():
             Debug.warn('HP bar not working correctly. Reload')
             press_key('f5')
             sleep(60)
             lock_event.clear()
             continue
 
+        farm_duration = config.get('battle_level_farm')
+        if farm and time.time() - farm < farm_duration:
+            continue
+        farm = 0
+
         boss = True if Region(1620, 533, 160, 40).text('Bos', colormap['white']) == 'Boss' else False
+        if not boss:
+            continue
+
         boss_retry = config.get('battle_boss_retry', 15)
         # dps = re.search(r'^DPS: (.+)$', Region(10, 860, 170, 38).text('', colormap['yellow']))
         # hp = re.search(r'^(.+) HP$', Region(840, 76, 310, 28).text('', colormap['white']))
@@ -1737,10 +1775,17 @@ def mainscreen_logic(event, reload_event, lock_event) -> None:
 
         duration: float = time.time() - start_ts
         # Debug.info(f'[Battle] Round: {round(duration, 3)}s | Boss: {boss} | DPS: {dps} | HP: {hp}')
-        if boss and duration < boss_retry:
-            click((1700, 490))
+        if not is_paused():
+            if duration < boss_retry:
+                Debug.warn(f'Retrying boss')
+                click((1700, 490))
+            else:
+                level_back = int(config.get('battle_level_back'))
+                Debug.warn(f'Going back {level_back} levels for {farm_duration} seconds')
+                for _ in range(level_back):
+                    click((700, 40))
+                farm = time.time()
 
-mainscreen_event = threading.Event()
-mainscreen_thread = threading.Thread(name='Mainscreen Logic', target=mainscreen_logic, args=(mainscreen_event, reload_event, lock_event, ))
+mainscreen_thread = threading.Thread(name='Mainscreen Logic', target=mainscreen_logic, args=(task_event, reload_event, lock_event, ))
 mainscreen_thread.daemon = True
 mainscreen_thread.start()
