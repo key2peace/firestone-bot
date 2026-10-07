@@ -478,7 +478,7 @@ def ollama_model_verify(event, item, varname) -> None:
     if event:
         pass
 
-    url = f'{config_panel_vars.get('ollama_url').get().rstrip('/')}/api/tags'
+    url = config_panel_vars.get('ollama_url').get().rstrip('/') + '/api/tags'
     if not re.search(r'^https?://', url):
         return
 
