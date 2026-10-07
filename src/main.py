@@ -189,7 +189,9 @@ def main() -> None:
                         runtime = max_runtime if max_runtime else 300
                         with SequentialTaskTimeout(runtime):
                             actual_function = getattr(task_logic, task_function_name)
-                            arg = False if pattern else True
+                            arg = True
+                            if pattern:
+                                arg = False
                             timeout_return = int(actual_function(arg)) # pylint: disable=assignment-from-no-return
                     except TimeoutError:
                         timeout_return = -2

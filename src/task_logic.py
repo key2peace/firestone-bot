@@ -625,7 +625,8 @@ def exotic_merchant(trigger: bool = False) -> int:
             x = m.get_x() + 140
             y = m.get_y() + 200
             while color_at(x, y) == 'green':
-                Debug.history(f'Selling {name.replace('_',' ')}')
+                n = name.replace('_', ' ').capitalize()
+                Debug.history(f'Selling {n}')
                 click((x + 10, y))
                 sleep(1)
         drag_drop((1690, 940), (1690, 380))

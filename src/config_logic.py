@@ -233,7 +233,11 @@ def config_page() -> None:
     values = []
     monitors = mss.MSS().monitors[1::]
     for idx, monitor in enumerate(monitors):
-        text = f'Display {idx + 1}: {monitor.get('name', 'unknown')} @ {monitor.get('width', 0)}x{monitor.get('height', 0)}'
+        i = idx + 1
+        n = monitor.get('name', 'unknown')
+        w = monitor.get('width', 0)
+        h = monitor.get('height', 0)
+        text = f'Display {i}: {n} @ {w}x{h}'
         if monitor['is_primary']:
             text += ' (primary)'
         values.append(text)

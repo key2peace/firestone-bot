@@ -931,6 +931,7 @@ class FileDB():
         self.filename = filename
 
     def get(self, name: str, default = 0):
+        """ Get value """
         if not os.path.exists(self.filename) or not self.is_valid():
             return default
 
@@ -939,9 +940,11 @@ class FileDB():
             return loaded_data.get(name, default)
 
     def incr(self, name: str, amount: int = 1) -> None:
+        """ Increase value """
         self.set(name, self.get(name, 0) + amount)
 
     def is_valid(self) -> bool:
+        """ Check if db is still valid """
         if not self.expire:
             return True
         if not os.path.exists(self.filename):
@@ -949,6 +952,7 @@ class FileDB():
         return os.path.getmtime(self.filename) >= get_next_reset() - 86400
 
     def set(self, name: str, value) -> None:
+        """ Set value """
         data = {}
         if not self.is_valid():
             Debug.warn(f'Invalidating {self.filename}')
