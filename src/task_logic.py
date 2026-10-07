@@ -3,7 +3,6 @@ Task Logic Subroutines for Firestone Bot Gameplay Automation.
 """
 from __future__ import annotations
 import datetime
-import json
 import os
 import random
 import re
@@ -22,7 +21,6 @@ from custom_core import (
     drag_drop,
     duration_text,
     get_next_reset,
-    get_pixel_color,
     get_timeout,
     get_value,
     grab_screen_to_mat,
@@ -32,7 +30,6 @@ from custom_core import (
     move_to,
     my_round,
     parse_ui_timeout,
-    pause_check,
     pause_off,
     pause_on,
     press_key,
@@ -245,7 +242,7 @@ def character_quests(trigger: bool = False) -> int:
         click((x, 130))
         sleep(0.3)
         while color_at(1560, 300) == 'green':
-            text = Region(160, 230, 660, 46).text().split(' ')[0].lower().capitalize()
+            text = Region(160, 230, 660, 46).text().split(' ', maxsplit=1)[0].lower().capitalize()
             Debug.history(f'Claiming {quest_type} quest \'{text}\'')
             click((1560, 300))
             move_to((1620, 300))
@@ -547,6 +544,7 @@ def events(trigger: bool = False) -> int:
 
             text = Region(530, y + 15, 890, 80).text('', colormap['yellow']).strip().lower()
             found = False
+            name = 'unknown'
             for name, _ in eventlist.items():
                 if re.search(name, text):
                     found = name
@@ -584,7 +582,7 @@ def events(trigger: bool = False) -> int:
                 # Stars exchange
                 click((960, 170))
                 sleep(1)
-                amount = Region(320, 270, 140, 45).get_number('decorated_number')
+                #amount = Region(320, 270, 140, 45).get_number('decorated_number')
 
 
                 # End decorated
@@ -965,7 +963,6 @@ def library_firestone_research(trigger: bool = False) -> int:
     if not page_wait('library_firestone_research'):
         return -1
 
-    available = 0
     timestamps = []
 
     for x_coords in [1280, 590]:
@@ -1661,15 +1658,15 @@ def temple_of_eternals(trigger: bool = False) -> int:
     """ Check temple of eternals and determine if we should empower. """
     global temple_ts, first_upgrade
 
+    delay = time.time() - temple_ts
+
     if trigger:
         press_key('e')
     else:
-        delay = time.time() - temple_ts
         temple_ts = time.time()
 
     if not page_wait('temple_of_eternals'):
         return -1
-
 
     while True:
         percentage_t = Region(1400, 417, 200, 40).text('', colormap['green'])
@@ -1684,20 +1681,22 @@ def temple_of_eternals(trigger: bool = False) -> int:
     perform = False
     if not trigger and delay < 20 and config.get('jump_temple_icon', 0):
         perform = True
-        Debug.warn(f'[temple_of_eternals] Time to jump! Tasks remains visible.')
+        Debug.warn('[temple_of_eternals] Time to jump! Tasks remains visible.')
     else:
-        jump_require = int(config['jump_percentage'])
+        val, exp = get_value(config.get('jump_percentage', 0))
+        jump_require = val * (10 ** exp)
         if jump_require and percentage >= jump_require:
             perform = True
             Debug.warn(f'[temple_of_eternals] Time to jump! {percentage}%/{jump_require}%')
         else:
-            Debug.warn(f'[temple_of_eternals] Current percentage: {percentage}%/{jump_require}%')
+            Debug.warn(f'[temple_of_eternals] Current: {percentage}%/{jump_require}%')
 
     if perform:
         click((1360 ,510))
         sleep(0.5)
-        jump_temple_token = int(config['jump_temple_token'])
-        if jump_temple_token and percentage >= jump_temple_token and color_at(1050, 990) == 'green':
+        val, exp = get_value(config.get('jump_temple_token', 0))
+        jump_require = val * (10 ** exp)
+        if jump_require and percentage >= jump_require and color_at(1050, 990) == 'green':
             click((1050, 990))
         else:
             click((960, 660))
@@ -1709,10 +1708,10 @@ def temple_of_eternals(trigger: bool = False) -> int:
         reload_event.set()
     return 0
 
-def mainscreen_logic(task_event, reload_event, lock_event) -> None:
+def mainscreen_logic(task, lock) -> None:
     """ Managing progress """
     def is_paused() -> bool:
-        if lock_event.is_set() or task_event.is_set():
+        if lock.is_set() or task.is_set():
             return True
         return False
 
@@ -1735,7 +1734,7 @@ def mainscreen_logic(task_event, reload_event, lock_event) -> None:
             Debug.warn('HP bar not working correctly. Reload')
             press_key('f5')
             sleep(60)
-            lock_event.clear()
+            lock.clear()
             continue
 
         farm_duration = config.get('battle_level_farm')
@@ -1762,7 +1761,7 @@ def mainscreen_logic(task_event, reload_event, lock_event) -> None:
         if not is_paused():
             if duration < boss_retry:
                 if not farm:
-                    Debug.warn(f'Retrying boss')
+                    Debug.warn('Retrying boss')
                     click((1700, 490))
                     farm_posted = False
                 elif not farm_posted:
@@ -1773,6 +1772,6 @@ def mainscreen_logic(task_event, reload_event, lock_event) -> None:
                 click((700, 40))
                 farm = time.time()
 
-mainscreen_thread = threading.Thread(name='Mainscreen Logic', target=mainscreen_logic, args=(task_event, reload_event, lock_event, ))
+mainscreen_thread = threading.Thread(name='Mainscreen Logic', target=mainscreen_logic, args=(task_event, lock_event, ))
 mainscreen_thread.daemon = True
 mainscreen_thread.start()

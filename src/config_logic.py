@@ -503,7 +503,7 @@ def ollama_url_verify(event, item, varname) -> None:
     if event:
         pass
 
-    url = f'{config_panel_vars.get(varname).get().rstrip('/')}/api/version'
+    url = config_panel_vars.get(varname).get().rstrip('/') + '/api/version'
     color = 'red'
     if re.search(r'^https?://', url):
         try:
