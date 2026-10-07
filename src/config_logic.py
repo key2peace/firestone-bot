@@ -233,7 +233,7 @@ def config_page() -> None:
     values = []
     monitors = mss.MSS().monitors[1::]
     for idx, monitor in enumerate(monitors):
-        text = f'Display {idx + 1}: {monitor['name']} @ {monitor['width']}x{monitor['height']}'
+        text = f'Display {idx + 1}: {monitor.get('name', 'unknown')} @ {monitor.get('width', 0)}x{monitor.get('height', 0)}'
         if monitor['is_primary']:
             text += ' (primary)'
         values.append(text)
@@ -293,7 +293,7 @@ def config_page() -> None:
     label(text='Sell items')
     idx = 1
     offset = 0
-    for name, tooltip in exotic_merchant.items():
+    for name, tooltip in exotic_merch.items():
         text = name.replace('_', ' ').capitalize()
         checkbox(text=text, row=idx, varname=f'sell_{name}', column=offset, tooltip=tooltip)
         offset += 2
