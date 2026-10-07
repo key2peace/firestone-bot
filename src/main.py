@@ -12,9 +12,10 @@ import task_logic
 from custom_core import (
     Debug,
     duration_text,
-    main_finished,
+    lock_event,
     pause_check,
     platform,
+    Region,
     reload_event,
     task_event,
     timeouts
@@ -122,7 +123,7 @@ class SequentialTaskTimeout:
             pass
 
         if event == 'line':
-            if time.time() > self.deadline:
+            if time.time() > self.deadline or reload_event.is_set() or lock_event.is_set():
                 raise TimeoutError('Task time limit exceeded')
         return self._trace_callback
 
@@ -163,7 +164,7 @@ def main() -> None:
                 if pattern:
                     m = None
                     match_count = 0
-                    area = main_finished
+                    area = Region(0, 0, 160, 570)
                     for _ in range(1, 5):
                         m = area.exists('images/tasks/' + pattern)
                         if m:
@@ -197,7 +198,7 @@ def main() -> None:
 
                     if timeout_return:
                         if timeout_return == -2:
-                            Debug.warn(f'[Task] {friendly_name} timed out after {runtime} seconds')
+                            Debug.warn(f'[Task] {friendly_name} timed out after {duration}')
                         elif timeout_return == -1:
                             Debug.warn(f'[Task] {friendly_name} failed after {duration}')
                         else:

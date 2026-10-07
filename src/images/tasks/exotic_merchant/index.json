@@ -1,54 +1,54 @@
 {
     "barrel_of_gold.png": {
-        "timestamp": 1787151112.843099,
-        "sha256": "bdfa2695176decae6e4307a7d786cbf2a1b654f27b1ea2308f0999d6b6fc3b67"
+        "timestamp": 1789808458.6198318,
+        "sha256": "cb09b2948290e8e474ab611de6e632877c9820207b804c5eaa1a718cf2215c63"
     },
     "bucket_of_gold.png": {
-        "timestamp": 1787151349.568665,
-        "sha256": "ce0bd807eac08c6123ad5523ccf7eb2ce80fcba36c6b0a1e55b75c70eb73449e"
+        "timestamp": 1789808458.6198318,
+        "sha256": "5c9bd6dcf7bb25107d3403c2f5a5e0f0e34d27f38a83b5039674fce3cb82e2f4"
     },
     "crate_of_gold.png": {
-        "timestamp": 1787151081.3740785,
-        "sha256": "ff5fa723459f27f0b41515328825486c74271bb3c764db18d18f9176675f9282"
+        "timestamp": 1789808458.6198318,
+        "sha256": "1ae8b42c4666b4925ca504c754865e22111761b2cd2d7eeb6fd6e3f8f88f7b7e"
     },
     "dragon_armor.png": {
-        "timestamp": 1787150783.5545344,
-        "sha256": "12078886fc3a7f145426c01ae43a8403c6782f7cb3cb9b6ffa2843274a3d15b7"
+        "timestamp": 1789808458.6208327,
+        "sha256": "ef8821fff493dea882b49c1d0027a3e281eaa53523da0be6d606a8170e53f699"
     },
     "drums_of_war.png": {
-        "timestamp": 1787151148.0409207,
-        "sha256": "f2e0844855fe13fc729ec69d94bdc6cbfab0eb93ae0a8283a717111c126c13b7"
+        "timestamp": 1789808458.6208327,
+        "sha256": "226c3ced3ac8c2a5cb5b5487623c5660c4d12b9c67d1b1ce2526a774561185e6"
     },
     "guardians_rune.png": {
-        "timestamp": 1787150835.4121015,
-        "sha256": "a68ef7b228cc8c0806fde4a690480fb7854c4fda7b459ad672e696e6a7674292"
+        "timestamp": 1789808458.6218321,
+        "sha256": "dc6e2ceae70b59870b814a5a1ffb061a0e3b01e6fd09167a39de632fd538d85a"
     },
     "midas_touch.png": {
-        "timestamp": 1787151266.3907158,
-        "sha256": "1c7c1112ee1f34b7a96814bd2b7e7a91fcd2ef5e69284f227f4db38d22ab3a27"
+        "timestamp": 1789808458.6218321,
+        "sha256": "392bddcea1d94e9c6f28e35ef5a08240df0fc8882c898db12db2a856482a7af1"
     },
     "pouch_of_gold.png": {
-        "timestamp": 1787151313.255793,
-        "sha256": "1dc6854521e851533542d81130744a20308c3ae3f69e10a14b91de2b95bdcd1b"
+        "timestamp": 1789808458.622833,
+        "sha256": "3ef820507a4ad20643ddcaaa51b30391fee17de1115dcf8342d8da0bb272cc7f"
     },
     "scroll_of_damage.png": {
-        "timestamp": 1787151430.9314735,
-        "sha256": "4d92c2dd76eda3852a8acf1564c3e84561002e3910e76dfc8c647f056e35d7cb"
+        "timestamp": 1789808458.6238334,
+        "sha256": "2706d3238252d2f7f8bdade66777721ba8ce7b73e61d794d64f3a06a017fc2b4"
     },
     "scroll_of_health.png": {
-        "timestamp": 1787151481.7985556,
-        "sha256": "825c15b59db63351e1196b2b5c84c41e5ef345c87c925c66d1def215ac3cc3fe"
+        "timestamp": 1789808458.6238334,
+        "sha256": "368ff46b34d3df01c3009f753b84c710cc0cb5eac144c07ff934de74acf6b910"
     },
     "scroll_of_speed.png": {
-        "timestamp": 1787151384.8773832,
-        "sha256": "f5b093d4aa995001a6d34c1d37e8074f9f2e8974525f99bce4a9962bceda1241"
+        "timestamp": 1789808458.6248338,
+        "sha256": "bf348d9c50375ccf6213becfa059de1031c924d7d8be793e87bf022ae36aadb4"
     },
     "totem_of_agony.png": {
-        "timestamp": 1787150900.5245745,
-        "sha256": "b640e135193984a652f536fd88bbcb99d3fcacbb44f54eff72beb9b8e09bd846"
+        "timestamp": 1789808458.6248338,
+        "sha256": "51b7da5b5db2eba2b2ee7bb203664845319cfc7c1af177187e29aad9f4606c14"
     },
     "totem_of_annihilation.png": {
-        "timestamp": 1788097067.8203137,
-        "sha256": "e6d8523c48ab209e0f0bef9780625b666c878a899d2480e4f5da47c6eea926e4"
+        "timestamp": 1789808458.6258316,
+        "sha256": "c78765e8a87e102a5a23bf88f3d2c0b44311f948012de55d6359ff586fffe069"
     }
 }

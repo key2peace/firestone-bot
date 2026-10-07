@@ -13,6 +13,19 @@ import requests
 
 from tkinter import ttk
 from typing import Any, ClassVar, Dict, List, Optional, Tuple, Union
+from custom_vars import (
+    alchemist_experiments,
+    alchemist_transmutes,
+    amulets,
+    eventlist,
+    exotic_merch,
+    forbidden_knowledge,
+    guardians,
+    machines,
+    mission_types,
+    oracle_rituals,
+    oracle_blessings
+)
 
 config = {
     # System settings
@@ -24,78 +37,18 @@ config = {
     'min_score':                        0.95,                       # minimal match score
     'monitor':                          0,                          # monitor to use for capturing
 
-    # Alchemist
-    'alchemist_dragon_blood':           True,                       # alchemist: do dragon blood experiments
-    'alchemist_strange_dust':           True,                       # alchemist: do strange dust experiments
-    'alchemist_exotic_coin':            True,                       # alchemist: do exotic coin experiments
-    'transmute_legendary':              True,                       # alchemist: transmute legendary chests
-    'transmute_epic':                   True,                       # alchemist: transmute epic chests
-    'transmute_rare':                   True,                       # alchemist: transmute rare chests
-    'transmute_uncommon':               True,                       # alchemist: transmute uncommon chests
-
     # Battle screen
     'bag_open_chests':                  True,                       # bag: open chests
     'upgrade_order':                    'slot 1,slot 2,slot 3,slot 4,slot 5, guardian, specials',
+    'upgrade_max':                      True,                       # upgrade max on start/empower
     'upgrade_mode':                     2,                          # set upgrade amount for heroes
-    'battle_boss_retry':                5,                          # set minimum battle duration before retrying boss
-    'battle_level_back':                5,                          # go back x levels to farm
+    'upgrade_interval':                 1,                          # upgrade interval
+    'battle_boss_retry':                5,                          # max battle time
     'battle_level_farm':                1800,                       # farm time in seconds
 
-    # Exotic Merchant
-    'sell_scroll_of_speed':             True,                       # 80 exotic coins
-    'sell_scroll_of_damage':            True,                       # 80 exotic coins
-    'sell_scroll_of_health':            True,                       # 80 exotic coins
-    'sell_midas_touch':                 True,                       # 70 exotic coins
-    'sell_pouch_of_gold':               True,                       # 10 exotic coins
-    'sell_bucket_of_gold':              True,                       # 35 exotic coins
-    'sell_crate_of_gold':               True,                       # 65 exotic coins
-    'sell_barrel_of_gold':              True,                       # 130 exotic coins
-    'sell_drums_of_war':                True,                       # 270 exotic coins
-    'sell_dragon_armor':                True,                       # 180 exotic coins
-    'sell_guardians_rune':              True,                       # 50 exotic coins
-    'sell_totem_of_agony':              True,                       # 150 exotic coins
-    'sell_totem_of_annihilation':       True,                       # 240 exotic coins
-
-    # Garage
-    'wm_fortress_upgrade':              True,
-    'wm_fortress_blueprints':           True,
-    'wm_fortress_rarity':               True,
-    'wm_thunderclap_upgrade':           True,
-    'wm_thunderclap_blueprints':        True,
-    'wm_thunderclap_rarity':            True,
-    'wm_firecracker_upgrade':           True,
-    'wm_firecracker_blueprints':        True,
-    'wm_firecracker_rarity':            True,
-    'wm_aegis_upgrade':                 True,
-    'wm_aegis_blueprints':              True,
-    'wm_aegis_rarity':                  True,
-    'wm_harvester_upgrade':             True,
-    'wm_harvester_blueprints':          True,
-    'wm_harvester_rarity':              True,
-    'wm_cloudfist_upgrade':             True,
-    'wm_cloudfist_blueprints':          True,
-    'wm_cloudfist_rarity':              True,
-    'wm_hunter_upgrade':                True,
-    'wm_hunter_blueprints':             True,
-    'wm_hunter_rarity':                 True,
-    'wm_goliath_upgrade':               True,
-    'wm_goliath_blueprints':            True,
-    'wm_goliath_rarity':                True,
-    'wm_judgement_upgrade':             True,
-    'wm_judgement_blueprints':          True,
-    'wm_judgement_rarity':              True,
-    'wm_curator_upgrade':               True,
-    'wm_curator_blueprints':            True,
-    'wm_curator_rarity':                True,
-    'wm_sentinel_upgrade':              True,
-    'wm_sentinel_blueprints':           True,
-    'wm_sentinel_rarity':               True,
-    'wm_talos_upgrade':                 True,
-    'wm_talos_blueprints':              True,
-    'wm_talos_rarity':                  True,
-    'wm_earthshatterer_upgrade':        True,
-    'wm_earthshatterer_blueprints':     True,
-    'wm_earthshatterer_rarity':         True,
+    # Events
+    'decorated_enable':                 True,                       # enable decorated heroes engine
+    'decorated_prepare':                14,                         # days to prepare for event
 
     # Guild
     'guild_bank':                       True,                       # visit guild bank
@@ -103,68 +56,76 @@ config = {
     'guild_hall':                       True,                       # visit guild hall
     'guild_autoaccept':                 True,                       # auto accept guild applications
 
-    # Magic Quarter
-    'guardian_vermilion_train':         True,                       # enlighten vermilion (uses dust)
-    'guardian_vermilion_enlighten':     True,                       # enlighten vermilion (uses dust)
-    'guardian_vermilion_evolve':        True,                       # evolve vermilion (uses dust)
-    'guardian_vermilion_chaosrift':     True,                       # increase vermilion holy damage (uses orbs of light)
-    'guardian_vermilion_rarity':        True,                       # increase vermilion rarity (uses contracts)
-    'guardian_grace_train':             True,                       # enlighten grace (uses dust)
-    'guardian_grace_enlighten':         True,                       # enlighten grace (uses dust)
-    'guardian_grace_evolve':            True,                       # evolve grace (uses dust)
-    'guardian_grace_chaosrift':         True,                       # increase grace holy damage (uses orbs of light)
-    'guardian_grace_rarity':            True,                       # increase grace rarity (uses contracts)
-    'guardian_ankaa_train':             True,                       # enlighten ankaa (uses dust)
-    'guardian_ankaa_enlighten':         True,                       # enlighten ankaa (uses dust)
-    'guardian_ankaa_evolve':            True,                       # evolve ankaa (uses dust)
-    'guardian_ankaa_chaosrift':         True,                       # increase ankaa holy damage (uses orbs of light)
-    'guardian_ankaa_rarity':            True,                       # increase ankaa rarity (uses contracts)
-    'guardian_azhar_train':             True,                       # enlighten azhar (uses dust)
-    'guardian_azhar_enlighten':         True,                       # enlighten azhar (uses dust)
-    'guardian_azhar_evolve':            True,                       # evolve azhar (uses dust)
-    'guardian_azhar_chaosrift':         True,                       # increase azhar holy damage (uses orbs of light)
-    'guardian_azhar_rarity':            True,                       # increase azhar rarity (uses contracts)
-
-    # Map
-    'map_order':                        'mystery,dragon,monster,naval,scout,war,adventure', # the order to play map missions
-
-    # Shop
-    'buy_amulet_of_conquest':           False,
-    'buy_amulet_of_the_sky':            False,
-    'buy_amulet_of_knowledge':          False,
-    'buy_amulet_of_war':                False,
-    'buy_amulet_of_power':              False,
-    'buy_amulet_of_midas':              False,
-    'buy_amulet_of_alchemy':            False,
-    'buy_amulet_of_cartography':        False,
-    'buy_amulet_of_exploration':        False,
-    'buy_amulet_of_greed':              False,
-    'buy_amulet_of_the_quartermaster':  False,
-    'buy_amulet_of_the_pioneers':       False,
-    'buy_amulet_of_liberation':         False,
-    'buy_amulet_of_production':         False,
-    'buy_amulet_of_clarity':            False,
-    'buy_amulet_of_astrology':          False,
-    'buy_amulet_of_the_seven':          False,
-    'buy_amulet_of_tinkering':          False,
-    'buy_amulet_of_insight':            False,
-    'buy_amulet_of_luck':               False,
-    'buy_amulet_of_the_king':           False,
-    'buy_amulet_of_the_queen':          False,
-    'buy_amulet_of_speed':              False,
-    'buy_amulet_of_damage':             False,
-    'buy_amulet_of_health':             False,
-
     # Temple of eternals
     'jump_percentage':                  400,                        # temple of eternals: jump percentage
     'jump_temple_token':                800,                        # temple of eternals: percentage to use temple tokens
+    'jump_temple_icon':                 True,                       # jump if icon remains visible on main
 
-    'version':                          1                           # config version on the end
+    'version':                          2                           # config version on the end
 }
+
+# Alchemist
+for name, (_, _, _) in alchemist_experiments.items():
+    config.update({f'alchemist_{name}': False, f'decorated_{name}': 0, f'decorated_{name}_save': 0})
+for _, (_, items) in alchemist_transmutes.items():
+    for name, _ in items.items():
+        config.update({f'transmute_{name}': False})
+
+# Amulets
+for name, (_, _) in amulets.items():
+    config.update({f'buy_{name}': False})
+
+# Exotic Merchant
+for name, _ in exotic_merch.items():
+    config.update({f'sell_{name}': False})
+
+# Machines
+for name in machines:
+    for item in ['upgrade', 'blueprints', 'rarity']:
+        config.update({f'wm_{name}_{item}': False})
+
+# Magic Quarter
+for name, _ in guardians.items():
+    for item in ['train', 'enlighten', 'evolve', 'chaosrift', 'rarity']:
+        config.update({f'guardian_{name}_{item}': False})
+
+# Map
+config.update({'map_order': ','.join(mission_types)})
+
 config_file: str = 'bot_settings.json'
 config_panel_vars = {}
 config_comboboxes = {}
 current_tab = None
+
+class ToolTip:
+    def __init__(self, widget, text):
+        self.widget = widget
+        self.text = text
+        self.tip_window = None
+        # Bind hover events
+        self.widget.bind("<Enter>", self.show_tip)
+        self.widget.bind("<Leave>", self.hide_tip)
+
+    def show_tip(self, event=None):
+        if self.tip_window: return
+        # Create window relative to the widget
+        x = self.widget.winfo_rootx() + 20
+        y = self.widget.winfo_rooty() + self.widget.winfo_height() + 5
+
+        self.tip_window = tw = tk.Toplevel(self.widget)
+        tw.wm_overrideredirect(True) # Remove standard window borders
+        tw.wm_geometry(f'+{x}+{y}')
+        tw.wm_attributes("-topmost", True) # Force it above your topmost app window
+
+        # Tooltip styling
+        label = tk.Label(tw, text=self.text, justify='left',
+                         background="#ffffe0", relief='solid', borderwidth=1, padx=4, pady=2)
+        label.pack()
+
+    def hide_tip(self, event=None):
+        if self.tip_window:
+            self.tip_window.destroy()
+            self.tip_window = None
 
 def checkbox(**args) -> None:
     global config_panel_vars
@@ -174,11 +135,15 @@ def checkbox(**args) -> None:
     tab = args.get('tab', current_tab)
     text = args.get('text', None)
     varname = args.get('varname', None)
+    tooltip = args.get('tooltip', None)
     if not tab or not text or not varname:
         return
 
     config_panel_vars.update({varname: tk.IntVar(value=config.get(varname, 0))})
-    tk.Checkbutton(tab, text=text, variable=config_panel_vars.get(varname, 0), onvalue=True, offvalue=False).grid(row=row, column=column, padx=5, pady=2, sticky='nsw')
+    box = tk.Checkbutton(tab, text=text, variable=config_panel_vars.get(varname, 0), onvalue=True, offvalue=False)
+    box.grid(row=row, column=column, padx=5, pady=2, sticky='nsw')
+    if tooltip:
+        ToolTip(box, tooltip)
 
 def combobox(**args) -> None:
     global config_comboboxes
@@ -188,10 +153,11 @@ def combobox(**args) -> None:
     text = args.get('text', None)
     values = args.get('values', None)
     varname = args.get('varname', None)
+    tooltip = args.get('tooltip', None)
     if not tab or not text or not values or not varname:
         return
 
-    label(text=text, row=row)
+    label(text=text, row=row, tooltip=tooltip)
     config_panel_vars.update({varname: tk.IntVar(value=config[varname])})
     config_comboboxes.update({varname: ttk.Combobox(tab, state='readonly', values=values)})
     config_comboboxes.get(varname).grid(row=row, column=1, columnspan=20, padx=5, pady=5, sticky='nsew', ipadx=5)
@@ -219,10 +185,12 @@ def config_load() -> None:
             file_version = loaded_config.get('version', 0)
             config.update(loaded_config)
 
-        if conf_version != file_version:
+        if conf_version != file_version and __name__ != '__main__':
+            config.update({'version': conf_version})
             config_page()
-    else:
-        config_save()
+
+    elif __name__ != '__main__':
+        config_page()
 
 def config_page() -> None:
     """ Settings dialog """
@@ -235,7 +203,7 @@ def config_page() -> None:
     style = ttk.Style()
     style.theme_use('xpnative')
     style.configure('LeftTabs.TNotebook', tabposition='wn')
-    style.configure('LeftTabs.TNotebook.Tab', width=-20, anchor='e', padding=(10, 8))
+    style.configure('LeftTabs.TNotebook.Tab', width=-20, anchor='e', padding=(10, 2))
     #style.configure('TFrame', background='white')
     style.configure('TLabel', background='black', foreground='white')
 
@@ -245,16 +213,20 @@ def config_page() -> None:
     tabs.pack(fill=tk.BOTH, expand=True, padx=10, pady=(10, 5))
     button_frame = ttk.Frame(menu_frame, padding=(0, 5, 0, 0))
     button_frame.pack(side=tk.BOTTOM, fill=tk.X)
-    tk.Button(button_frame, text='Save', command=config_save, bg='green', fg='white').pack(side=tk.LEFT, padx=(10,5), fill=tk.X, expand=True)
-    tk.Button(button_frame, text='Exit', command=c.destroy, bg='red', fg='white').pack(side=tk.LEFT, padx=(5, 10), fill=tk.X, expand=True)
+    button_save = tk.Button(button_frame, text='Save', command=config_save, bg='green', fg='white')
+    button_save.pack(side=tk.LEFT, padx=(10,5), fill=tk.X, expand=True)
+    ToolTip(button_save, 'Save the current values to the configuration file')
+    button_exit = tk.Button(button_frame, text='Exit', command=c.destroy, bg='red', fg='white')
+    button_exit.pack(side=tk.LEFT, padx=(5, 10), fill=tk.X, expand=True)
+    ToolTip(button_exit,'Exit this tool without saving')
 
     current_tab = ttk.Frame(tabs, padding=10)
     tabs.add(current_tab, text='System')
     current_tab.grid_columnconfigure(1, minsize=400, weight=0)
-    input_text(current_tab, 'Logfile', 0, 'logfile')
-    input_text(current_tab, 'Ollama URL', 1, 'ollama_url', ('<Return>', 'ollama_url_verify'))
-    input_text(current_tab, 'Ollama Model', 2, 'ollama_model', ('<Return>', 'ollama_model_verify'))
-    input_text(current_tab, 'Tracker file', 3, 'tracker_file')
+    input_text(text='Logfile', row=0, varname='logfile', tooltip='The location of the logfile')
+    input_text(text='Ollama URL', row=1, varname='ollama_url', on_update=('<Return>', 'ollama_url_verify'), tooltip='The base url for ollama [http(s)://host:port]')
+    input_text(text='Ollama Model', row=2, varname='ollama_model', on_update=('<Return>', 'ollama_model_verify'), tooltip='Ollama model to use, please define a vision model')
+    input_text(text='Tracker file', row=3, varname='tracker_file', tooltip='The name of the tracker file to use for image tracking')
     input_number(current_tab, 'Page Wait Time', 4, 'wait_page', 1, 30, 0.01)
     slider(current_tab, 'Min match score', 5, 'min_score', 0.8, 1)
 
@@ -265,49 +237,72 @@ def config_page() -> None:
         if monitor['is_primary']:
             text += ' (primary)'
         values.append(text)
-    combobox(text='Monitor', row=6, varname='monitor', values=values)
+    combobox(text='Monitor', row=6, varname='monitor', values=values, tooltip='Select the monitor the game will be running on')
 
     current_tab = ttk.Frame(tabs, padding=10)
     tabs.add(current_tab, text='Alchemist')
-    label(text='Experiments')
-    checkbox(text='Dragon Blood', row=1, varname='alchemist_dragon_blood')
-    checkbox(text='Strange Dust', row=1,varname='alchemist_strange_dust', column=2)
-    checkbox(text='Exotic Coin', row=1, varname='alchemist_exotic_coin', column=4)
-
-    label(text='Transmute Chests', row=2)
-    checkbox(text='Legendary', row=3, varname='transmute_legendary')
-    checkbox(text='Epic', row=3, varname='transmute_epic', column=2)
-    checkbox(text='Rare', row=3, varname='transmute_rare', column=4)
-    checkbox(text='Uncommon', row=3, varname='transmute_uncommon', column=8)
+    label(text='Experiments', tooltip='Select the experiments to run')
+    row = 1
+    col = 0
+    for name, _ in config.items():
+        if name.startswith('alchemist_'):
+            item = name[10::].replace('_', ' ').capitalize()
+            checkbox(text=item, row=row, varname=name, column=col)
+            col += 2
+            if col == 8:
+                col = 0
+                row += 1
+    label(text='Transmute Chests', row=row + 1)
+    row += 2
+    col = 0
+    for name, _ in config.items():
+        if name.startswith('transmute_'):
+            item = name[10::].replace('_', ' ').capitalize()
+            checkbox(text=item, row=row, varname=name, column=col)
+            col += 2
+            if col == 8:
+                col = 0
+                row += 1
 
     current_tab = ttk.Frame(tabs, padding=10)
     tabs.add(current_tab, text='Battle Screen')
     values = ['Upgrade x1','Upgrade x10','Upgrade x100','Next milestone','Upgrade max']
     combobox(text='Upgrade mode', row=0, varname='upgrade_mode', values=values)
-
+    checkbox(text='Upgrade max on start/empower', row=2, varname='upgrade_max')
     upgrade_types = ['slot 1', 'slot 2', 'slot 3', 'slot 4', 'slot 5', 'guardian', 'specials']
-    listbox(current_tab, 'Upgrade order', 1, 'upgrade_order', upgrade_types)
+    listbox(current_tab, 'Upgrade order', 3, 'upgrade_order', upgrade_types)
+    input_number(current_tab, 'Upgrade interval', 19, 'upgrade_interval', 0, 60, 0.1)
     input_number(current_tab, 'Boss retry', 20, 'battle_boss_retry', 0, 60, 0.1)
     input_number(current_tab, 'Level back', 21, 'battle_level_back', 0, 60)
     input_number(current_tab, 'Farm time', 22, 'battle_level_farm', 0, 604800)
+    checkbox(text='Open chests in bag', row=23, varname='bag_open_chests')
+
+    current_tab = ttk.Frame(tabs, padding=10)
+    tabs.add(current_tab, text='Decorated Heroes')
+    checkbox(text='Enable decorate heroes mode',  varname='decorated_enable')
+    input_number(current_tab, 'Days to prepare', 2, 'decorated_prepare', 0, 60)
+    input_number(current_tab, 'Prepare dragon blood', 3, 'decorated_dragon_blood_save', 0, 16800)
+    input_number(current_tab, 'Daily dragon blood', 4, 'decorated_dragon_blood', 0, 9)
+    input_number(current_tab, 'Prepare strange dust', 5, 'decorated_strange_dust_save', 0, 13440)
+    input_number(current_tab, 'Daily strange dust', 6, 'decorated_strange_dust', 0, 9)
+    input_number(current_tab, 'Prepare exotic coin', 7, 'decorated_exotic_coin_save', 0, 420000)
+    input_number(current_tab, 'Daily exotic coin', 8, 'decorated_exotic_coin', 0, 9)
 
     current_tab = ttk.Frame(tabs, padding=10)
     tabs.add(current_tab, text='Exotic Merchant')
     label(text='Sell items')
     idx = 1
     offset = 0
-    for name, _ in config.items():
-        if name.startswith('sell_'):
-            text = name[5::].replace('_', ' ').capitalize()
-            checkbox(text=text, row=idx, varname=name, column=offset)
-            offset += 2
-            if offset == 6:
-                idx += 1
-                offset = 0
+    for name, tooltip in exotic_merchant.items():
+        text = name.replace('_', ' ').capitalize()
+        checkbox(text=text, row=idx, varname=f'sell_{name}', column=offset, tooltip=tooltip)
+        offset += 2
+        if offset == 6:
+            idx += 1
+            offset = 0
 
     current_tab = ttk.Frame(tabs, padding=10)
     tabs.add(current_tab, text='Garage')
-    machines = ['aegis', 'cloudfist', 'curator', 'earthshatterer', 'firecracker', 'fortress', 'goliath', 'harvester', 'hunter', 'judgement', 'sentinel', 'talos', 'thunderclap']
     for idx, machine in enumerate(machines):
         label(text=machine.capitalize(), row=idx)
         for offset, item in enumerate(['upgrade', 'blueprints', 'rarity']):
@@ -325,7 +320,6 @@ def config_page() -> None:
 
     current_tab = ttk.Frame(tabs, padding=10)
     tabs.add(current_tab, text='Magic Quarter')
-    guardians = ['vermilion', 'grace', 'ankaa', 'azhar']
     for idx, guardian in enumerate(guardians):
         label(text=guardian.capitalize(), row=idx)
         for offset, item in enumerate(['train', 'enlighten', 'evolve', 'chaosrift', 'rarity']):
@@ -338,7 +332,7 @@ def config_page() -> None:
 
     current_tab = ttk.Frame(tabs, padding=10)
     tabs.add(current_tab, text='Map')
-    mission_types = ['adventure', 'dragon', 'monster', 'mystery', 'naval', 'scout', 'titan', 'war']
+    mission_types = ['adventure', 'dragon', 'monster', 'mystery', 'naval', 'scout', 'shadow', 'titan', 'war']
     listbox(current_tab, 'Mission map order', 0, 'map_order', mission_types)
 
     current_tab = ttk.Frame(tabs, padding=10)
@@ -358,8 +352,9 @@ def config_page() -> None:
     current_tab = ttk.Frame(tabs, padding=10)
     tabs.add(current_tab, text='Temple of eternals')
     current_tab.grid_columnconfigure(1, minsize=400, weight=0)
-    input_number(current_tab, 'Jump percentage', 0, 'jump_percentage', 0, 100000000000)
-    input_number(current_tab, 'Use temple token at', 1, 'jump_temple_token', 0, 100000000000)
+    checkbox(text='Jump when icon remains visible', varname='jump_temple_icon')
+    input_number(current_tab, 'Jump percentage', 1, 'jump_percentage', 0, 100000000000)
+    input_number(current_tab, 'Use temple token at', 2, 'jump_temple_token', 0, 100000000000)
 
     c.mainloop()
 
@@ -381,10 +376,19 @@ def input_number(tab, text, row, varname, min_val, max_val, increment = 1) -> No
     config_panel_vars.update({varname: tk.DoubleVar(value=config[varname])})
     tk.Spinbox(tab, from_=min_val, to=max_val, increment=increment, textvariable=config_panel_vars.get(varname), width=6).grid(row=row, column=1, padx=5, pady=2, sticky='nsew')
 
-def input_text(tab, text:str, row: int, varname: str, on_update: Union[None, Tuple[str, str]] = None) -> None:
+def input_text(**args) -> None:
     global config_panel_vars
 
-    label(text=text, row=row)
+    row = args.get('row', 0)
+    tab = args.get('tab', current_tab)
+    text = args.get('text', None)
+    varname = args.get('varname', None)
+    tooltip = args.get('tooltip', None)
+    on_update = args.get('on_update', None)
+    if not tab or not text or not varname:
+        return
+
+    label(text=text, row=row, tooltip=tooltip)
     config_panel_vars.update({varname: tk.StringVar(value=config[varname])})
     item = tk.Entry(tab, textvariable=config_panel_vars.get(varname), highlightthickness=2)
     item.grid(row=row, column=1, padx=5, pady=2, sticky='nsew')
@@ -397,16 +401,19 @@ def input_text(tab, text:str, row: int, varname: str, on_update: Union[None, Tup
             actual_function(None, item, varname)
 
 def label(**args) -> None:
-
     column = args.get('column', 0)
     columnspan = args.get('columnspan', 1)
     row = args.get('row', 0)
     tab = args.get('tab', current_tab)
     text = args.get('text', None)
+    tooltip = args.get('tooltip', None)
     if not tab or not text:
         return
 
-    ttk.Label(tab, text=text).grid(row=row, column=column, columnspan=columnspan, pady=5, sticky='nsew', ipadx=5)
+    l = ttk.Label(tab, text=text)
+    l.grid(row=row, column=column, columnspan=columnspan, pady=5, sticky='nsew', ipadx=5)
+    if tooltip:
+        ToolTip(l, tooltip)
 
 def listbox(tab, text, row, varname, values) -> None:
     label(text=text, row=row)

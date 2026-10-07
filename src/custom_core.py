@@ -49,6 +49,7 @@ colormap = {
     'brown_forbidden_knowledge': (214, 217, 73, 86, 16, 16),
     'brown_liberation_won': (192, 197, 143, 146, 99, 103),
     'brown_firestone_research': (108, 112, 75, 85, 40, 45),
+    'decorated_number': (132, 137, 70, 74, 37, 41),
     'green': (0, 24, 140, 255, 0, 32),
     'green_talents': (100, 135, 150, 255, 0, 25),
     'grey': (120, 180, 120, 180, 120, 180),
@@ -223,7 +224,7 @@ def click(location: Union[Tuple[int, int], 'Region', 'Match']) -> None:
             Can be a pure (x, y) tuple, a Region, or a Match node.
 
     Raises:
-        RuntimeError: If the execution thread is stopped or the pyautogui
+        RuntimeError: If the execution thread is stopped or the
             fail-safe is triggered via a screen corner.
     """
     x_coord, y_coord = get_coords(location)
@@ -298,6 +299,24 @@ def get_coords(location: Union[Tuple[int, int], 'Region', 'Match']) -> Tuple[int
             y = round((monitor['height'] / 1080) * y)
 
     return (x, y)
+
+def get_next_reset() -> int:
+    """
+    Get timestamp for next daily cycle
+    """
+    ts = datetime.datetime.now()
+
+    next_reset = ts.replace(
+        hour=10,
+        minute=0,
+        second=0,
+        microsecond=0
+    )
+
+    if ts >= next_reset:
+        next_reset += datetime.timedelta(days=1)
+
+    return int(next_reset.timestamp())
 
 def drag_drop(start_location: Union[Tuple[int, int], 'Region', 'Match'],
              end_location: Union[Tuple[int, int], 'Region', 'Match']) -> None:
@@ -422,24 +441,6 @@ def get_file_sha256(filepath: str):
         hasher.update(file_ptr.read())
     return hasher.hexdigest()
 
-def get_next_reset() -> int:
-    """
-    Get timestamp for next daily cycle
-    """
-    ts = datetime.datetime.now()
-
-    next_reset = ts.replace(
-        hour=10,
-        minute=0,
-        second=0,
-        microsecond=0
-    )
-
-    if ts >= next_reset:
-        next_reset += datetime.timedelta(days=1)
-
-    return int(next_reset.timestamp())
-
 def get_pixel_color(x: int, y: int) -> Tuple[int, int, int]:
     """
     Retrieve the exact RGB color values of a specific screen pixel coordinate.
@@ -472,6 +473,10 @@ def get_value(value: str) -> Tuple[float, int]:
     m = re.search(r'^[\d\.]+$', value)
     if m:
         return (float(value), 0)
+
+    m = re.search(r'^[\d\.,]+$', value)
+    if m:
+        return (float(value.replace('.', '').replace(',','.')), 0)
 
     # Scientific notation
     m = re.search(r'^([\d,]+)e(\d+)$', value)
@@ -643,7 +648,7 @@ def on_keyrelease(key) -> None:
         if not word in app:
             return
 
-    for _, word in enumerate(['armor games', 'crazygames', 'kongregate', 'minijuegos', 'miniplay', 'r2games', 'yandex']):
+    for word in ['armor games', 'crazygames', 'kongregate', 'minijuegos', 'miniplay', 'r2games', 'yandex']:
         if word in app:
             platform = word
             if word not in ['crazygames']:
@@ -651,7 +656,7 @@ def on_keyrelease(key) -> None:
                 platform += ' (untested)'
 
     if not platform:
-        Debug.warn('Unrecognized platform. Use at your own risk and let me know if it works or not!')
+        Debug.warn(f'Unrecognized platform \'{app}\'.\nUse at your own risk and let me know if it works or not!')
 
     #Debug.info(f'Key released: {key}')
 
@@ -782,41 +787,6 @@ def parse_ui_timeout(ocr_text: str) -> float | None:
     except (ValueError, TypeError) as error:
         Debug.error(f'[parse_ui_timeout] Failed to map UI clock vector: {error}')
         return None
-
-def popup(message: str, title: str = 'Bot Notification', timeout: float = 0) -> None:
-    """
-    Display a cross-platform alert dialog with an optional auto-vanish timeout.
-
-    Fires a native GUI message box. If a timeout greater than zero is specified,
-    spawns a non-blocking background worker to automatically dismiss the canvas
-    after the expiration threshold to prevent thread stagnation.
-
-    Args:
-        message (str): Body content text to render inside the dialog.
-        title (str): Header title of the popup window frame.
-        timeout (float): Seconds to wait before auto-closing. 0 blocks indefinitely.
-    """
-
-    def auto_close_worker() -> None:
-        """
-        Background worker thread that counts down and forcefully kills the dialog.
-        """
-        sleep(timeout)
-        # Locate the specific alert window by its title and close it safely
-        for window in pyautogui.getWindowsWithTitle(title):
-            try:
-                window.close()
-            except Exception:
-                pass
-
-    try:
-        # Spawn the closer thread and immediately execute the alert interface
-        if timeout > 0:
-            closer_thread = threading.Thread(target=auto_close_worker, daemon=True)
-            closer_thread.start()
-        pyautogui.alert(text=str(message), title=str(title), button='OK')
-    except Exception as error:
-        Debug.error(f'[popup] Render failed:\n{error}')
 
 def press_key(key_name: str) -> None:
     """
@@ -949,6 +919,46 @@ class Debug:
         if config['logfile']:
             with open(config['logfile'], 'at', encoding='utf-8') as logptr:
                 logptr.write(f'\n[{timestamp}] [{padded_level}] {formatted_msg}')
+
+class FileDB():
+    """
+    Simple json file database with daily expiry
+    No caching so it allows manual updates on the fly
+    """
+
+    def __init__(self, filename: str, expire: bool = False):
+        self.expire = expire
+        self.filename = filename
+
+    def get(self, name: str, default = 0):
+        if not os.path.exists(self.filename) or not self.is_valid():
+            return default
+
+        with open(self.filename, 'rt', encoding='utf-8') as f:
+            loaded_data = json.load(f)
+            return loaded_data.get(name, default)
+
+    def incr(self, name: str, amount: int = 1) -> None:
+        self.set(name, self.get(name, 0) + amount)
+
+    def is_valid(self) -> bool:
+        if not self.expire:
+            return True
+        if not os.path.exists(self.filename):
+            return True
+        return os.path.getmtime(self.filename) >= get_next_reset() - 86400
+
+    def set(self, name: str, value) -> None:
+        data = {}
+        if not self.is_valid():
+            Debug.warn(f'Invalidating {self.filename}')
+            os.remove(self.filename)
+        else:
+            with open(self.filename, 'rt', encoding='utf-8') as f:
+                data = json.load(f)
+        data.update({name: value, 'timestamp': int(time.time())})
+        with open(self.filename, 'wt', encoding='utf-8') as f:
+            f.write(json.dumps(data, indent=4))
 
 class ImageEventHandler(FileSystemEventHandler):
     """
@@ -1348,7 +1358,6 @@ class Region():
             floatt: the extracted value
         """
         number = self.text('1234567890.,+%', colormap[color_map])
-        # Debug.info(f'Number start: {number}')
 
         if not number:
             return 0.0
@@ -1362,8 +1371,6 @@ class Region():
                 comma_found = True
             elif char.isnumeric():
                 sanitized = char + sanitized
-
-        # Debug.info(f'Number end: {sanitized}')
 
         try:
             return float(sanitized) if sanitized else 0.0
@@ -1587,12 +1594,11 @@ class Match(Region):
 
 os.system('color')
 
-# general regions
-screen = Region(0, 0, 1920, 1080)
-main_finished = Region(0, 0, 160, 570)
-
 # filetracker
 tracker = ImageTracker()
+
+# databases
+db_day = FileDB('.bot-daily', True)
 
 # keyboard and mouse mapping
 if os.name == 'nt':

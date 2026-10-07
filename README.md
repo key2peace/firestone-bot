@@ -58,10 +58,12 @@ But sadly, new OculiX IDE looking shiny on my desktop, getting frustrated by the
 ### Battle field
 - Bag:
   - Opening all chests except the first one (common mostly) in order to open those after sign-in to meet daily requirements
-- Heroes level upgrading
-  that is, if they are known, this is in order to facilitate users with less then 6 members in their party.
-  If you do not see them being upgraded, they have not been captured yet,  in that case please submit an issue providing a 1:1 image capture
-  of the area not being upgraded, and I will add them as soon as possible.
+- Heroes/Guardian/Specials upgrading
+  - Specify what and in which order to upgrade
+  - Define upgrade multiplier
+  - When hitting bosswall, go back levels one by one until the battle duration is as configured, then farm there for a specified amount of time
+  If you do not see heroes being upgraded, they have not been captured yet,  in that case please submit an issue providing a 1:1 image capture
+  of the hero there not being upgraded, and I will add them as soon as possible.
   See [this](https://github.com/key2peace/firestone-bot/tree/main/src/images/heroes) page for the current list of supported heroes
   **NOTE: IF YOU CHANGE YOUR PARTY SIZE, PRESS ESC OR F5 IN ORDER TO INITIALIZE A RELOAD OF THE PARTY CHECKER!**
 - Special upgrades
@@ -73,6 +75,14 @@ But sadly, new OculiX IDE looking shiny on my desktop, getting frustrated by the
 - Events:
   - mini events listed on wiki
   - calendar events listed on wiki
+  - decorated heroes:
+    - prepare:
+      - define amount of days to prepare collecting resources
+      - define amount of alchemist resources to save up
+    - during event:
+      - define amount of daily experiments per resource
+      - adjust daily targets for arcane crystal, enlightment, tavern game
+      - protect resources needed for eventa
   Other events(/types) will be added as soon as I see/play them
 
 ### Character
@@ -125,7 +135,7 @@ But sadly, new OculiX IDE looking shiny on my desktop, getting frustrated by the
 - Experimental support for silver missions (not yet unlocked map level 10 to test)
 - Campaign Battles:
   - Pick up the loot
-  - Run daily liberation missions
+  - Run daily liberation/dungeon missions
 
 ### Oracle
 - Rituals
@@ -160,7 +170,7 @@ But sadly, new OculiX IDE looking shiny on my desktop, getting frustrated by the
 ## Tasks/Features not (yet) supported
 
 ### Alchemist:
-- Below transmute (not yet unlocked)
+- Some transmutes that have not been unlocked yet
 
 ### Battles
 - Arena of kings
@@ -171,17 +181,12 @@ But sadly, new OculiX IDE looking shiny on my desktop, getting frustrated by the
   - Blueprints
   - Rarity
 
-### Events
-- Prepare for the bi-monthly 'Decorated Heroes' event, saving up needed materials
-
 ### General
 - Walk through the beginning dialogs if you start fresh
 - Settings Webserver
 - More detailed logging what the bot is doing
-- Improve OCR
 - Finetune timeouts
 - Server reconnect detection
-- Browser plugins
 
 ### Guild
 - Tree of Life

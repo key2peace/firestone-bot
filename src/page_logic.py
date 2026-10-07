@@ -1,6 +1,7 @@
 """
 Page Logic Subroutines for Firestone Bot Gameplay Automation.
 """
+from __future__ import annotations
 import sys
 import time
 
@@ -138,7 +139,6 @@ def is_oracle() -> bool:
 def is_oracle_gift() -> bool:
     """ Oracle Gift """
     text = Region(560, 215, 250, 50).text('', colormap['white']).lower()
-    Debug.info(text)
     return text == 'oracle\'s gift'
 
 # pirates_price
