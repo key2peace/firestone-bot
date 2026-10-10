@@ -5,26 +5,23 @@ import json
 import os
 import re
 import sys
+import tkinter as tk
+
+from tkinter import ttk
 
 import mss
 import mss.tools
-import tkinter as tk
 import requests
 
-from tkinter import ttk
-from typing import Any, ClassVar, Dict, List, Optional, Tuple, Union
 from custom_vars import (
     alchemist_experiments,
     alchemist_transmutes,
     amulets,
-    eventlist,
     exotic_merch,
-    forbidden_knowledge,
+    #forbidden_knowledge,
     guardians,
     machines,
-    mission_types,
-    oracle_rituals,
-    oracle_blessings
+    mission_types
 )
 
 config = {
@@ -357,8 +354,8 @@ def config_page() -> None:
     tabs.add(current_tab, text='Temple of eternals')
     current_tab.grid_columnconfigure(1, minsize=400, weight=0)
     checkbox(text='Jump when icon remains visible', varname='jump_temple_icon')
-    input_number(current_tab, 'Jump percentage', 1, 'jump_percentage', 0, 100000000000)
-    input_number(current_tab, 'Use temple token at', 2, 'jump_temple_token', 0, 100000000000)
+    input_text(text='Jump percentage',row=1, varname='jump_percentage')
+    input_text(text='Use temple token at', row=2, varname='jump_temple_token')
 
     c.mainloop()
 

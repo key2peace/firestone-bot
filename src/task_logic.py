@@ -308,7 +308,6 @@ def check_heroes(trigger: bool = False) -> int:
     values = ['upgrade\nx1','upgrade\nx10','upgrade\nx100','next\nmilestone','upgrade\nmax']
     if first_upgrade and config.get('upgrade_max', 0):
         target_mode = values[4]
-        first_upgrade = False
     else:
         target_mode = values[config['upgrade_mode']]
 
@@ -353,6 +352,10 @@ def check_heroes(trigger: bool = False) -> int:
             mouse_up()
             upgraded += 1
             clicked = True
+
+        if first_upgrade and config.get('upgrade_max', 0):
+            first_upgrade = False
+            break
 
     if clicked:
         move_to((x, 1080))
@@ -934,6 +937,14 @@ def guild_shop_pickaxe(trigger: bool = False) -> int:
 
     return 0
 
+def hall_of_heroes(trigger: Bool = False) -> int:
+    """ Maintain heroes """
+    if trigger:
+        press_key('h')
+        sleep(1)
+
+    return 0
+
 def is_decorated() -> int:
     """  Determine decorated heroes engine state. """
     if not config.get('decorated_enable', 0):
@@ -1085,28 +1096,28 @@ def magic_quarter(trigger: bool = False) -> int:
                 del tmp[current]
 
             # General
-            if config[f'guardian_{current}_train'] or config[f'guardian_{current}_enlighten']:
+            train = config.get(f'guardian_{current}_train', 0)
+            enlight = config.get(f'guardian_{current}_enlighten', 0)
+            if train or enlight:
                 click((1050, 150))
                 sleep(0.3)
-                if config[f'guardian_{current}_train'] and color_at(1090, 800) == 'green':
+                if train and color_at(1090, 800) == 'green':
                     Debug.history(f'Training {current}')
                     click((1090,800))
-                if config[f'guardian_{current}_enlighten']:
-                    while dust > 19 and color_at(1590, 800) == 'green':
-                        Debug.history(f'Enlightening {current}')
-                        click((1590, 800))
-                        move_to((1590, 900))
-                        dust -= 20
-                        sleep(0.3)
+                while enlight and dust > 19 and color_at(1590, 800) == 'green':
+                    Debug.history(f'Enlightening {current}')
+                    click((1590, 800))
+                    move_to((1590, 900))
+                    dust -= 20
+                    sleep(0.3)
 
             # Evolution - colorcheck disabled because of bug
-            #if config[f'guardian_{current}_evolve'] and color_at(1265, 100) == 'white':
-            if True:
+            if config.get(f'guardian_{current}_evolve', 1) and color_at(1265, 100) == 'white':
                 click((1210, 150))
                 sleep(0.3)
-                if config[f'guardian_{current}_evolve'] and color_at(1220, 780) == 'green':
+                if color_at(1220, 780) == 'green':
                     cost = Region(1100, 760, 160, 60).get_number()
-                    if cost and cost >= dust:
+                    if cost and dust > cost:
                         Debug.history(f'Evolving {current}')
                         click((1220, 780))
                         dust -= cost
@@ -1191,7 +1202,7 @@ def map_campaign(trigger: bool = False) ->int:
                                 break
                             sleep(1)
                     elif color_at(x, 810) == 'yellow':
-                        Debug.history(f'[Campaign] Reached max')
+                        Debug.history('[Campaign] Reached max')
                         winning = False
                         break
 
@@ -1741,8 +1752,7 @@ def mainscreen_logic(task, lock) -> None:
         if farm and time.time() - farm > farm_duration:
             farm = 0
 
-        boss = True if Region(1620, 533, 160, 40).text('Bos', colormap['white']) == 'Boss' else False
-        if not boss:
+        if Region(1620, 533, 160, 40).text('Bos', colormap['white']) != 'Boss':
             continue
 
         boss_retry = config.get('battle_boss_retry', 15)

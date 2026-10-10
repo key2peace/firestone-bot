@@ -96,6 +96,7 @@ def is_guild_expeditions() -> bool:
     return text == 'guild expeditions'
 
 # guild_forbidden_knowledge
+# hall of heroes
 
 def is_guild_hall() -> bool:
     """ Guild Hall"""

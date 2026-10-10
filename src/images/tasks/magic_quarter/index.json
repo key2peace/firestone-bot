@@ -1,6 +1,6 @@
 {
     "chaos_rift.png": {
-        "timestamp": 1786556714.1096704,
+        "timestamp": 1791648277.4106529,
         "sha256": "bc91254835f9f63ecb5080a63ff8bcf86aced3e1ddf9fc0b9ee7b24f6d46bfda"
     },
     "grace_evo1.png": {
@@ -46,5 +46,21 @@
     "guardian_chaos_rift.png": {
         "timestamp": 1787990324.5813034,
         "sha256": "bc91254835f9f63ecb5080a63ff8bcf86aced3e1ddf9fc0b9ee7b24f6d46bfda"
+    },
+    "ankaa_evo1.png": {
+        "timestamp": 1791583642.2754374,
+        "sha256": "2351d643023b2820274e93af0598a2a97081310b06f68bbe771e91441cb1f9c1"
+    },
+    "grace_evo4.png": {
+        "timestamp": 1791583642.2914367,
+        "sha256": "6f1736d0a8a9d631f747a87d6e0b63715d0f325d178e3a6dd78cddcda326f45c"
+    },
+    "grace_evo5.png": {
+        "timestamp": 1791583642.306437,
+        "sha256": "6d9e1495e27b414d3603d25fcb44c86cd68e17f009608940f74c3c845fc4d81b"
+    },
+    "evolve.png": {
+        "timestamp": 1791648277.4256635,
+        "sha256": "0f5f5e021d6ebc66165f24f02c16eb69a09ef37fae989d1a295198c782e0f28b"
     }
 }
