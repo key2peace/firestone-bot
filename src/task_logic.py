@@ -85,7 +85,7 @@ def alchemist(trigger: bool = False) -> int:
     decorated = is_decorated()
 
     for item, (x, x_amount, cost) in alchemist_experiments.items():
-        ts = Region(x, 675, 280, 30).text('', colormap['white'])
+        ts = Region(x, 675, 280, 30).text()
         name = item.replace('_', ' ').capitalize()
         if ts == 'Completed':
             Debug.history(f'Completed {name} Experiment')
@@ -116,7 +116,7 @@ def alchemist(trigger: bool = False) -> int:
             click((x + 50, 800))
             db_day.incr(f'decorated_{item}')
             sleep(1)
-            ts = Region(x, 675, 280, 30).text('', colormap['white'])
+            ts = Region(x, 675, 280, 30).text()
             if re.search(r'(\d{2})?:?(\d{1,2}):(\d{2})', ts.lower()):
                 ts = parse_ui_timeout(ts)
                 if ts:
@@ -275,7 +275,7 @@ def character_talents(trigger: bool = False) -> int:
             Debug.history('Selecting talent')
             match.click()
             match.wait_vanish()
-            text = Region(780, 320,390, 44).text('', colormap['yellow'])
+            text = Region(780, 320,390, 44).text('', 'yellow')
             while color_at(1032, 853) == 'green_talents':
                 Debug.history(f'Upgrading talent \'{text}\'')
                 click((1020, 866))
@@ -311,37 +311,23 @@ def check_heroes(trigger: bool = False) -> int:
     else:
         target_mode = values[config['upgrade_mode']]
 
-    x, y = party_coords['upgrade']
+    x = party_coords['upgrade']
+    y = 916
     area = Region(x, y, 250, 160)
 
-    while not area.text('', colormap['white']).lower().endswith(target_mode):
+    while not area.text().lower().endswith(target_mode):
         area.click()
         move_to((area.get_center().get_x(), 1080))
 
     clicked: bool = False
-    x: int = 960
     upgraded: int = 1
 
     while upgraded > 0:
         upgraded: int = 0
-        for upgrade_type in config['upgrade_order'].split(','):
-            y: int = 0
-            upgrade_type = upgrade_type.strip().lower()
-            if party_coords.get(upgrade_type, 0):
-                name = upgrade_type
-                x, y = party_coords.get(upgrade_type)
-
-            elif upgrade_type.startswith('slot'):
-                m = re.search(r'^slot\s([1-5])$', upgrade_type)
-                if not m:
-                    continue
-                for slot, name in enumerate(party_coords):
-                    if slot + 1 == int(m.group(1)):
-                        if name not in ['guardian', 'specials']:
-                            x, y = party_coords.get(name)
-                        break
-
-            if not y or color_at(x, y + 60) != 'yellow':
+        for name in config['upgrade_order'].split(','):
+            name = name.strip().lower()
+            x = party_coords.get(name, 0)
+            if not x or color_at(x, y + 60) != 'yellow':
                 continue
 
             Debug.history(f'Upgrading {name}')
@@ -397,30 +383,26 @@ def check_party(trigger: bool = False) -> int:
     if color_at(1640, 160) == 'white':
         click((1640, 160))
 
-    area = Region(10, 910, 1900, 160)
-    max_x: int = 0
-    coords = {}
-    y: int = 0
+    area = Region(0, 1020, 1920, 1)
+    pixels = grab_screen_to_mat(area)
+    party_coords = {}
+    x = 0
+    slot = 0
+    while x < pixels.shape[1]:
+        b_ch, g_ch, r_ch = pixels[0, x]
+        if color_name((r_ch, g_ch, b_ch)) in ['party_on', 'party_off']:
+            slot += 1
+            party_coords.update({f'slot {slot}': x + 111})
+            x += 186
+        x += 1
 
-    for root, _, files in os.walk('images/heroes'):
-        files = [f for f in files if f.lower().endswith('.png')]
-        if not files:
-            continue
-        for filename in files:
-            filepath = os.path.join(root, filename)
-            name = filename.split('.')[0].split('_')[0]
-            m = area.exists(filepath)
-            if m:
-                x = m.get_x() + m.get_w() + 10
-                y = m.get_y()
-                max_x = x if x > max_x else max_x
-                coords[name] = (x, y)
-
-    party_coords = dict(sorted(coords.items(), key=lambda item: item[1][0]))
-    party_coords['guardian'] = (max_x + 192, y)
-    party_coords['specials'] = (max_x + 384, y)
-    party_coords['upgrade'] = (max_x + 464, y)
+    party_coords.update({'guardian': party_coords.get(f'slot {slot - 1}')})
+    party_coords.update({'specials': party_coords.get(f'slot {slot}')})
+    party_coords.update({'upgrade': party_coords.get(f'slot {slot}') + 80})
+    party_coords.pop(f'slot {slot}')
+    party_coords.pop(f'slot {slot - 1}')
     Debug.info(f'{party_coords}')
+
     return time.time() * 2
 
 def crazygames_check(trigger: bool = False) -> int:
@@ -545,7 +527,7 @@ def events(trigger: bool = False) -> int:
             if not color_at(1470, y) == 'white':
                 continue
 
-            text = Region(530, y + 15, 890, 80).text('', colormap['yellow']).strip().lower()
+            text = Region(530, y + 15, 890, 80).text('', 'yellow').strip().lower()
             found = False
             name = 'unknown'
             for name, _ in eventlist.items():
@@ -610,7 +592,7 @@ def exotic_merchant(trigger: bool = False) -> int:
 
     # Sell items
     click((1120, 160))
-    while not Region(1750, 220, 110, 42).text('x015', colormap['white']) == 'x50':
+    while not Region(1750, 220, 110, 42).text('x015') == 'x50':
         click((1855, 240))
 
     drag_count = 0
@@ -649,7 +631,7 @@ def exotic_merchant(trigger: bool = False) -> int:
 
     if perform:
         click((1300, 160))
-        while not Region(1750, 220, 110, 42).text('x015', colormap['white']) == 'x1':
+        while not Region(1750, 220, 110, 42).text('x015') == 'x1':
             click((1855, 240))
 
         drag_count = 0
@@ -767,8 +749,8 @@ def guild(trigger: bool = False) -> int:
         if not page_wait('guild_hall'):
             return -1
 
-        #guild_level = Region(400, 160, 300, 36).text('', colormap['white'])
-        #members = Region(400, 260, 300, 36).text('', colormap['white'])
+        #guild_level = Region(400, 160, 300, 36).text()
+        #members = Region(400, 260, 300, 36).text()
 
         click((180, 800))       # Guild log
         click((1670, 50))
@@ -863,13 +845,22 @@ def guild_expeditions(trigger: bool = False) -> int:
     if trigger:
         pass
 
+    timeout = 0
+
     while color_at(1200, 300) == 'green':
-        Debug.history('Claiming/Starting guild expedition')
+        text = 'Claim' if Region().text().lower() == 'claim' else 'Start'
+        Debug.history(f'{text}ing guild expedition')
+        if text == 'Start':
+            ts = Region(740, 320, 180, 44).text('1234567890:')
+            if ts:
+                duration = parse_ui_timeout(ts)
+                if duration:
+                    timeout = duration
         click((1290,320))
         move_to((1290, 370))
         sleep(0.5)
 
-    return 0
+    return timeout
 
 def guild_forbidden_knowledge(trigger: bool = False) -> int:
     """ Run forbidden knowledge """
@@ -982,7 +973,7 @@ def library_firestone_research(trigger: bool = False) -> int:
             click((x_coords, 980))
         elif color == 'lightbrown_research_nonfree':
             ts_area = Region(x_coords - 440, 1000, 300, 32)
-            ts = ts_area.text('', colormap['white'])
+            ts = ts_area.text()
             if re.search(r'^[\d:]+$', ts):
                 timeout = parse_ui_timeout(ts)
                 if timeout:
@@ -1007,7 +998,7 @@ def library_firestone_research(trigger: bool = False) -> int:
         if found:
             click((x, y + 130))
             sleep(1)
-            ts = Region(1050, 610, 300, 32).text('', colormap['green'])
+            ts = Region(1050, 610, 300, 32).text('', 'green')
             timeout = 0
             if re.search(r'^[\d:]+$', ts):
                 timeout = parse_ui_timeout(ts)
@@ -1090,7 +1081,7 @@ def magic_quarter(trigger: bool = False) -> int:
             tmp[name] = x
 
     while True:
-        current = Region(250, 830, 300, 60).text('abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ', colormap['brown']).lower()
+        current = Region(250, 830, 300, 60).text('abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ', 'brown').lower()
         if current and current in guardians:
             if current in tmp:
                 del tmp[current]
@@ -1240,7 +1231,7 @@ def map_map(trigger: bool = False, direction: int = 0) -> int:
         else:
             # Get new missions time
             while True:
-                ts = Region(260, 1020, 150, 40).text('', colormap['lightyellow']).lower()
+                ts = Region(260, 1020, 150, 40).text('', 'lightyellow').lower()
                 match = re.search(r':\s([\d:]+)$', ts)
                 if match:
                     timeout = parse_ui_timeout(match.group(1))
@@ -1261,7 +1252,7 @@ def map_map(trigger: bool = False, direction: int = 0) -> int:
                 click((160, 306))
                 clicked = True
             else:
-                ts = Region(85, 306 - 10, 180, 40).text('', colormap['white'])
+                ts = Region(85, 306 - 10, 180, 40).text()
                 if re.search(r'^[\d:.]+$', ts):
                     timeout = parse_ui_timeout(ts)
                     if timeout:
@@ -1317,19 +1308,9 @@ def map_map(trigger: bool = False, direction: int = 0) -> int:
                     continue
                 clicked.append([x, y])
 
-                # check if running (scan for banner)
-                found = False
-                left = m.get_x()
-                for x in range(left, left - 30, -1):
-                    if color_at(x, m.get_y() + 10) == 'red':
-                        right = m.get_x() + m.get_w()
-                        for x in range(right, right + 30):
-                            if color_at(x, m.get_y() + 10) == 'red':
-                                found = True
-                                break
-                    if found:
-                        break
-                if found:
+                # check for timestamp
+                text = Region(m.get_x(), m.get_y() + m.get_h(), m.get_w(), 16).text()
+                if not text:
                     continue
 
                 # check if silver mission (double requirement)
@@ -1344,7 +1325,7 @@ def map_map(trigger: bool = False, direction: int = 0) -> int:
                 m.click()
                 m.wait_vanish()
                 if color_at(1090, 870) == 'green':
-                    ts = Region(1000, 790, 200, 36).text('1234567890:', colormap['green'])
+                    ts = Region(1000, 790, 200, 36).text('1234567890:', 'green')
                     if ts:
                         timeout = parse_ui_timeout(ts)
                         if timeout:
@@ -1405,7 +1386,7 @@ def oracle(trigger: bool = False) -> int:
         for _ in range (0, 2):
             for name, (x, y) in oracle_rituals.items():
                 if color_at(x, y) == 'green':
-                    text = Region(x - 180, y - 10, 180, 50).text('', colormap['white']).capitalize()
+                    text = Region(x - 180, y - 10, 180, 50).text().capitalize()
                     Debug.history(f'{text}ing {name} ritual')
                     click((x, y))
 
@@ -1491,7 +1472,7 @@ def shop(trigger: bool = False) -> int:
     # Amulet of the day
     click((1050, 100))
     sleep(1)
-    current = Region(710, 360, 840, 56).text('', colormap['white']).strip().replace(' ', '_').lower()
+    current = Region(710, 360, 840, 56).text().strip().replace(' ', '_').lower()
     Debug.warn(f'For Aurora: {current}')
     if current in amulets and config[f'buy_{current}']:
         keys, gems = amulets[current]
@@ -1658,7 +1639,7 @@ def tavern_tavern_game(trigger: bool = False) -> int:
         click((230, 1030))
         while not color_at(1820, 80) == 'white':
             pass
-        text = Region(420, 800, 1120, 130).text('', colormap['yellow'])
+        text = Region(420, 800, 1120, 130).text('', 'yellow')
         Debug.history(f'Obtained {text}')
         click((180, 80))
 
@@ -1680,7 +1661,7 @@ def temple_of_eternals(trigger: bool = False) -> int:
         return -1
 
     while True:
-        percentage_t = Region(1400, 417, 200, 40).text('', colormap['green'])
+        percentage_t = Region(1400, 417, 200, 40).text('', 'green')
         Debug.info(percentage_t)
         m = re.search(r'\+(.+)\%$', percentage_t)
         if m:
@@ -1752,12 +1733,12 @@ def mainscreen_logic(task, lock) -> None:
         if farm and time.time() - farm > farm_duration:
             farm = 0
 
-        if Region(1620, 533, 160, 40).text('Bos', colormap['white']) != 'Boss':
+        if Region(1620, 533, 160, 40).text('Bos') != 'Boss':
             continue
 
         boss_retry = config.get('battle_boss_retry', 15)
-        # dps = re.search(r'^DPS: (.+)$', Region(10, 860, 170, 38).text('', colormap['yellow']))
-        # hp = re.search(r'^(.+) HP$', Region(840, 76, 310, 28).text('', colormap['white']))
+        # dps = re.search(r'^DPS: (.+)$', Region(10, 860, 170, 38).text('', 'yellow'))
+        # hp = re.search(r'^(.+) HP$', Region(840, 76, 310, 28).text())
 
         # Get battle duration
         while color_at(1186, 90) == 'red':

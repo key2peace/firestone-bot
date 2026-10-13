@@ -62,6 +62,8 @@ colormap = {
     'white': (230, 255, 200, 255, 200, 255),
     'white_overlayed': (125, 130, 124, 126, 100, 105),
     'yellow': (240, 255, 157, 255, 0, 100),
+    'party_on': (200, 210, 70, 80, 0, 0),
+    'party_off': (107, 107, 105, 105, 107, 107),
     'purple': (104, 104, 66, 66, 255, 255),
     'silver': (214, 214, 232, 232, 242, 242),
 
@@ -470,10 +472,6 @@ def get_value(value: str) -> Tuple[float, int]:
                           (1.2, 3) = 1.2 * 10^3 = 1200
     """
     # Simple numbers
-    m = re.search(r'^[\d\.]+$', value)
-    if m:
-        return (float(value), 0)
-
     m = re.search(r'^[\d\.,]+$', value)
     if m:
         return (float(value.replace('.', '').replace(',','.')), 0)
@@ -1361,7 +1359,7 @@ class Region():
         Return:
             floatt: the extracted value
         """
-        number = self.text('1234567890.,+%', colormap[color_map])
+        number = self.text('1234567890.,+%', color_map)
 
         if not number:
             return 0.0
@@ -1458,7 +1456,7 @@ class Region():
         target_y = self.y + int(self.h / 2)
         move_to((target_x, target_y))
 
-    def text(self, expect: str = None, color_mask: tuple = None, min_chars: int = 1) -> str:
+    def text(self, expect: str = None, color_mask: str = 'white', min_chars: int = 1) -> str:
         """
         Extract textual values from the region viewport using custom OCR tuning.
         Supports a custom RGB color mask to isolate specific styled game fonts.
@@ -1470,7 +1468,7 @@ class Region():
 
         if color_mask:
             # 1. Isolate the custom color into a high-fidelity RGBA layer
-            rgba_layer = extract_color_layer(src_mat, color_mask)
+            rgba_layer = extract_color_layer(src_mat, colormap.get(color_mask))
 
             # 2. Extract only the Alpha channel (matched text pixels are 255, background is 0)
             # We must invert this alpha channel to make the text black on a white background

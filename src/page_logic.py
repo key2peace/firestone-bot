@@ -22,7 +22,7 @@ def is_alchemist() -> bool:
 
 def is_arena_of_kings() -> bool:
     """ Arena of kings """
-    text = Region(790, 70, 320, 55).text('', colormap['white']).lower()
+    text = Region(790, 70, 320, 55).text().lower()
     return text == 'arena of kings'
 
 def is_bag() -> bool:
@@ -61,17 +61,17 @@ def is_character_talents() -> bool:
 
 def is_engineer() -> bool:
     """ Engineer """
-    text = Region(40, 30, 390, 42).text('', colormap['yellow'])
+    text = Region(40, 30, 390, 42).text('', 'yellow')
     return text.startswith('Engineer level')
 
 def is_engineer_garage() -> bool:
     """ Engineer Garage """
-    text = Region(770, 0, 350, 60).text('', colormap['white']).lower()
+    text = Region(770, 0, 350, 60).text().lower()
     return text == 'garage'
 
 def is_events() -> bool:
     """ Events """
-    text = Region(850, 90, 220, 70).text('', colormap['white']).lower()
+    text = Region(850, 90, 220, 70).text().lower()
     return text == 'events'
 
 def is_exotic_merchant() -> bool:
@@ -84,7 +84,7 @@ def is_exotic_merchant() -> bool:
 
 def is_guild_bank() -> bool:
     """ Guild Bank """
-    text = Region(300, 20, 1300, 56).text('', colormap['white']).lower()
+    text = Region(300, 20, 1300, 56).text().lower()
     return text in ['bank', 'treasury', 'bank log', 'locker']
 
 # guild_chaos_rift
@@ -92,7 +92,7 @@ def is_guild_bank() -> bool:
 
 def is_guild_expeditions() -> bool:
     """ Guild Expeditions"""
-    text = Region(780, 40, 520, 50).text('', colormap['white']).lower()
+    text = Region(780, 40, 520, 50).text().lower()
     return text == 'guild expeditions'
 
 # guild_forbidden_knowledge
@@ -100,46 +100,46 @@ def is_guild_expeditions() -> bool:
 
 def is_guild_hall() -> bool:
     """ Guild Hall"""
-    text = Region(300, 20, 1300, 56).text('', colormap['white']).lower()
+    text = Region(300, 20, 1300, 56).text().lower()
     return text in ['guild', 'guild spirit', 'guild banner', 'guild log']
 
 def is_guild_map() -> bool:
     """ Guild Map """
-    text = Region(770, 0, 350, 60).text('', colormap['white']).lower()
+    text = Region(770, 0, 350, 60).text().lower()
     return text == 'guild'
 
 # guild_shop_pickaxe
 
 def is_library_firestone_research() -> bool:
     """ Firestone Research """
-    text = Region(820, 40, 280, 70).text('', colormap['white']).lower()
+    text = Region(820, 40, 280, 70).text().lower()
     return 'tree' in text
 
 def is_library_meteorite_research() -> bool:
     """ Meteorite Research """
-    text = Region(700, 1020, 520, 56).text('', colormap['white'])
+    text = Region(700, 1020, 520, 56).text()
     return 'meteorite' in text
 
 def is_magic_quarter() -> bool:
     """ Magic quarter """
-    text = Region(300, 140, 260, 44).text('', colormap['white']).lower()
+    text = Region(300, 140, 260, 44).text().lower()
     return 'evolution' in text
 
 # map_campaign
 
 def is_map_map() -> bool:
     """ Missions map """
-    text = Region(64, 1020, 240, 50).text('', colormap['lightyellow']).lower()
+    text = Region(64, 1020, 240, 50).text('', 'lightyellow').lower()
     return text.startswith('new missions')
 
 def is_oracle() -> bool:
     """ Oracle """
-    text = Region(95, 24, 320, 48).text('', colormap['yellow']).lower()
+    text = Region(95, 24, 320, 48).text('', 'yellow').lower()
     return text.startswith('oracle level')
 
 def is_oracle_gift() -> bool:
     """ Oracle Gift """
-    text = Region(560, 215, 250, 50).text('', colormap['white']).lower()
+    text = Region(560, 215, 250, 50).text().lower()
     return text == 'oracle\'s gift'
 
 # pirates_price

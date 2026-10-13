@@ -54,9 +54,12 @@ tasks = {
     'forbidden_knowledge':  ('guild/forbidden_knowledge.png',   'guild_forbidden_knowledge', 0, 0),
     'new_application':      ('guild/application.png',           'guild_new_application', 0, 0),
 
+    # hall of heroes
+    'new_hero':             ('new_hero.png',                    'hall_of_heroes', 0, 0),
+
     # library
-    'firestone_research':   ('library/firestone_research.png',  'library_firestone_research', 0, 0),
     'meteorite_research':   ('library/meteorite_research.png',  'library_meteorite_research', 0, 0),
+    'firestone_research':   ('library/firestone_research.png',  'library_firestone_research', 0, 0),
 
     # map
     'campaign':             ('map/campaign.png',                'map_campaign', 0, 0),
